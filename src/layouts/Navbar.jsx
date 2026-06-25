@@ -1,13 +1,13 @@
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { authService } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
-  const user = authService.getCurrentUser();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const logout = async () => {
-    await authService.logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 
@@ -22,7 +22,7 @@ export default function Navbar() {
         {user ? (
           <>
             <NavLink to="/profile">{user.fullName}</NavLink>
-            <button type="button" onClick={logout}>Logout</button>
+            <button type="button" onClick={handleLogout}>Logout</button>
           </>
         ) : (
           <>

@@ -1,9 +1,10 @@
 import { mockAddresses } from '../mocks/mockData';
+import { addressService } from './addressService';
 import { cartService } from './cartService';
 
 export const checkoutService = {
   getAddresses() {
-    return Promise.resolve(mockAddresses);
+    return addressService.list().catch(() => Promise.resolve(mockAddresses));
   },
   async preview(address = mockAddresses[0]) {
     const cart = await cartService.getCart();

@@ -1,15 +1,79 @@
+import { useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import { AuthFormFooter, AuthFormMessage } from '../../components/auth/AuthFormFooter';
+import { captureFormError } from '../../components/auth/authFormUtils';
+import { authService } from '../../services/authService';
+import { MOCK_OTP } from '../../mocks/mockStore';
 
 export default function VerifyEmailPage() {
+  const [params] = useSearchParams();
+  const emailDefault = params.get('email') || '';
+
+  const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+    setFieldErrors({});
+    const form = new FormData(event.currentTarget);
+    try {
+      await authService.verifyEmail({
+        email: form.get('email'),
+        otp: form.get('otp'),
+      });
+      setSuccess('Xac thuc email thanh cong. Ban co the dang nhap.');
+    } catch (err) {
+      captureFormError(err, setError, setFieldErrors);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    const email = document.querySelector('[name="email"]')?.value;
+    if (!email) return;
+    setResendLoading(true);
+    setError(null);
+    try {
+      await authService.resendVerification({ email });
+      setSuccess('Ma OTP moi da duoc gui (neu email ton tai).');
+    } catch (err) {
+      captureFormError(err, setError, setFieldErrors);
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   return (
     <section className="narrow">
       <h1>Verify Email</h1>
-      <form className="form">
-        <Input label="Email" />
-        <Input label="OTP" />
-        <Button type="button">Verify mock</Button>
+      <AuthFormMessage error={error} success={success} />
+      <form className="form" onSubmit={handleSubmit}>
+        <Input label="Email" name="email" type="email" defaultValue={emailDefault} error={fieldErrors.email} required />
+        <Input label="OTP" name="otp" error={fieldErrors.otp} required />
+        <p className="form-hint">Demo OTP: {MOCK_OTP}</p>
+        <Button type="submit" disabled={loading}>{loading ? 'Dang xu ly...' : 'Verify'}</Button>
       </form>
+      <div className="actions">
+        <Button type="button" onClick={handleResend} disabled={resendLoading}>
+          {resendLoading ? 'Dang gui...' : 'Gui lai OTP'}
+        </Button>
+      </div>
+      <AuthFormFooter>
+        {success ? (
+          <Link to="/login?registered=1">Den trang dang nhap</Link>
+        ) : (
+          <Link to="/login">Quay lai dang nhap</Link>
+        )}
+      </AuthFormFooter>
     </section>
   );
 }

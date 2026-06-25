@@ -1,17 +1,141 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
-import { authService } from '../../services/authService';
+import { AuthFormMessage } from '../../components/auth/AuthFormFooter';
+import { captureFormError } from '../../components/auth/authFormUtils';
+import { LoadingState, ErrorState } from '../../components/ui/State';
+import { profileService } from '../../services/profileService';
+import { useAuth } from '../../context/AuthContext';
 
 export default function ProfilePage() {
-  const user = authService.getCurrentUser();
+  const { refreshUser } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [saveSuccess, setSaveSuccess] = useState(null);
+  const [saveFieldErrors, setSaveFieldErrors] = useState({});
+
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdError, setPwdError] = useState(null);
+  const [pwdSuccess, setPwdSuccess] = useState(null);
+  const [pwdFieldErrors, setPwdFieldErrors] = useState({});
+
+  useEffect(() => {
+    profileService.getProfile()
+      .then(setProfile)
+      .catch((err) => setLoadError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSaveProfile = async (event) => {
+    event.preventDefault();
+    setSaveLoading(true);
+    setSaveError(null);
+    setSaveSuccess(null);
+    setSaveFieldErrors({});
+    const form = new FormData(event.currentTarget);
+    try {
+      const updated = await profileService.updateProfile({ fullName: form.get('fullName') });
+      setProfile(updated);
+      refreshUser();
+      setSaveSuccess('Cap nhat ho so thanh cong.');
+    } catch (err) {
+      captureFormError(err, setSaveError, setSaveFieldErrors);
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (event) => {
+    event.preventDefault();
+    setPwdLoading(true);
+    setPwdError(null);
+    setPwdSuccess(null);
+    setPwdFieldErrors({});
+    const form = new FormData(event.currentTarget);
+    const newPassword = form.get('newPassword');
+    const confirmPassword = form.get('confirmPassword');
+    if (newPassword !== confirmPassword) {
+      setPwdFieldErrors({ confirmPassword: 'Mat khau xac nhan khong khop.' });
+      setPwdLoading(false);
+      return;
+    }
+    try {
+      await profileService.changePassword({
+        currentPassword: form.get('currentPassword'),
+        newPassword,
+      });
+      setPwdSuccess('Doi mat khau thanh cong.');
+      event.currentTarget.reset();
+    } catch (err) {
+      captureFormError(err, setPwdError, setPwdFieldErrors);
+    } finally {
+      setPwdLoading(false);
+    }
+  };
+
+  if (loading) return <LoadingState />;
+  if (loadError) return <ErrorState text={loadError} />;
+
   return (
-    <section className="narrow">
+    <section className="narrow stack">
       <h1>Profile</h1>
-      <form className="form">
-        <Input label="Full name" defaultValue={user?.fullName || ''} />
-        <Input label="Email" defaultValue={user?.email || ''} disabled />
-        <Button type="button">Save mock</Button>
-      </form>
+      <p className="auth-footer">
+        <Link to="/profile/addresses">Quan ly dia chi</Link>
+      </p>
+
+      <div className="form-section">
+        <h2>Thong tin ca nhan</h2>
+        <AuthFormMessage error={saveError} success={saveSuccess} />
+        <form className="form" onSubmit={handleSaveProfile} key={profile?.updatedAt}>
+          <Input
+            label="Full name"
+            name="fullName"
+            defaultValue={profile?.fullName || ''}
+            error={saveFieldErrors.fullName}
+            required
+          />
+          <Input label="Email" defaultValue={profile?.email || ''} disabled />
+          <Button type="submit" disabled={saveLoading}>
+            {saveLoading ? 'Dang luu...' : 'Save'}
+          </Button>
+        </form>
+      </div>
+
+      <div className="form-section">
+        <h2>Doi mat khau</h2>
+        <AuthFormMessage error={pwdError} success={pwdSuccess} />
+        <form className="form" onSubmit={handleChangePassword}>
+          <Input
+            label="Current password"
+            name="currentPassword"
+            type="password"
+            error={pwdFieldErrors.currentPassword}
+            required
+          />
+          <Input
+            label="New password"
+            name="newPassword"
+            type="password"
+            error={pwdFieldErrors.newPassword}
+            required
+          />
+          <Input
+            label="Confirm password"
+            name="confirmPassword"
+            type="password"
+            error={pwdFieldErrors.confirmPassword}
+            required
+          />
+          <Button type="submit" disabled={pwdLoading}>
+            {pwdLoading ? 'Dang xu ly...' : 'Change password'}
+          </Button>
+        </form>
+      </div>
     </section>
   );
 }

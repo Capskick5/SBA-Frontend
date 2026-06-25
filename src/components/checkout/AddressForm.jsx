@@ -1,17 +1,98 @@
+import { useState } from 'react';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 
-export default function AddressForm({ onSubmit }) {
+const defaultValues = {
+  recipient: '',
+  phone: '',
+  line: '',
+  ward: '',
+  district: '',
+  city: '',
+  isDefault: false,
+};
+
+export default function AddressForm({
+  initialValues = defaultValues,
+  onSubmit,
+  submitLabel = 'Save address',
+  loading = false,
+  onCancel,
+  fieldErrors = {},
+}) {
+  const [values, setValues] = useState({ ...defaultValues, ...initialValues });
+
+  const setField = (name, value) => {
+    setValues((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    onSubmit?.(values);
+  };
+
   return (
-    <form className="form" onSubmit={(event) => { event.preventDefault(); onSubmit?.(); }}>
-      <Input label="Recipient" defaultValue="Nguyen Van A" required />
-      <Input label="Phone" defaultValue="0900000000" required />
-      <Input label="Line" defaultValue="123 Nguyen Trai" required />
-      <Input label="Ward" defaultValue="Ben Thanh" />
-      <Input label="District" defaultValue="Quan 1" />
-      <Input label="City" defaultValue="Ho Chi Minh" required />
-      <label className="check"><input type="checkbox" /> Set default</label>
-      <Button type="submit">Save address</Button>
+    <form className="form" onSubmit={handleSubmit}>
+      <Input
+        label="Recipient"
+        name="recipient"
+        value={values.recipient}
+        onChange={(e) => setField('recipient', e.target.value)}
+        error={fieldErrors.recipient}
+        required
+      />
+      <Input
+        label="Phone"
+        name="phone"
+        value={values.phone}
+        onChange={(e) => setField('phone', e.target.value)}
+        error={fieldErrors.phone}
+        required
+      />
+      <Input
+        label="Line"
+        name="line"
+        value={values.line}
+        onChange={(e) => setField('line', e.target.value)}
+        error={fieldErrors.line}
+        required
+      />
+      <Input
+        label="Ward"
+        name="ward"
+        value={values.ward}
+        onChange={(e) => setField('ward', e.target.value)}
+      />
+      <Input
+        label="District"
+        name="district"
+        value={values.district}
+        onChange={(e) => setField('district', e.target.value)}
+      />
+      <Input
+        label="City"
+        name="city"
+        value={values.city}
+        onChange={(e) => setField('city', e.target.value)}
+        error={fieldErrors.city}
+        required
+      />
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={values.isDefault}
+          onChange={(e) => setField('isDefault', e.target.checked)}
+        />
+        Set default
+      </label>
+      <div className="actions">
+        <Button type="submit" disabled={loading}>
+          {loading ? 'Dang luu...' : submitLabel}
+        </Button>
+        {onCancel && (
+          <Button type="button" onClick={onCancel}>Cancel</Button>
+        )}
+      </div>
     </form>
   );
 }

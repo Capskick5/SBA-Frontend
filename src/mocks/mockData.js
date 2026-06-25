@@ -25,6 +25,7 @@ export const mockUsers = {
     fullName: 'BookVerse Customer',
     role: 'CUSTOMER',
     emailVerified: true,
+    enabled: true,
   },
   admin: {
     id: 2,
@@ -32,6 +33,7 @@ export const mockUsers = {
     fullName: 'BookVerse Admin',
     role: 'ADMIN',
     emailVerified: true,
+    enabled: true,
   },
 };
 

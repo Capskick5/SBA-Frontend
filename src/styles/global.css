@@ -159,10 +159,61 @@ textarea {
   border: 1px solid #ddd;
 }
 
-.form,
-.field {
+.form {
   display: grid;
   gap: 10px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field-error {
+  color: #111;
+  font-size: 13px;
+}
+
+.form-message {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  margin: 0 0 12px;
+}
+
+.form-message-error {
+  border-color: #111;
+}
+
+.form-message-success {
+  border-color: #111;
+}
+
+.form-hint {
+  margin: 0;
+  color: #666;
+  font-size: 13px;
+}
+
+.auth-footer {
+  margin-top: 12px;
+  color: #555;
+}
+
+.form-section {
+  display: grid;
+  gap: 12px;
+}
+
+.form-section h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.address-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
 }
 
 .check {
