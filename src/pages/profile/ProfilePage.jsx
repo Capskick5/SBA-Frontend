@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import { AuthFormMessage } from '../../components/auth/AuthFormFooter';
-import { captureFormError } from '../../components/auth/authFormUtils';
+import { captureFormError } from '../../utils/formErrorUtils';
 import { LoadingState, ErrorState } from '../../components/ui/State';
 import { profileService } from '../../services/profileService';
 import { useAuth } from '../../context/AuthContext';

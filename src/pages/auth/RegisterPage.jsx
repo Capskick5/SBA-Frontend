@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { AuthFormFooter, AuthFormMessage } from '../../components/auth/AuthFormFooter';
-import { captureFormError } from '../../components/auth/authFormUtils';
+import { captureFormError } from '../../utils/formErrorUtils';
 import { authService } from '../../services/authService';
 
 export default function RegisterPage() {

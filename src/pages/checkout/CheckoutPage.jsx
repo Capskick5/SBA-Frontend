@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AddressForm from '../../components/checkout/AddressForm';
 import CheckoutSummary from '../../components/checkout/CheckoutSummary';
 import { AuthFormMessage } from '../../components/auth/AuthFormFooter';
-import { captureFormError } from '../../components/auth/authFormUtils';
+import { captureFormError } from '../../utils/formErrorUtils';
 import { addressService } from '../../services/addressService';
 import { checkoutService } from '../../services/checkoutService';
 

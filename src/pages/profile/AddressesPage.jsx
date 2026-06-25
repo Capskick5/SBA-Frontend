@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import AddressForm from '../../components/checkout/AddressForm';
 import Button from '../../components/ui/Button';
 import { AuthFormMessage } from '../../components/auth/AuthFormFooter';
-import { captureFormError } from '../../components/auth/authFormUtils';
+import { captureFormError } from '../../utils/formErrorUtils';
 import { EmptyState, ErrorState, LoadingState } from '../../components/ui/State';
 import { addressService } from '../../services/addressService';
 

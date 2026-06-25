@@ -2,7 +2,6 @@ import {
   delay,
   findUserInDb,
   getSessionUser,
-  getUsersDb,
   saveUsersDb,
   setSessionUser,
   toPublicUser,
