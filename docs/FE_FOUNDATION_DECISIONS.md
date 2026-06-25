@@ -39,13 +39,7 @@ Ngoai scope:
 - Chua login bam `Add to Cart` thi chuyen sang `/login`.
 - Login xong nen quay lai trang truoc do neu co `redirect`.
 - Checkout cho chon address co san va them address moi ngay trong man checkout.
-- Cart co checkbox de user chon item nao se mua trong lan checkout nay.
-- Checkout co payment method selector, ban wireframe support PayOS va mock transfer.
-- Submit review nam trong Order Detail khi order da `DELIVERED`.
 - Admin review moderation co man rieng don gian `/admin/reviews`.
-- Admin category co CRUD wireframe: create, edit, active/deactivate, delete.
-- Admin order detail co control doi trang thai don hang; khi chuyen `SHIPPED` can shipping provider va tracking code.
-- Admin review co nut View de xem noi dung review day du.
 - Payment result ho tro mock trang thai bang query param:
   - `/payment/result?status=success`
   - `/payment/result?status=failed`
@@ -125,11 +119,11 @@ Customer:
 
 - Catalog: search, filter category, sort, pagination don gian.
 - Book Detail: cover, title, author, description, price, stock, add to cart, reviews.
-- Cart: item list, checkbox chon mua, quantity, remove, subtotal, selected subtotal, checkout button.
-- Checkout: address selector, address form, item summary, payment method, shipping fee, total, payment button.
+- Cart: item list, quantity, remove, subtotal, checkout button.
+- Checkout: address selector, address form, item summary, shipping fee, total, payment button.
 - Payment Result: trang thai thanh toan, order link, back home.
 - Orders: danh sach don.
-- Order Detail: item snapshot, address snapshot, payment status, order timeline, review form khi `DELIVERED`.
+- Order Detail: item snapshot, address snapshot, payment status, order timeline.
 - Profile: full name, email, change password.
 - Address Management: list/add/edit/delete/set default.
 - Review: list review, create review neu du dieu kien.
@@ -137,15 +131,14 @@ Customer:
 Admin:
 
 - Dashboard/statistics.
-- Category management: create/edit/active toggle/delete.
+- Category management.
 - Book management.
 - Book create/edit.
 - Stock adjustment, gop trong book detail/edit.
 - Order management.
-- Order detail/status update, shipping provider/tracking khi `SHIPPED`.
+- Order detail/status update.
 - User management enable/disable.
 - Review moderation.
-- Review moderation co View de xem full message.
 
 ## 6. Data shape chot
 
@@ -186,8 +179,7 @@ Cart item:
   coverUrl,
   price,
   quantity,
-  lineTotal,
-  selected
+  lineTotal
 }
 ```
 
@@ -199,8 +191,7 @@ Checkout preview:
   subtotal,
   shippingFee,
   total,
-  address,
-  paymentMethod
+  address
 }
 ```
 
@@ -282,7 +273,6 @@ Behavior:
 
 CartItemRow hien:
 
-- Buy checkbox.
 - Cover.
 - Title.
 - Price.
@@ -295,7 +285,6 @@ Behavior:
 - Quantity dung nut `-` va `+`, co input so o giua.
 - Quantity vuot stock thi hien loi ngay tai row.
 - Remove item khong can confirm trong ban wireframe.
-- Item nao duoc check thi moi tinh vao selected subtotal va checkout preview.
 
 ### CheckoutSummary
 
@@ -304,7 +293,7 @@ CheckoutSummary hien:
 - Subtotal.
 - Shipping fee.
 - Total.
-- Payment method.
+- Payment method: PayOS.
 - Button Proceed to payment.
 
 Behavior:
@@ -313,18 +302,6 @@ Behavior:
 - Preview fail hien alert/error box tren dau summary.
 - Shipping fee hien thanh mot dong rieng.
 - Total la `subtotal + shippingFee`.
-
-### PaymentMethodSelector
-
-PaymentMethodSelector hien:
-
-- PayOS payment link.
-- Mock bank transfer wireframe.
-
-Behavior:
-
-- Ban dau chi la UI selector de customer thay co buoc chon payment method.
-- Backend contract co the gioi han PayOS; service that se dieu chinh theo backend sau.
 
 ### AddressForm
 
@@ -361,17 +338,6 @@ Behavior:
 - Customer chi cancel `PENDING_PAYMENT`.
 - Chi review khi order `DELIVERED`.
 
-### ReviewList va ReviewForm
-
-ReviewList hien o Book Detail.
-
-ReviewForm nam trong Order Detail khi:
-
-- Order status la `DELIVERED`.
-- User da mua sach trong order do.
-
-Book Detail khong dat submit review truc tiep trong ban flow chot.
-
 ### AdminLayout
 
 AdminLayout gom:
@@ -384,34 +350,6 @@ AdminLayout gom:
 - Admin tach layout rieng.
 - Sidebar chua can collapse o ban dau.
 - Action button inline: Edit, Disable, Delete, Update Status.
-
-### AdminCategoryManagement
-
-Admin category management gom:
-
-- Category table.
-- Create category form.
-- Edit category action.
-- Active/deactivate action.
-- Delete action.
-
-### AdminOrderStatusControl
-
-Admin order detail gom:
-
-- Current status.
-- Next status selector.
-- Update status button.
-- Shipping provider va tracking code khi next status la `SHIPPED`.
-
-### AdminReviewModeration
-
-Admin reviews gom:
-
-- Review table.
-- Comment preview ngan trong table.
-- View action de mo full review message.
-- Delete action.
 
 ## 8. Service/mock strategy
 
@@ -479,6 +417,9 @@ Mot man hinh duoc coi la xong ban wireframe khi:
 
 - Navbar mobile search nam dau?
 - Login xong redirect ve trang truoc hay ve home neu khong co redirect?
+- BookCard co Add to Cart truc tiep hay chi View Detail?
 - Checkout address form hien cung luc voi address list hay mo modal?
 - Admin book create/edit dung page rieng hay modal?
+- Order status update trong admin dung dropdown hay modal confirm?
+- Review form nam trong Book Detail hay Order Detail?
 - Payment result mock status co can nut tao lai payment khong?

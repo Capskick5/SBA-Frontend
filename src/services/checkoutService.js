@@ -6,7 +6,7 @@ export const checkoutService = {
     return Promise.resolve(mockAddresses);
   },
   async preview(address = mockAddresses[0]) {
-    const cart = await cartService.getSelectedCart();
+    const cart = await cartService.getCart();
     const shippingFee = cart.items.length ? 30000 : 0;
     return {
       items: cart.items,
@@ -16,11 +16,10 @@ export const checkoutService = {
       address,
     };
   },
-  checkout(paymentMethod = 'PAYOS') {
+  checkout() {
     return Promise.resolve({
       orderId: 1001,
       paymentId: 501,
-      paymentMethod,
       checkoutUrl: '/payment/result?status=pending',
     });
   },

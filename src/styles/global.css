@@ -173,7 +173,7 @@ textarea {
 
 .cart-row {
   display: grid;
-  grid-template-columns: auto 72px 1fr auto auto auto;
+  grid-template-columns: 72px 1fr auto auto auto;
   gap: 14px;
   align-items: center;
   border: 1px solid #ddd;
@@ -191,13 +191,6 @@ textarea {
   display: flex;
   gap: 8px;
   align-items: center;
-}
-
-.inline-form {
-  display: grid;
-  grid-template-columns: minmax(240px, 1fr) auto auto;
-  gap: 12px;
-  align-items: end;
 }
 
 .summary-row {
@@ -303,8 +296,7 @@ td {
   .detail-grid,
   .checkout-grid,
   .admin-shell,
-  .cart-row,
-  .inline-form {
+  .cart-row {
     grid-template-columns: 1fr;
   }
 

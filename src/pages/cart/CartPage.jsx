@@ -21,19 +21,13 @@ export default function CartPage() {
         <CartItemRow
           key={item.itemId}
           item={item}
-          onSelect={(itemId, selected) => cartService.toggleSelected(itemId, selected).then(setCart)}
           onQuantity={(itemId, quantity) => cartService.updateQuantity(itemId, quantity).then(setCart)}
           onRemove={(itemId) => cartService.removeItem(itemId).then(setCart)}
         />
       ))}
       <div className="summary-row">
-        <div>
-          <p>Cart subtotal: {formatCurrency(cart.subtotal)}</p>
-          <strong>Selected subtotal: {formatCurrency(cart.selectedSubtotal)}</strong>
-        </div>
-        <Link to="/checkout">
-          <Button disabled={!cart.items.some((item) => item.selected)}>Checkout selected</Button>
-        </Link>
+        <strong>Subtotal: {formatCurrency(cart.subtotal)}</strong>
+        <Link to="/checkout"><Button>Checkout</Button></Link>
       </div>
     </section>
   );

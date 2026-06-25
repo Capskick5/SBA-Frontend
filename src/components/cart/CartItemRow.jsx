@@ -1,17 +1,9 @@
 import Button from '../ui/Button';
 import { formatCurrency } from '../../utils/formatters';
 
-export default function CartItemRow({ item, onQuantity, onRemove, onSelect }) {
+export default function CartItemRow({ item, onQuantity, onRemove }) {
   return (
     <div className="cart-row">
-      <label className="check">
-        <input
-          type="checkbox"
-          checked={item.selected}
-          onChange={(event) => onSelect(item.itemId, event.target.checked)}
-        />
-        Buy
-      </label>
       <img src={item.coverUrl} alt={item.title} />
       <div>
         <strong>{item.title}</strong>
