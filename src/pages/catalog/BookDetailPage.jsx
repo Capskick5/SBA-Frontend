@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import ReviewList from '../../components/reviews/ReviewList';
-import ReviewForm from '../../components/reviews/ReviewForm';
 import { authService } from '../../services/authService';
 import { bookService } from '../../services/bookService';
 import { cartService } from '../../services/cartService';
@@ -44,7 +43,6 @@ export default function BookDetailPage() {
         <Button onClick={addToCart} disabled={book.stock === 0}>Add to Cart</Button>
         <h2>Reviews</h2>
         <ReviewList reviews={reviews} />
-        <ReviewForm />
       </div>
     </section>
   );

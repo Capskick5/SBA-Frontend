@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import OrderStatusBadge from '../../components/orders/OrderStatusBadge';
 import OrderTimeline from '../../components/orders/OrderTimeline';
+import ReviewForm from '../../components/reviews/ReviewForm';
 import Table from '../../components/ui/Table';
 import { orderService } from '../../services/orderService';
 import { formatCurrency } from '../../utils/formatters';
@@ -30,6 +31,13 @@ export default function OrderDetailPage() {
       />
       <h2>Total: {formatCurrency(order.total)}</h2>
       <OrderTimeline history={order.statusHistory} />
+      {order.status === 'DELIVERED' && (
+        <div className="panel">
+          <h2>Submit Review</h2>
+          <p>Review form appears here because the order is delivered.</p>
+          <ReviewForm />
+        </div>
+      )}
     </section>
   );
 }

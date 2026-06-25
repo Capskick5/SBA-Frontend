@@ -15,7 +15,7 @@ export const mockBooks = rawBooks.map((book, index) => ({
 }));
 
 export const mockCategories = Array.from(new Set(mockBooks.map((book) => book.category))).map(
-  (name, index) => ({ id: index + 1, name }),
+  (name, index) => ({ id: index + 1, name, active: true }),
 );
 
 export const mockUsers = {
@@ -67,7 +67,7 @@ export const orderStatuses = [
   'CANCELLED',
 ];
 
-export const mockOrders = orderStatuses.slice(0, 4).map((status, index) => {
+export const mockOrders = orderStatuses.map((status, index) => {
   const item = mockBooks[index + 2];
   const subtotal = item.price * 1;
   const shippingFee = 30000;
@@ -100,7 +100,8 @@ export const mockReviews = mockBooks.slice(0, 5).map((book, index) => ({
   bookId: book.id,
   userName: `Reader ${index + 1}`,
   rating: 4 + (index % 2),
-  comment: 'Sach ro rang, phu hop de demo review UI.',
+  comment:
+    'Sach ro rang, phu hop de demo review UI. Day la noi dung dai hon de admin co the bam View va xem day du noi dung review trong ban wireframe.',
 }));
 
 export const mockAdminStats = {
