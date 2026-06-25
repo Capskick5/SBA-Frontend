@@ -1,0 +1,306 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: #111;
+  background: #fff;
+  font-family: Arial, sans-serif;
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.navbar {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 24px;
+  border-bottom: 1px solid #ddd;
+}
+
+.brand {
+  font-size: 22px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.nav-search,
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  border: 1px solid #bbb;
+  padding: 10px;
+  background: #fff;
+}
+
+.nav-links,
+.actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.nav-links a,
+.nav-links button {
+  border: 0;
+  background: transparent;
+  color: #111;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.page {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0;
+}
+
+.footer {
+  border-top: 1px solid #ddd;
+  padding: 20px 24px;
+  color: #555;
+}
+
+.stack {
+  display: grid;
+  gap: 18px;
+}
+
+.narrow {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.filters,
+.checkout-grid,
+.detail-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.filters {
+  grid-template-columns: 2fr 1fr 1fr;
+}
+
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.book-card,
+.panel,
+.summary {
+  border: 1px solid #ddd;
+  padding: 16px;
+  background: #fff;
+}
+
+.book-card {
+  display: grid;
+  gap: 12px;
+}
+
+.book-card img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border: 1px solid #ddd;
+}
+
+.muted {
+  color: #666;
+}
+
+.btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 40px;
+  border: 1px solid #111;
+  padding: 8px 12px;
+  background: #fff;
+  color: #111;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:disabled {
+  color: #777;
+  border-color: #ccc;
+  cursor: not-allowed;
+}
+
+.detail-grid {
+  grid-template-columns: minmax(220px, 340px) 1fr;
+  align-items: start;
+}
+
+.detail-cover {
+  width: 100%;
+  border: 1px solid #ddd;
+}
+
+.form,
+.field {
+  display: grid;
+  gap: 10px;
+}
+
+.check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cart-row {
+  display: grid;
+  grid-template-columns: 72px 1fr auto auto auto;
+  gap: 14px;
+  align-items: center;
+  border: 1px solid #ddd;
+  padding: 12px;
+}
+
+.cart-row img {
+  width: 72px;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border: 1px solid #ddd;
+}
+
+.quantity {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.checkout-grid {
+  grid-template-columns: 1fr 320px;
+  align-items: start;
+}
+
+.badge {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid #111;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.timeline {
+  display: grid;
+  gap: 10px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.state {
+  border: 1px solid #ddd;
+  padding: 24px;
+  text-align: center;
+}
+
+.state-error {
+  border-color: #111;
+}
+
+.admin-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+}
+
+.admin-sidebar {
+  border-right: 1px solid #ddd;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-content {
+  padding: 28px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 35%);
+  display: grid;
+  place-items: center;
+}
+
+.modal {
+  width: min(520px, calc(100% - 32px));
+  background: #fff;
+  border: 1px solid #111;
+  padding: 16px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+@media (max-width: 760px) {
+  .navbar,
+  .filters,
+  .detail-grid,
+  .checkout-grid,
+  .admin-shell,
+  .cart-row {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-links {
+    justify-content: flex-start;
+  }
+}
