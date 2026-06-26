@@ -203,6 +203,26 @@ textarea {
   cursor: not-allowed;
 }
 
+.pagination {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.pagination-pages {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pagination .is-active {
+  background: #111;
+  color: #fff;
+}
+
 .detail-grid {
   grid-template-columns: minmax(220px, 340px) 1fr;
   align-items: start;
