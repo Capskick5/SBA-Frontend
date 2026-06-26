@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import { AuthFormMessage } from '../../components/auth/AuthFormFooter';
@@ -9,7 +9,8 @@ import { profileService } from '../../services/profileService';
 import { useAuth } from '../../context/AuthContext';
 
 export default function ProfilePage() {
-  const { refreshUser } = useAuth();
+  const navigate = useNavigate();
+  const { refreshUser, logout } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
@@ -69,8 +70,11 @@ export default function ProfilePage() {
         currentPassword: form.get('currentPassword'),
         newPassword,
       });
-      setPwdSuccess('Doi mat khau thanh cong.');
-      event.currentTarget.reset();
+      await logout();
+      navigate('/login', {
+        replace: true,
+        state: { message: 'Doi mat khau thanh cong. Vui long dang nhap lai.' },
+      });
     } catch (err) {
       captureFormError(err, setPwdError, setPwdFieldErrors);
     } finally {

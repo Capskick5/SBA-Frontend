@@ -1,12 +1,11 @@
-import { mockAddresses } from '../mocks/mockData';
-import { addressService } from './addressService';
 import { cartService } from './cartService';
+import { addressService } from './addressService';
 
 export const checkoutService = {
   getAddresses() {
-    return addressService.list().catch(() => Promise.resolve(mockAddresses));
+    return addressService.list();
   },
-  async preview(address = mockAddresses[0]) {
+  async preview(address) {
     const cart = await cartService.getCart();
     const shippingFee = cart.items.length ? 30000 : 0;
     return {
