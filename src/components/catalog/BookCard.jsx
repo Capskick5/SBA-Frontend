@@ -26,7 +26,6 @@ export default function BookCard({ book }) {
         <p>{book.stock > 0 ? `In stock: ${book.stock}` : 'Out of stock'}</p>
       </div>
       <div className="actions">
-        <Link className="btn" to={`/books/${book.id}`}>View Detail</Link>
         <Button onClick={addToCart} disabled={book.stock === 0}>Add to Cart</Button>
       </div>
     </article>
