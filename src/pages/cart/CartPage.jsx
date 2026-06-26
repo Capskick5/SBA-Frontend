@@ -8,26 +8,43 @@ import { formatCurrency } from '../../utils/formatters';
 
 export default function CartPage() {
   const [cart, setCart] = useState({ items: [], subtotal: 0 });
-  const refresh = () => cartService.getCart().then(setCart);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = () => {
+    setLoading(true);
+    cartService.getCart()
+      .then(setCart)
+      .catch(err => console.error("Lỗi lấy giỏ hàng:", err))
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => { refresh(); }, []);
 
-  if (!cart.items.length) return <EmptyState text="Gio hang dang trong." />;
+  if (loading) return <div>Loading...</div>;
+  if (!cart.items || cart.items.length === 0) return <EmptyState text="Giỏ hàng đang trống." />;
 
   return (
     <section className="stack">
-      <h1>Cart</h1>
+      <h1>Giỏ hàng</h1>
       {cart.items.map((item) => (
         <CartItemRow
           key={item.itemId}
           item={item}
-          onQuantity={(itemId, quantity) => cartService.updateQuantity(itemId, quantity).then(setCart)}
-          onRemove={(itemId) => cartService.removeItem(itemId).then(setCart)}
+          onQuantity={(itemId, quantity) =>
+            cartService.updateQuantity(itemId, quantity)
+              .then(setCart)
+              .catch(err => alert("Không thể cập nhật số lượng!"))
+          }
+          onRemove={(itemId) =>
+            cartService.removeItem(itemId)
+              .then(setCart)
+              .catch(err => alert("Không thể xóa sản phẩm!"))
+          }
         />
       ))}
       <div className="summary-row">
-        <strong>Subtotal: {formatCurrency(cart.subtotal)}</strong>
-        <Link to="/checkout"><Button>Checkout</Button></Link>
+        <strong>Tổng cộng: {formatCurrency(cart.subtotal)}</strong>
+        <Link to="/checkout"><Button>Thanh toán (Checkout)</Button></Link>
       </div>
     </section>
   );

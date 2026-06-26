@@ -1,27 +1,28 @@
-import { mockAddresses } from '../mocks/mockData';
-import { addressService } from './addressService';
-import { cartService } from './cartService';
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'http://localhost:8080/api/v1/checkout',
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
 export const checkoutService = {
-  getAddresses() {
-    return addressService.list().catch(() => Promise.resolve(mockAddresses));
+  // Gửi thông tin chọn địa chỉ và các item để lấy preview tính tiền
+  preview: async (addressId, cartItemIds) => {
+    const response = await api.post('/preview', { addressId, cartItemIds });
+    return response.data;
   },
-  async preview(address = mockAddresses[0]) {
-    const cart = await cartService.getCart();
-    const shippingFee = cart.items.length ? 30000 : 0;
-    return {
-      items: cart.items,
-      subtotal: cart.subtotal,
-      shippingFee,
-      total: cart.subtotal + shippingFee,
-      address,
-    };
-  },
-  checkout() {
-    return Promise.resolve({
-      orderId: 1001,
-      paymentId: 501,
-      checkoutUrl: '/payment/result?status=pending',
-    });
-  },
+
+  // Thực hiện checkout
+  checkout: async (addressId, cartItemIds, idempotencyKey) => {
+    const response = await api.post('',
+      { addressId, cartItemIds },
+      { headers: { 'Idempotency-Key': idempotencyKey } }
+    );
+    return response.data;
+  }
 };

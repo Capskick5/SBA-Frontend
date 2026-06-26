@@ -7,17 +7,25 @@ import { formatCurrency } from '../../utils/formatters';
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
-  useEffect(() => { orderService.getOrders().then(setOrders); }, []);
+
+  useEffect(() => {
+    orderService.getOrders()
+      .then(data => {
+        // Nếu backend trả về phân trang (PageResponse), chỉnh lại thành setOrders(data.content || [])
+        setOrders(Array.isArray(data) ? data : (data.content || []));
+      })
+      .catch(err => console.error("Lỗi lấy danh sách đơn hàng:", err));
+  }, []);
 
   return (
     <section className="stack">
-      <h1>My Orders</h1>
+      <h1>Đơn hàng của tôi</h1>
       <Table
         columns={[
-          { key: 'id', label: 'Order' },
-          { key: 'status', label: 'Status', render: (row) => <OrderStatusBadge status={row.status} /> },
-          { key: 'total', label: 'Total', render: (row) => formatCurrency(row.total) },
-          { key: 'action', label: 'Action', render: (row) => <Link to={`/orders/${row.id}`}>View</Link> },
+          { key: 'id', label: 'Mã đơn' },
+          { key: 'status', label: 'Trạng thái', render: (row) => <OrderStatusBadge status={row.status} /> },
+          { key: 'total', label: 'Tổng tiền', render: (row) => formatCurrency(row.total) },
+          { key: 'action', label: 'Thao tác', render: (row) => <Link to={`/orders/${row.id}`}>Xem</Link> },
         ]}
         rows={orders}
       />

@@ -1,43 +1,26 @@
-import { mockCartItems } from '../mocks/mockData';
+import axios from 'axios';
 
-let cartItems = [...mockCartItems];
+const API_BASE = 'http://localhost:8080/api/v1/cart';
 
-const recalculate = () =>
-  cartItems.map((item) => ({ ...item, lineTotal: item.price * item.quantity }));
+// Hàm lấy token từ localStorage (hoặc nơi bạn lưu trữ sau khi login)
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token'); // Thay 'token' bằng key bạn dùng để lưu JWT
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 export const cartService = {
-  getCart() {
-    cartItems = recalculate();
-    return Promise.resolve({
-      items: cartItems,
-      subtotal: cartItems.reduce((sum, item) => sum + item.lineTotal, 0),
-    });
+  getCart: async () => {
+    const response = await axios.get(API_BASE, { headers: getAuthHeaders() });
+    return response.data;
   },
-  addItem(book, quantity = 1) {
-    const existing = cartItems.find((item) => item.bookId === book.id);
-    if (existing) {
-      existing.quantity += quantity;
-    } else {
-      cartItems.push({
-        itemId: Date.now(),
-        bookId: book.id,
-        title: book.title,
-        coverUrl: book.coverUrl,
-        price: book.price,
-        quantity,
-        lineTotal: book.price * quantity,
-      });
-    }
-    return this.getCart();
+
+  updateQuantity: async (itemId, quantity) => {
+    const response = await axios.put(`${API_BASE}/items/${itemId}`, { quantity }, { headers: getAuthHeaders() });
+    return response.data;
   },
-  updateQuantity(itemId, quantity) {
-    cartItems = cartItems.map((item) =>
-      item.itemId === itemId ? { ...item, quantity: Math.max(1, quantity) } : item,
-    );
-    return this.getCart();
-  },
-  removeItem(itemId) {
-    cartItems = cartItems.filter((item) => item.itemId !== itemId);
-    return this.getCart();
-  },
+
+  removeItem: async (itemId) => {
+    const response = await axios.delete(`${API_BASE}/items/${itemId}`, { headers: getAuthHeaders() });
+    return response.data;
+  }
 };

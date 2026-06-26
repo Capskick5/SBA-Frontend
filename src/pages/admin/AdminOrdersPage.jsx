@@ -7,16 +7,23 @@ import { formatCurrency } from '../../utils/formatters';
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
-  useEffect(() => { adminService.getOrders().then(setOrders); }, []);
+
+  useEffect(() => {
+    adminService.getOrders().then((data) => {
+      // Đảm bảo xử lý đúng cấu trúc dữ liệu trả về từ backend
+      setOrders(Array.isArray(data) ? data : (data.content || []));
+    });
+  }, []);
+
   return (
     <section className="stack">
-      <h1>Manage Orders</h1>
+      <h1>Quản lý Đơn hàng</h1>
       <Table
         columns={[
-          { key: 'id', label: 'Order' },
-          { key: 'status', label: 'Status', render: (row) => <OrderStatusBadge status={row.status} /> },
-          { key: 'total', label: 'Total', render: (row) => formatCurrency(row.total) },
-          { key: 'action', label: 'Action', render: (row) => <Link to={`/admin/orders/${row.id}`}>View</Link> },
+          { key: 'id', label: 'Mã đơn' },
+          { key: 'status', label: 'Trạng thái', render: (row) => <OrderStatusBadge status={row.status} /> },
+          { key: 'total', label: 'Tổng tiền', render: (row) => formatCurrency(row.total) },
+          { key: 'action', label: 'Hành động', render: (row) => <Link to={`/admin/orders/${row.id}`}>Chi tiết</Link> },
         ]}
         rows={orders}
       />

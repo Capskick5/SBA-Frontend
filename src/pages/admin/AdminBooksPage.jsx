@@ -6,17 +6,25 @@ import { formatCurrency } from '../../utils/formatters';
 
 export default function AdminBooksPage() {
   const [books, setBooks] = useState([]);
-  useEffect(() => { adminService.getBooks().then(setBooks); }, []);
+
+  useEffect(() => {
+    // Gọi API thực tế từ adminService
+    adminService.getBooks().then((data) => {
+      // Backend thường trả về page object, nếu có thuộc tính 'content' thì dùng nó
+      setBooks(data.content || data);
+    });
+  }, []);
+
   return (
     <section className="stack">
-      <h1>Manage Books</h1>
+      <h1>Quản lý Sách</h1>
       <Table
         columns={[
-          { key: 'title', label: 'Title' },
-          { key: 'author', label: 'Author' },
-          { key: 'price', label: 'Price', render: (row) => formatCurrency(row.price) },
-          { key: 'stock', label: 'Stock' },
-          { key: 'action', label: 'Action', render: (row) => <Link to={`/admin/books/${row.id}`}>Edit</Link> },
+          { key: 'title', label: 'Tên sách' },
+          { key: 'author', label: 'Tác giả' },
+          { key: 'price', label: 'Giá', render: (row) => formatCurrency(row.price) },
+          { key: 'stock', label: 'Kho' },
+          { key: 'action', label: 'Thao tác', render: (row) => <Link to={`/admin/books/${row.id}`}>Sửa</Link> },
         ]}
         rows={books}
       />
