@@ -21,7 +21,7 @@ export default function CatalogPage() {
   return (
     <section className="stack">
       <div>
-        <h1>BookVerse Catalog</h1>
+        <h1>Catalog</h1>
         <p className="muted">Wireframe catalog using mock book data.</p>
       </div>
       <CatalogFilters
