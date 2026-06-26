@@ -216,6 +216,28 @@ textarea {
   border: 1px solid #ddd;
 }
 
+.detail-purchase {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+  border: 1px solid #ddd;
+  padding: 16px;
+}
+
+.detail-purchase h2 {
+  margin: 0;
+}
+
+.detail-section {
+  display: grid;
+  gap: 8px;
+}
+
+.detail-section h2,
+.detail-section p {
+  margin: 0;
+}
+
 .form {
   display: grid;
   gap: 10px;

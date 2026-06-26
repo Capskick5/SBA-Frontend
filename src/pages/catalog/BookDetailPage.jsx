@@ -38,10 +38,17 @@ export default function BookDetailPage() {
         <p className="muted">{book.category}</p>
         <h1>{book.title}</h1>
         <p>{book.author}</p>
-        <h2>{formatCurrency(book.price)}</h2>
-        <p>{book.stock > 0 ? `In stock: ${book.stock}` : 'Out of stock'}</p>
-        <p>{book.description}</p>
-        <Button onClick={addToCart} disabled={book.stock === 0}>Add to Cart</Button>
+        <section className="detail-purchase">
+          <h2>{formatCurrency(book.price)}</h2>
+          <p className={`stock-badge ${book.stock > 0 ? 'is-available' : 'is-empty'}`}>
+            {book.stock > 0 ? `In stock: ${book.stock}` : 'Out of stock'}
+          </p>
+          <Button onClick={addToCart} disabled={book.stock === 0}>Add to Cart</Button>
+        </section>
+        <section className="detail-section">
+          <h2>Description</h2>
+          <p>{book.description}</p>
+        </section>
         <h2>Reviews</h2>
         <ReviewList reviews={reviews} />
         <ReviewForm />
