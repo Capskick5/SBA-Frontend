@@ -18,16 +18,19 @@ function mapSort(sort) {
 }
 
 export const bookService = {
-  async getBooks({ query = '', category = 'all', sort = 'title_asc' } = {}) {
-    const page = await apiGet('/books', {
+  async getBooks({ query = '', category = 'all', sort = 'title_asc', page = 0, size = 20 } = {}) {
+    const pageData = await apiGet('/books', {
       query,
       categoryId: category === 'all' ? undefined : category,
       sort: mapSort(sort),
-      page: 0,
-      size: 200,
+      page,
+      size,
     });
 
-    return (page.items || []).map(mapBook);
+    return {
+      ...pageData,
+      items: (pageData.items || []).map(mapBook),
+    };
   },
   async getBookById(id) {
     const book = await apiGet(`/books/${id}`);
