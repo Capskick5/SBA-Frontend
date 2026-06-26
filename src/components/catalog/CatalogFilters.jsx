@@ -7,7 +7,7 @@ export default function CatalogFilters({ query, setQuery, category, setCategory,
       <Input label="Search" value={query} onChange={(event) => setQuery(event.target.value)} />
       <Select label="Category" value={category} onChange={(event) => setCategory(event.target.value)}>
         <option value="all">All</option>
-        {categories.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)}
+        {categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
       </Select>
       <Select label="Sort" value={sort} onChange={(event) => setSort(event.target.value)}>
         <option value="title_asc">Title A-Z</option>
