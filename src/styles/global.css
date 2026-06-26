@@ -238,6 +238,26 @@ textarea {
   margin: 0;
 }
 
+.review-list {
+  display: grid;
+  gap: 12px;
+}
+
+.review-card {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #ddd;
+  padding: 14px;
+}
+
+.review-card p {
+  margin: 0;
+}
+
+.review-stars {
+  letter-spacing: 1px;
+}
+
 .form {
   display: grid;
   gap: 10px;

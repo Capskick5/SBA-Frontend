@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import ReviewList from '../../components/reviews/ReviewList';
-import ReviewForm from '../../components/reviews/ReviewForm';
 import { authService } from '../../services/authService';
 import { bookService } from '../../services/bookService';
 import { cartService } from '../../services/cartService';
@@ -51,7 +50,7 @@ export default function BookDetailPage() {
         </section>
         <h2>Reviews</h2>
         <ReviewList reviews={reviews} />
-        <ReviewForm />
+        <p className="muted">You can review this book after a delivered order includes it.</p>
       </div>
     </section>
   );
