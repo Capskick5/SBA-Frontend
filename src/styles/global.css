@@ -126,6 +126,14 @@ textarea {
   border: 1px solid #ddd;
 }
 
+.book-card-title a {
+  text-decoration: none;
+}
+
+.book-card-title a:hover {
+  text-decoration: none;
+}
+
 .muted {
   color: #666;
 }

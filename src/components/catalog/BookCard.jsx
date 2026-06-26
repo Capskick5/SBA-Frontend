@@ -19,8 +19,7 @@ export default function BookCard({ book }) {
     <article className="book-card">
       <Link to={`/books/${book.id}`}><img src={book.coverUrl} alt={book.title} /></Link>
       <div>
-        <p className="muted">{book.category}</p>
-        <h3><Link to={`/books/${book.id}`}>{book.title}</Link></h3>
+        <h3 className="book-card-title"><Link to={`/books/${book.id}`}>{book.title}</Link></h3>
         <p>{book.author}</p>
         <strong>{formatCurrency(book.price)}</strong>
         <p>{book.stock > 0 ? `In stock: ${book.stock}` : 'Out of stock'}</p>
