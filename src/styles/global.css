@@ -103,10 +103,9 @@ textarea {
 .book-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 18px;
+  gap: 22px;
 }
 
-.book-card,
 .panel,
 .summary {
   border: 1px solid #ddd;
@@ -116,22 +115,72 @@ textarea {
 
 .book-card {
   display: grid;
-  gap: 12px;
+  align-content: start;
+  gap: 10px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid transparent;
+}
+
+.book-card:hover {
+  border-color: #ddd;
+}
+
+.book-card-cover {
+  display: grid;
+  place-items: center;
+  text-decoration: none;
 }
 
 .book-card img {
-  width: 100%;
+  width: min(100%, 188px);
   aspect-ratio: 3 / 4;
   object-fit: cover;
   border: 1px solid #ddd;
 }
 
+.book-card-title {
+  min-height: 60px;
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.12;
+}
+
 .book-card-title a {
+  display: -webkit-box;
+  overflow: hidden;
   text-decoration: none;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .book-card-title a:hover {
   text-decoration: none;
+}
+
+.book-card-author {
+  min-height: 20px;
+  margin: 8px 0;
+  color: #555;
+}
+
+.book-card-price {
+  display: block;
+  margin: 8px 0;
+  font-size: 20px;
+}
+
+.stock-badge {
+  display: inline-flex;
+  width: fit-content;
+  margin: 0;
+  border: 1px solid #bbb;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.stock-badge.is-empty {
+  color: #666;
 }
 
 .muted {
