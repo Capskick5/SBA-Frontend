@@ -4,7 +4,7 @@ import CatalogFilters from '../../components/catalog/CatalogFilters';
 import BookGrid from '../../components/catalog/BookGrid';
 import Pagination from '../../components/catalog/Pagination';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 
 export default function CatalogPage() {
   const [books, setBooks] = useState([]);
