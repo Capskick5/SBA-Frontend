@@ -26,10 +26,10 @@ textarea {
 }
 
 .navbar {
-  display: grid;
-  grid-template-columns: auto minmax(180px, 1fr) auto;
+  display: flex;
   gap: 16px;
   align-items: center;
+  justify-content: space-between;
   padding: 14px 24px;
   border-bottom: 1px solid #ddd;
 }
@@ -40,7 +40,6 @@ textarea {
   text-decoration: none;
 }
 
-.nav-search,
 .field input,
 .field select,
 .field textarea {
@@ -441,7 +440,11 @@ td {
 }
 
 @media (max-width: 760px) {
-  .navbar,
+  .navbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .filters,
   .detail-grid,
   .checkout-grid,

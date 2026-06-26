@@ -14,7 +14,6 @@ export default function Navbar() {
   return (
     <header className="navbar">
       <Link className="brand" to="/">BookVerse</Link>
-      <input className="nav-search" placeholder="Search books..." readOnly />
       <nav className="nav-links">
         <NavLink to="/cart">Cart</NavLink>
         {user && <NavLink to="/orders">Orders</NavLink>}
