@@ -1,13 +1,30 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { authService } from '../services/authService';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => authService.getCurrentUser());
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const refreshUser = useCallback(() => {
-    setUser(authService.getCurrentUser());
+  useEffect(() => {
+    let active = true;
+    authService.syncSession()
+      .then((profile) => {
+        if (active) setUser(profile);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const refreshUser = useCallback(async () => {
+    const profile = await authService.syncSession();
+    setUser(profile);
+    return profile;
   }, []);
 
   const login = useCallback(async (credentials) => {
@@ -24,11 +41,11 @@ export function AuthProvider({ children }) {
   const value = useMemo(() => ({
     user,
     isAuthenticated: Boolean(user),
-    loading: false,
+    loading,
     login,
     logout,
     refreshUser,
-  }), [user, login, logout, refreshUser]);
+  }), [user, loading, login, logout, refreshUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

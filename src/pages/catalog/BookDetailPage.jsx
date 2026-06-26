@@ -13,12 +13,26 @@ export default function BookDetailPage() {
   const navigate = useNavigate();
   const [book, setBook] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    bookService.getBookById(id).then(setBook);
+    bookService
+      .getBookById(id)
+      .then((result) => {
+        setBook(result);
+        setError('');
+      })
+      .catch(() => {
+        setBook(null);
+        setError('Could not load book detail from backend.');
+      })
+      .finally(() => setLoading(false));
     reviewService.getReviewsByBookId(id).then(setReviews);
   }, [id]);
 
+  if (loading) return <p>Loading book...</p>;
+  if (error) return <p className="form-error">{error}</p>;
   if (!book) return <p>Book not found.</p>;
 
   const addToCart = async () => {

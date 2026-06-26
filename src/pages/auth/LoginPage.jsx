@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { AuthFormFooter, AuthFormMessage } from '../../components/auth/AuthFormFooter';
@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [params] = useSearchParams();
   const redirect = params.get('redirect') || '/';
@@ -52,6 +53,9 @@ export default function LoginPage() {
       {reset && (
         <p className="form-message form-message-success">Dat lai mat khau thanh cong. Vui long dang nhap.</p>
       )}
+      {location.state?.message && (
+        <p className="form-message form-message-success">{location.state.message}</p>
+      )}
       <AuthFormMessage error={error} />
       {unverifiedEmail && (
         <p className="auth-footer">
@@ -63,7 +67,7 @@ export default function LoginPage() {
           label="Email"
           name="email"
           type="email"
-          defaultValue="customer@bookverse.local"
+          defaultValue="admin@bookverse.local"
           error={fieldErrors.email}
           required
         />
@@ -71,7 +75,7 @@ export default function LoginPage() {
           label="Password"
           name="password"
           type="password"
-          defaultValue="password"
+          defaultValue="ChangeMe123!"
           error={fieldErrors.password}
           required
         />
