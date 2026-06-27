@@ -9,10 +9,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    adminService.getOrders().then((data) => {
-      // Đảm bảo xử lý đúng cấu trúc dữ liệu trả về từ backend
-      setOrders(Array.isArray(data) ? data : (data.content || []));
-    });
+    adminService.getOrders().then(setOrders);
   }, []);
 
   return (

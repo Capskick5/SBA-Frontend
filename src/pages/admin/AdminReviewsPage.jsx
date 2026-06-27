@@ -15,7 +15,7 @@ export default function AdminReviewsPage() {
       try {
         await adminService.deleteReview(id); // Giả định service này tồn tại
         setReviews(reviews.filter(r => r.id !== id));
-      } catch (err) {
+      } catch {
         alert("Lỗi khi xóa đánh giá");
       }
     }
@@ -24,6 +24,7 @@ export default function AdminReviewsPage() {
   return (
     <section className="stack">
       <h1>Quản lý Đánh giá</h1>
+      <p className="muted">Backend chưa có review API, màn này đang giữ khung quản trị.</p>
       <Table
         columns={[
           { key: 'userName', label: 'Người dùng' },

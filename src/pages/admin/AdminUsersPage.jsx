@@ -7,16 +7,15 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    adminService.getAllUsers().then(setUsers);
+    adminService.getUsers().then(setUsers);
   }, []);
 
   const handleToggle = async (user) => {
     try {
       await adminService.toggleUserStatus(user.id, !user.enabled);
-      // Refresh lại danh sách sau khi update
-      const updatedUsers = await adminService.getAllUsers();
+      const updatedUsers = await adminService.getUsers();
       setUsers(updatedUsers);
-    } catch (err) {
+    } catch {
       alert("Lỗi cập nhật trạng thái người dùng");
     }
   };

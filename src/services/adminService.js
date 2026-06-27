@@ -1,39 +1,70 @@
-import axios from 'axios';
+import { apiClient } from './apiClient';
 
-// Cấu hình axios instance chung cho nhóm Admin
-const api = axios.create({
-  baseURL: 'http://localhost:8080/api/v1',
-});
-
-// Interceptor để luôn gửi kèm token admin
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+const pageQuery = 'page=0&size=100';
+const itemsOf = (page) => page?.items || [];
 
 export const adminService = {
-  // Thống kê (Bạn cần check xem backend có API trả về stats không, 
-  // nếu chưa có bạn có thể tự tổng hợp từ list đơn hàng)
-  getStats: () => api.get('/admin/stats').then(res => res.data),
+  async getStats() {
+    const [booksPage, ordersPage, usersPage] = await Promise.all([
+      apiClient.get(`/books?${pageQuery}`, { auth: false }),
+      apiClient.get(`/orders?${pageQuery}`),
+      apiClient.get(`/users?${pageQuery}`),
+    ]);
+    const orders = itemsOf(ordersPage);
 
-  // Quản lý Sách
-  getBooks: (params) => api.get('/books', { params }).then(res => res.data),
-  addBook: (bookData) => api.post('/books', bookData).then(res => res.data),
-  updateBook: (id, bookData) => api.put(`/books/${id}`, bookData).then(res => res.data),
+    return {
+      totalUsers: usersPage.totalItems || itemsOf(usersPage).length,
+      totalBooks: booksPage.totalItems || itemsOf(booksPage).length,
+      totalOrders: ordersPage.totalItems || orders.length,
+      recognizedRevenue: orders.reduce((sum, order) => sum + (order.total || 0), 0),
+    };
+  },
 
-  // Quản lý Danh mục
-  getCategories: () => api.get('/categories').then(res => res.data),
-  addCategory: (catData) => api.post('/categories', catData).then(res => res.data),
+  async getBooks() {
+    const page = await apiClient.get(`/books?${pageQuery}`, { auth: false });
+    return itemsOf(page);
+  },
 
-  // Quản lý Đơn hàng
-  getOrders: (params) => api.get('/orders', { params }).then(res => res.data),
-  updateOrderStatus: (id, status) => api.put(`/orders/${id}/status`, { status }).then(res => res.data),
+  getBookById(id) {
+    return apiClient.get(`/books/${id}`, { auth: false });
+  },
 
-  // Quản lý Người dùng
-  getUsers: () => api.get('/users').then(res => res.data),
-  toggleUserStatus: (userId, enabled) => api.put(`/users/${userId}/enabled`, { enabled }).then(res => res.data),
+  updateBook(id, bookData) {
+    return apiClient.put(`/books/${id}`, bookData);
+  },
 
-  // Quản lý Review (Nếu có API tương ứng)
-  getReviews: () => api.get('/reviews').then(res => res.data),
+  async getCategories() {
+    const page = await apiClient.get(`/categories?${pageQuery}`, { auth: false });
+    return itemsOf(page);
+  },
+
+  addCategory(categoryData) {
+    return apiClient.post('/categories', categoryData);
+  },
+
+  async getOrders() {
+    const page = await apiClient.get(`/orders?${pageQuery}`);
+    return itemsOf(page);
+  },
+
+  updateOrderStatus(id, status) {
+    return apiClient.put(`/orders/${id}/status`, { status });
+  },
+
+  async getUsers() {
+    const page = await apiClient.get(`/users?${pageQuery}`);
+    return itemsOf(page);
+  },
+
+  toggleUserStatus(userId, enabled) {
+    return apiClient.put(`/users/${userId}/enabled`, { enabled });
+  },
+
+  getReviews() {
+    return Promise.resolve([]);
+  },
+
+  deleteReview() {
+    return Promise.resolve();
+  },
 };

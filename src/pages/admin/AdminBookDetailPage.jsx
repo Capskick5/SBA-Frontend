@@ -12,11 +12,7 @@ export default function AdminBookDetailPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Dùng adminService để lấy chi tiết sách
-    adminService.getBooks().then((data) => {
-      const bookList = data.content || data;
-      setBook(bookList.find(b => b.id.toString() === id));
-    });
+    adminService.getBookById(id).then(setBook);
   }, [id]);
 
   const handleSave = async (e) => {
@@ -24,7 +20,17 @@ export default function AdminBookDetailPage() {
     setLoading(true);
     try {
       const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData.entries());
+      const values = Object.fromEntries(formData.entries());
+      const data = {
+        title: values.title,
+        author: values.author,
+        categoryId: Number(values.categoryId),
+        price: Number(values.price),
+        originalPrice: Number(values.originalPrice || values.price),
+        description: values.description,
+        coverUrl: book.coverUrl,
+        active: book.active,
+      };
       await adminService.updateBook(id, data);
       alert("Cập nhật thành công!");
       navigate('/admin/books');
@@ -44,6 +50,8 @@ export default function AdminBookDetailPage() {
         <Input name="title" label="Tên sách" defaultValue={book.title} />
         <Input name="author" label="Tác giả" defaultValue={book.author} />
         <Input name="price" label="Giá" defaultValue={book.price} type="number" />
+        <Input name="originalPrice" label="Giá gốc" defaultValue={book.originalPrice || book.price} type="number" />
+        <input type="hidden" name="categoryId" value={book.categoryId || book.category?.id} />
         <Input name="stock" label="Kho" defaultValue={book.stock} type="number" />
         <Textarea name="description" label="Mô tả" defaultValue={book.description} />
         <Button type="submit" loading={loading}>Lưu thay đổi</Button>
