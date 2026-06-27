@@ -10,10 +10,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     orderService.getOrders()
-      .then(data => {
-        // Nếu backend trả về phân trang (PageResponse), chỉnh lại thành setOrders(data.content || [])
-        setOrders(Array.isArray(data) ? data : (data.content || []));
-      })
+      .then(setOrders)
       .catch(err => console.error("Lỗi lấy danh sách đơn hàng:", err));
   }, []);
 

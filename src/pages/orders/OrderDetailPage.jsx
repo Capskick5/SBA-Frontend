@@ -21,7 +21,7 @@ export default function OrderDetailPage() {
   // Chuyển đổi addressSnapshot từ chuỗi JSON sang object nếu backend trả về là string
   const address = typeof order.addressSnapshot === 'string'
     ? JSON.parse(order.addressSnapshot)
-    : order.addressSnapshot;
+    : order.addressSnapshot || {};
 
   return (
     <section className="stack">
@@ -31,7 +31,7 @@ export default function OrderDetailPage() {
       <div className="panel">
         <h3>Địa chỉ giao hàng</h3>
         <p>{address.recipient} - {address.phone}</p>
-        <p>{address.line}, {address.ward}, {address.district}, {address.city}</p>
+        <p>{[address.line, address.ward, address.district, address.city].filter(Boolean).join(', ')}</p>
       </div>
 
       <Table
@@ -45,7 +45,6 @@ export default function OrderDetailPage() {
 
       <h2>Tổng cộng: {formatCurrency(order.total)}</h2>
 
-      {/* Đảm bảo component OrderTimeline xử lý đúng mảng statusHistory */}
       <OrderTimeline history={order.statusHistory || []} />
     </section>
   );
