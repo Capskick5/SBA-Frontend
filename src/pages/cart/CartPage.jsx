@@ -36,7 +36,7 @@ export default function CartPage() {
           key={item.itemId}
           item={item}
           onQuantity={(itemId, quantity) =>
-            cartService.updateQuantity(itemId, quantity)
+            cartService.updateQuantity(itemId, item.bookId, quantity)
               .then(setCart)
               .catch(() => alert("Không thể cập nhật số lượng!"))
           }

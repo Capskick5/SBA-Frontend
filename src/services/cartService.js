@@ -36,8 +36,9 @@ export const cartService = {
     }));
   },
 
-  async updateQuantity(itemId, quantity) {
+  async updateQuantity(itemId, bookId, quantity) {
     return mapCart(await apiClient.put(`/cart/items/${itemId}`, {
+      bookId: bookId,
       quantity: Math.max(1, quantity),
     }));
   },
