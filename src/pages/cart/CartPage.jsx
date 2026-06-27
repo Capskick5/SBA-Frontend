@@ -10,15 +10,20 @@ export default function CartPage() {
   const [cart, setCart] = useState({ items: [], subtotal: 0 });
   const [loading, setLoading] = useState(true);
 
-  const refresh = () => {
-    setLoading(true);
+  useEffect(() => {
+    let active = true;
     cartService.getCart()
-      .then(setCart)
-      .catch(err => console.error("Lỗi lấy giỏ hàng:", err))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { refresh(); }, []);
+      .then((data) => {
+        if (active) setCart(data);
+      })
+      .catch((err) => console.error("Lỗi lấy giỏ hàng:", err))
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   if (loading) return <div>Loading...</div>;
   if (!cart.items || cart.items.length === 0) return <EmptyState text="Giỏ hàng đang trống." />;
@@ -33,12 +38,12 @@ export default function CartPage() {
           onQuantity={(itemId, quantity) =>
             cartService.updateQuantity(itemId, quantity)
               .then(setCart)
-              .catch(err => alert("Không thể cập nhật số lượng!"))
+              .catch(() => alert("Không thể cập nhật số lượng!"))
           }
           onRemove={(itemId) =>
             cartService.removeItem(itemId)
               .then(setCart)
-              .catch(err => alert("Không thể xóa sản phẩm!"))
+              .catch(() => alert("Không thể xóa sản phẩm!"))
           }
         />
       ))}

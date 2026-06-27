@@ -1,26 +1,48 @@
-import axios from 'axios';
+import { apiClient } from './apiClient';
 
-const API_BASE = 'http://localhost:8080/api/v1/cart';
+const fallbackCover = (title) => `https://placehold.co/120x170?text=${encodeURIComponent(title || 'Book')}`;
 
-// Hàm lấy token từ localStorage (hoặc nơi bạn lưu trữ sau khi login)
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token'); // Thay 'token' bằng key bạn dùng để lưu JWT
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+function mapCartItem(item) {
+  const title = item.bookTitle || 'Untitled book';
+  return {
+    itemId: item.id,
+    bookId: item.bookId,
+    title,
+    coverUrl: item.bookCoverUrl || fallbackCover(title),
+    price: item.bookPrice || 0,
+    quantity: item.quantity || 1,
+    lineTotal: item.lineTotal || 0,
+    available: item.available,
+  };
+}
+
+function mapCart(cart) {
+  return {
+    id: cart?.id,
+    items: (cart?.items || []).map(mapCartItem),
+    subtotal: cart?.subtotal || 0,
+  };
+}
 
 export const cartService = {
-  getCart: async () => {
-    const response = await axios.get(API_BASE, { headers: getAuthHeaders() });
-    return response.data;
+  async getCart() {
+    return mapCart(await apiClient.get('/cart'));
   },
 
-  updateQuantity: async (itemId, quantity) => {
-    const response = await axios.put(`${API_BASE}/items/${itemId}`, { quantity }, { headers: getAuthHeaders() });
-    return response.data;
+  async addItem(book, quantity = 1) {
+    return mapCart(await apiClient.post('/cart/items', {
+      bookId: book.id,
+      quantity,
+    }));
   },
 
-  removeItem: async (itemId) => {
-    const response = await axios.delete(`${API_BASE}/items/${itemId}`, { headers: getAuthHeaders() });
-    return response.data;
-  }
+  async updateQuantity(itemId, quantity) {
+    return mapCart(await apiClient.put(`/cart/items/${itemId}`, {
+      quantity: Math.max(1, quantity),
+    }));
+  },
+
+  async removeItem(itemId) {
+    return mapCart(await apiClient.delete(`/cart/items/${itemId}`));
+  },
 };
