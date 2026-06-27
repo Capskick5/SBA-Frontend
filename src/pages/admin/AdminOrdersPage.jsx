@@ -10,8 +10,7 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     adminService.getOrders().then((data) => {
-      // Đảm bảo xử lý đúng cấu trúc dữ liệu trả về từ backend
-      setOrders(Array.isArray(data) ? data : (data.content || []));
+      setOrders(data.items || data.content || (Array.isArray(data) ? data : []));
     });
   }, []);
 

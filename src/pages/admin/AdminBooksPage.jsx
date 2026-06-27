@@ -8,10 +8,8 @@ export default function AdminBooksPage() {
   const [books, setBooks] = useState([]);
 
   useEffect(() => {
-    // Gọi API thực tế từ adminService
     adminService.getBooks().then((data) => {
-      // Backend thường trả về page object, nếu có thuộc tính 'content' thì dùng nó
-      setBooks(data.content || data);
+      setBooks(data.items || data.content || (Array.isArray(data) ? data : []));
     });
   }, []);
 

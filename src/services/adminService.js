@@ -1,39 +1,38 @@
-import axios from 'axios';
+import { apiClient } from './apiClient';
+import { mockAdminStats, mockReviews } from '../mocks/mockData';
 
-// Cấu hình axios instance chung cho nhóm Admin
-const api = axios.create({
-  baseURL: 'http://localhost:8080/api/v1',
-});
-
-// Interceptor để luôn gửi kèm token admin
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+const buildPath = (path, params) => {
+  if (!params) return path;
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      searchParams.set(key, String(value));
+    }
+  });
+  const qs = searchParams.toString();
+  return qs ? `${path}?${qs}` : path;
+};
 
 export const adminService = {
-  // Thống kê (Bạn cần check xem backend có API trả về stats không, 
-  // nếu chưa có bạn có thể tự tổng hợp từ list đơn hàng)
-  getStats: () => api.get('/admin/stats').then(res => res.data),
+  getStats: () => Promise.resolve(mockAdminStats),
 
-  // Quản lý Sách
-  getBooks: (params) => api.get('/books', { params }).then(res => res.data),
-  addBook: (bookData) => api.post('/books', bookData).then(res => res.data),
-  updateBook: (id, bookData) => api.put(`/books/${id}`, bookData).then(res => res.data),
+  getBooks: (params) => apiClient.get(buildPath('/books', params)),
+  addBook: (bookData) => apiClient.post('/books', bookData),
+  updateBook: (id, bookData) => apiClient.put(`/books/${id}`, bookData),
 
-  // Quản lý Danh mục
-  getCategories: () => api.get('/categories').then(res => res.data),
-  addCategory: (catData) => api.post('/categories', catData).then(res => res.data),
+  getCategories: () => apiClient.get('/categories'),
+  addCategory: (catData) => apiClient.post('/categories', catData),
 
-  // Quản lý Đơn hàng
-  getOrders: (params) => api.get('/orders', { params }).then(res => res.data),
-  updateOrderStatus: (id, status) => api.put(`/orders/${id}/status`, { status }).then(res => res.data),
+  getOrders: (params) => apiClient.get(buildPath('/orders', params)),
+  updateOrderStatus: (id, status) => apiClient.put(`/orders/${id}/status`, { status }),
 
-  // Quản lý Người dùng
-  getUsers: () => api.get('/users').then(res => res.data),
-  toggleUserStatus: (userId, enabled) => api.put(`/users/${userId}/enabled`, { enabled }).then(res => res.data),
+  getUsers: (params) => apiClient.get(buildPath('/users', params)),
+  getAllUsers: (params) => apiClient.get(buildPath('/users', params)),
+  toggleUserStatus: (userId, enabled) => apiClient.put(`/users/${userId}/enabled`, { enabled }),
 
-  // Quản lý Review (Nếu có API tương ứng)
-  getReviews: () => api.get('/reviews').then(res => res.data),
+  getReviews: () => Promise.resolve(mockReviews),
+  deleteReview: (id) => Promise.resolve(),
+
+  ingestBookContent: (bookId) => apiClient.post(`/admin/rag/ingest/${bookId}`),
+  upsertBookCatalog: (bookId) => apiClient.post(`/admin/rag/catalog/upsert/${bookId}`),
 };

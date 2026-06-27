@@ -7,15 +7,16 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    adminService.getAllUsers().then(setUsers);
+    adminService.getAllUsers().then((data) => {
+      setUsers(data.items || data.content || (Array.isArray(data) ? data : []));
+    });
   }, []);
 
   const handleToggle = async (user) => {
     try {
       await adminService.toggleUserStatus(user.id, !user.enabled);
-      // Refresh lại danh sách sau khi update
-      const updatedUsers = await adminService.getAllUsers();
-      setUsers(updatedUsers);
+      const updatedData = await adminService.getAllUsers();
+      setUsers(updatedData.items || updatedData.content || (Array.isArray(updatedData) ? updatedData : []));
     } catch (err) {
       alert("Lỗi cập nhật trạng thái người dùng");
     }
