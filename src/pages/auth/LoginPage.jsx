@@ -67,7 +67,7 @@ export default function LoginPage() {
           label="Email"
           name="email"
           type="email"
-          defaultValue="admin@bookverse.local"
+          defaultValue="customer@bookverse.local"
           error={fieldErrors.email}
           required
         />
