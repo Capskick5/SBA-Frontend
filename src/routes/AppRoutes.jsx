@@ -24,6 +24,7 @@ import AdminOrdersPage from '../pages/admin/AdminOrdersPage';
 import AdminOrderDetailPage from '../pages/admin/AdminOrderDetailPage';
 import AdminUsersPage from '../pages/admin/AdminUsersPage';
 import AdminReviewsPage from '../pages/admin/AdminReviewsPage';
+import AdminAddBookPage from '../pages/admin/AdminAddBookPage';
 
 const main = (page) => <MainLayout>{page}</MainLayout>;
 const protectedPage = (page) => main(<ProtectedRoute>{page}</ProtectedRoute>);
@@ -54,6 +55,7 @@ export default function AppRoutes() {
       <Route path="/admin/categories" element={admin(<AdminCategoriesPage />)} />
       <Route path="/admin/books" element={admin(<AdminBooksPage />)} />
       <Route path="/admin/books/:id" element={admin(<AdminBookDetailPage />)} />
+      <Route path="/admin/books/new" element={admin(<AdminAddBookPage />)} />
       <Route path="/admin/orders" element={admin(<AdminOrdersPage />)} />
       <Route path="/admin/orders/:id" element={admin(<AdminOrderDetailPage />)} />
       <Route path="/admin/users" element={admin(<AdminUsersPage />)} />
