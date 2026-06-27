@@ -1,95 +1,91 @@
-import { apiClient } from './apiClient';
+import axios from 'axios';
 
-const pageQuery = { page: 0, size: 100 };
+// Cấu hình axios instance chung cho nhóm Admin
+const api = axios.create({
+  baseURL: 'http://localhost:8080/api/v1',
+});
 
-const buildPath = (path, params) => {
-  if (!params) return path;
-  const searchParams = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      searchParams.set(key, String(value));
-    }
-  });
-  const qs = searchParams.toString();
-  return qs ? `${path}?${qs}` : path;
-};
-
-const itemsOf = (page) => page?.items || page?.content || (Array.isArray(page) ? page : []);
-
-async function getUsersPage(params = pageQuery) {
-  return apiClient.get(buildPath('/users', params));
-}
+// Interceptor để luôn gửi kèm token admin
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('bookverse_access_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export const adminService = {
-  async getStats() {
-    const [booksPage, ordersPage, usersPage] = await Promise.all([
-      apiClient.get(buildPath('/books', pageQuery), { auth: false }),
-      apiClient.get(buildPath('/orders', pageQuery)),
-      getUsersPage(pageQuery),
-    ]);
-    const orders = itemsOf(ordersPage);
+  // Hàm tổng hợp thống kê đã được tối ưu
+  getStats: async () => {
+    try {
+      // Truyền size lớn để đếm toàn bộ dữ liệu trong DB
+      const [users, books, orders] = await Promise.all([
+        adminService.getUsers({ size: 1000 }),
+        adminService.getBooks({ size: 1000 }),
+        adminService.getOrders({ size: 1000 })
+      ]);
 
-    return {
-      totalUsers: usersPage.totalItems || itemsOf(usersPage).length,
-      totalBooks: booksPage.totalItems || itemsOf(booksPage).length,
-      totalOrders: ordersPage.totalItems || orders.length,
-      recognizedRevenue: orders
-        .filter((order) => order.status !== 'CANCELLED')
-        .reduce((sum, order) => sum + (order.total || 0), 0),
-    };
+      // Bóc vỏ dữ liệu chuẩn xác theo format của Backend
+      const usersList = users.data?.items || users.items || [];
+      const booksList = books.data?.items || books.items || [];
+      const ordersList = orders.data?.items || orders.items || [];
+
+      // Tính tổng doanh thu
+      const revenue = ordersList
+        .filter(order => order.status !== 'CANCELLED')
+        .reduce((sum, order) => sum + (order.total || 0), 0);
+
+      return {
+        totalUsers: usersList.length,
+        totalBooks: booksList.length,
+        totalOrders: ordersList.length,
+        recognizedRevenue: revenue
+      };
+    } catch (error) {
+      console.error("Lỗi khi tổng hợp thống kê:", error);
+      throw error;
+    }
   },
 
-  getBooks(params = pageQuery) {
-    return apiClient.get(buildPath('/books', params), { auth: false });
+  // Quản lý Sách
+  getBooks: (params) => api.get('/books', { params }).then(res => res.data),
+
+  // THÊM DÒNG NÀY: Gọi API lấy chi tiết 1 cuốn sách theo ID
+  getBookById: (id) => api.get(`/books/${id}`).then(res => res.data),
+
+  addBook: (bookData) => { return api.post('/books', bookData); },
+  updateBook: (id, bookData) => api.put(`/books/${id}`, bookData).then(res => res.data),
+
+  // Quản lý Danh mục
+  getCategories: () => api.get('/categories').then(res => res.data),
+  addCategory: (catData) => api.post('/categories', catData).then(res => res.data),
+
+  // Quản lý Đơn hàng
+  getOrders: (params) => api.get('/orders', { params }).then(res => res.data),
+  updateOrderStatus: (id, status) => api.put(`/orders/${id}/status`, { status }).then(res => res.data),
+
+  // Quản lý Người dùng
+  getUsers: (params) => api.get('/users', { params }).then(res => res.data), // Nhớ thêm { params } ở đây
+  toggleUserStatus: (userId, enabled) => api.put(`/users/${userId}/enabled`, { enabled }).then(res => res.data),
+
+  // Quản lý Review
+  getReviews: (params) => api.get('/reviews', { params }).then(res => res.data),
+
+  // Ẩn/hiện sách
+  toggleBookActive: (id, isActive) => {
+    return api.put(`/books/${id}/active`, null, { params: { active: isActive } });
   },
 
-  getBookById(id) {
-    return apiClient.get(`/books/${id}`, { auth: false });
-  },
 
-  addBook(bookData) {
-    return apiClient.post('/books', bookData);
+  uploadThumbnail: (formData) => {
+    return api.post('/admin/uploads/thumbnail', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
   },
+  uploadBookFile: (formData) => {
+    return api.post('/admin/uploads/book-file', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
 
-  updateBook(id, bookData) {
-    return apiClient.put(`/books/${id}`, bookData);
-  },
-
-  toggleBookActive(id, active) {
-    return apiClient.put(`/books/${id}/active`, { active });
-  },
-
-  async getCategories(params = pageQuery) {
-    const page = await apiClient.get(buildPath('/categories', params), { auth: false });
-    return itemsOf(page);
-  },
-
-  addCategory(categoryData) {
-    return apiClient.post('/categories', categoryData);
-  },
-
-  getOrders(params = pageQuery) {
-    return apiClient.get(buildPath('/orders', params));
-  },
-
-  updateOrderStatus(id, status) {
-    return apiClient.put(`/orders/${id}/status`, { status });
-  },
-
-  async getUsers(params = pageQuery) {
-    const page = await getUsersPage(params);
-    return itemsOf(page);
-  },
-
-  toggleUserStatus(userId, enabled) {
-    return apiClient.put(`/users/${userId}/enabled`, { enabled });
-  },
-
-  getReviews() {
-    return Promise.resolve([]);
-  },
-
-  deleteReview() {
-    return Promise.resolve();
-  },
+  }
 };

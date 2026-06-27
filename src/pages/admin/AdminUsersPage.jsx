@@ -6,15 +6,23 @@ import { adminService } from '../../services/adminService';
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
 
+  const fetchUsers = () => {
+    adminService.getUsers()
+      .then((res) => {
+        const list = res.data?.items || res.items || (Array.isArray(res) ? res : []);
+        setUsers(list);
+      })
+      .catch((err) => console.error("Lỗi tải người dùng:", err));
+  };
+
   useEffect(() => {
-    adminService.getUsers().then(setUsers);
+    fetchUsers();
   }, []);
 
   const handleToggle = async (user) => {
     try {
       await adminService.toggleUserStatus(user.id, !user.enabled);
-      const updatedUsers = await adminService.getUsers();
-      setUsers(updatedUsers);
+      fetchUsers();
     } catch {
       alert("Lỗi cập nhật trạng thái người dùng");
     }

@@ -18,7 +18,6 @@ export function AdminRoute({ children }) {
   if (loading) return <LoadingState />;
   if (!user) return <Navigate to="/login?redirect=/admin" replace />;
 
-  // Dựa vào log của bạn, user nằm ngay ở root object
   if (user.role !== 'ADMIN') {
     return <Navigate to="/" replace />;
   }
