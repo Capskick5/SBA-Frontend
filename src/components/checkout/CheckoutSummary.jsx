@@ -8,8 +8,8 @@ export default function CheckoutSummary({ preview, onPay }) {
       <p>Subtotal: {formatCurrency(preview.subtotal)}</p>
       <p>Shipping fee: {formatCurrency(preview.shippingFee)}</p>
       <h3>Total: {formatCurrency(preview.total)}</h3>
-      <p>Payment method: PayOS</p>
-      <Button onClick={onPay} disabled={!preview.address || !preview.items.length}>Proceed to payment</Button>
+      <p>Payment method: VNPAY</p>
+      <Button onClick={onPay} disabled={!preview.items.length}>Proceed to payment</Button>
     </aside>
   );
 }
