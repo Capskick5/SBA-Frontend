@@ -1,7 +1,11 @@
-export default function Button({ children, className = '', ...props }) {
+export default function Button({ children, loading, ...props }) {
   return (
-    <button className={`btn ${className}`.trim()} {...props}>
-      {children}
+    <button
+      {...props}
+      // Vô hiệu hóa nút bấm tự động khi đang ở trạng thái loading
+      disabled={props.disabled || loading}
+    >
+      {loading ? 'Đang xử lý...' : children}
     </button>
   );
 }

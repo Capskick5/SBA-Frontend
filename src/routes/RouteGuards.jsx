@@ -14,8 +14,15 @@ export function ProtectedRoute({ children }) {
 
 export function AdminRoute({ children }) {
   const { user, loading } = useAuth();
+
   if (loading) return <LoadingState />;
   if (!user) return <Navigate to="/login?redirect=/admin" replace />;
-  if (user.role !== 'ADMIN') return <Navigate to="/" replace />;
+
+  // Dựa vào log của bạn, user nằm ngay ở root object
+  if (user.role !== 'ADMIN') {
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 }
+
