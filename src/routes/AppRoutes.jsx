@@ -46,6 +46,8 @@ export default function AppRoutes() {
       <Route path="/cart" element={protectedPage(<CartPage />)} />
       <Route path="/checkout" element={protectedPage(<CheckoutPage />)} />
       <Route path="/payment/result" element={protectedPage(<PaymentResultPage />)} />
+      <Route path="/payment/success" element={protectedPage(<PaymentResultPage />)} />
+      <Route path="/payment/cancel" element={protectedPage(<PaymentResultPage />)} />
       <Route path="/orders" element={protectedPage(<OrdersPage />)} />
       <Route path="/orders/:id" element={protectedPage(<OrderDetailPage />)} />
       <Route path="/profile" element={protectedPage(<ProfilePage />)} />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import Button from '../../components/ui/Button';
 import { paymentService } from '../../services/paymentService';
 
 export default function PaymentResultPage() {
@@ -11,9 +12,9 @@ export default function PaymentResultPage() {
       try {
         // Gửi toàn bộ query params sang cho backend verify
         const params = Object.fromEntries([...searchParams]);
-        await paymentService.verifyPayment(params);
-        setStatus('success');
-      } catch (err) {
+        const result = await paymentService.verifyPayment(params);
+        setStatus(result.status === 'PAID' ? 'success' : 'failed');
+      } catch {
         setStatus('failed');
       }
     };
