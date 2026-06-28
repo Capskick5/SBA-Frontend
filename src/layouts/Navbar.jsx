@@ -62,6 +62,7 @@ export default function Navbar() {
           </NavLink>
         )}
         {user && user.role !== 'ADMIN' && <NavLink to="/orders">Orders</NavLink>}
+        {user && user.role !== 'ADMIN' && <NavLink to="/books/chat">AI Chat</NavLink>}
         {user?.role === 'ADMIN' && <NavLink to="/admin">Admin</NavLink>}
         {user ? (
           <>

@@ -15,9 +15,18 @@ export default function AdminOrdersPage() {
 
   const loadOrders = (pageIndex, currentSort) => {
     adminService.getOrders({ page: pageIndex, size: 10, sort: currentSort })
-      .then((page) => {
-        setOrders(page.items || []);
-        setTotalPages(page.totalPages || 1);
+      .then((res) => {
+        const responseBody = res.data || res;
+        if (responseBody?.data?.items && Array.isArray(responseBody.data.items)) {
+          setOrders(responseBody.data.items);
+          setTotalPages(responseBody.data.totalPages || 1);
+        } else if (responseBody?.items && Array.isArray(responseBody.items)) {
+          setOrders(responseBody.items);
+          setTotalPages(responseBody.totalPages || 1);
+        } else {
+          setOrders([]);
+          setTotalPages(1);
+        }
       })
       .catch((err) => {
         console.error('Failed to load orders:', err);
