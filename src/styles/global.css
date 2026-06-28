@@ -399,6 +399,13 @@ textarea {
   padding: 12px;
 }
 
+.cart-row-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #111;
+  font-size: 13px;
+}
+
 .cart-select-all {
   display: inline-flex;
   align-items: center;

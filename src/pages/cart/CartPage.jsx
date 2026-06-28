@@ -11,6 +11,7 @@ export default function CartPage() {
   const navigate = useNavigate();
   const [cart, setCart] = useState({ items: [], subtotal: 0 });
   const [selectedItemIds, setSelectedItemIds] = useState([]);
+  const [itemErrors, setItemErrors] = useState({});
   const [loading, setLoading] = useState(true);
 
   const syncCart = (nextCart, options = {}) => {
@@ -64,6 +65,46 @@ export default function CartPage() {
     setSelectedItemIds(allSelected ? [] : cart.items.map((item) => item.itemId));
   };
 
+  const clearItemError = (itemId) => {
+    setItemErrors((currentErrors) => {
+      const nextErrors = { ...currentErrors };
+      delete nextErrors[itemId];
+      return nextErrors;
+    });
+  };
+
+  const setItemError = (itemId, message) => {
+    setItemErrors((currentErrors) => ({
+      ...currentErrors,
+      [itemId]: message,
+    }));
+  };
+
+  const handleQuantityChange = (item, quantity) => {
+    clearItemError(item.itemId);
+    cartService.updateQuantity(item.itemId, item.bookId, quantity)
+      .then((nextCart) => {
+        syncCart(nextCart);
+        clearItemError(item.itemId);
+      })
+      .catch(() => {
+        const message = quantity > item.quantity
+          ? 'Maximum available stock reached for this book.'
+          : 'Could not update quantity. Please try again.';
+        setItemError(item.itemId, message);
+      });
+  };
+
+  const handleRemove = (itemId) => {
+    clearItemError(itemId);
+    cartService.removeItem(itemId)
+      .then((nextCart) => {
+        syncCart(nextCart);
+        clearItemError(itemId);
+      })
+      .catch(() => setItemError(itemId, 'Could not remove this item. Please try again.'));
+  };
+
   const goToCheckout = () => {
     if (selectedItemIds.length === 0) return;
     navigate(`/checkout?items=${selectedItemIds.join(',')}`);
@@ -85,17 +126,10 @@ export default function CartPage() {
           key={item.itemId}
           item={item}
           selected={selectedItemIds.includes(item.itemId)}
+          error={itemErrors[item.itemId]}
           onSelect={() => toggleItem(item.itemId)}
-          onQuantity={(itemId, quantity) =>
-            cartService.updateQuantity(itemId, item.bookId, quantity)
-              .then(syncCart)
-              .catch(() => alert('Could not update quantity.'))
-          }
-          onRemove={(itemId) =>
-            cartService.removeItem(itemId)
-              .then(syncCart)
-              .catch(() => alert('Could not remove this item.'))
-          }
+          onQuantity={(_, quantity) => handleQuantityChange(item, quantity)}
+          onRemove={handleRemove}
         />
       ))}
       <div className="summary-row">

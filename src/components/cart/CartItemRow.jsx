@@ -1,7 +1,7 @@
 import Button from '../ui/Button';
 import { formatCurrency } from '../../utils/formatters';
 
-export default function CartItemRow({ item, selected, onSelect, onQuantity, onRemove }) {
+export default function CartItemRow({ item, selected, error, onSelect, onQuantity, onRemove }) {
   return (
     <div className="cart-row">
       <input
@@ -29,6 +29,7 @@ export default function CartItemRow({ item, selected, onSelect, onQuantity, onRe
       </div>
       <strong>{formatCurrency(item.lineTotal)}</strong>
       <Button type="button" onClick={() => onRemove(item.itemId)}>Remove</Button>
+      {error && <p className="cart-row-error">{error}</p>}
     </div>
   );
 }
