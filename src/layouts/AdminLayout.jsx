@@ -7,6 +7,7 @@ const links = [
   ['/admin/orders', 'Orders'],
   ['/admin/users', 'Users'],
   ['/admin/reviews', 'Reviews'],
+  ['/admin/rag', 'RAG Catalog'],
   ['/', 'Main Page'],
 ];
 

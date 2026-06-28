@@ -25,6 +25,7 @@ import AdminOrderDetailPage from '../pages/admin/AdminOrderDetailPage';
 import AdminUsersPage from '../pages/admin/AdminUsersPage';
 import AdminReviewsPage from '../pages/admin/AdminReviewsPage';
 import AdminAddBookPage from '../pages/admin/AdminAddBookPage';
+import AdminRagPage from '../pages/admin/AdminRagPage';
 
 const main = (page) => <MainLayout>{page}</MainLayout>;
 const protectedPage = (page) => main(<ProtectedRoute>{page}</ProtectedRoute>);
@@ -62,6 +63,7 @@ export default function AppRoutes() {
       <Route path="/admin/orders/:id" element={admin(<AdminOrderDetailPage />)} />
       <Route path="/admin/users" element={admin(<AdminUsersPage />)} />
       <Route path="/admin/reviews" element={admin(<AdminReviewsPage />)} />
+      <Route path="/admin/rag" element={admin(<AdminRagPage />)} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

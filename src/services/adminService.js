@@ -74,6 +74,13 @@ export const adminService = {
     return api.post('/admin/uploads/book-file', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
+  },
 
-  }
+  checkRagHealth: () => api.get('/admin/rag/health').then(res => res.data),
+  ingestBookContent: (bookId) => api.post(`/admin/rag/ingest/${bookId}`).then(res => res.data),
+  ingestBooksBulk: (bookIds) => api.post('/admin/rag/ingest/bulk', bookIds).then(res => res.data),
+  deleteBookIndex: (bookId) => api.delete(`/admin/rag/index/${bookId}`).then(res => res.data),
+  getBookIndexStatus: (bookId) => api.get(`/admin/rag/index/${bookId}/status`).then(res => res.data),
+  getBookCatalogStatus: (bookId) => api.get(`/admin/rag/catalog/${bookId}/status`).then(res => res.data),
+  upsertBookCatalog: (bookId) => api.post(`/admin/rag/catalog/upsert/${bookId}`).then(res => res.data)
 };

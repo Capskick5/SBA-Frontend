@@ -78,8 +78,17 @@ export default function AiChatbot() {
     setQuery('');
     setIsLoading(true);
 
+    const history = messages.map(msg => ({
+      role: msg.sender === 'user' ? 'user' : 'assistant',
+      content: msg.text
+    }));
+    history.push({
+      role: 'user',
+      content: trimmed
+    });
+
     try {
-      const response = await aiChatService.recommend(trimmed, 5);
+      const response = await aiChatService.recommend(trimmed, history, 5);
       const botMsg = {
         id: Date.now() + 1,
         sender: 'bot',
