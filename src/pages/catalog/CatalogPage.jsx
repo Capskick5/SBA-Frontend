@@ -103,9 +103,9 @@ export default function CatalogPage() {
 
   return (
     <section className="stack">
-      <div>
-        <h1>Catalog</h1>
-        <p className="muted">Browse available books from BookVerse.</p>
+      <div className="hero-banner">
+        <h1>Explore BookVerse</h1>
+        <p>Discover your next favorite read from our curated digital library, assisted by AI.</p>
       </div>
       <CatalogFilters
         query={query}

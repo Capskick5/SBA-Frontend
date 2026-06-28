@@ -205,8 +205,9 @@ export default function BookChatPage() {
               setCurrentSession(null);
             }}
             style={{
-              background: chatType === 'BOOK_CHAT' ? '#111' : '#fff',
-              color: chatType === 'BOOK_CHAT' ? '#fff' : '#111',
+              background: chatType === 'BOOK_CHAT' ? 'var(--accent)' : 'var(--surface-alt)',
+              color: chatType === 'BOOK_CHAT' ? '#fff' : 'var(--muted)',
+              borderColor: chatType === 'BOOK_CHAT' ? 'var(--accent)' : 'var(--border)',
             }}
           >
             Book Q&A
@@ -217,8 +218,9 @@ export default function BookChatPage() {
               setCurrentSession(null);
             }}
             style={{
-              background: chatType === 'BOOK_RECOMMEND' ? '#111' : '#fff',
-              color: chatType === 'BOOK_RECOMMEND' ? '#fff' : '#111',
+              background: chatType === 'BOOK_RECOMMEND' ? 'var(--accent)' : 'var(--surface-alt)',
+              color: chatType === 'BOOK_RECOMMEND' ? '#fff' : 'var(--muted)',
+              borderColor: chatType === 'BOOK_RECOMMEND' ? 'var(--accent)' : 'var(--border)',
             }}
           >
             Catalog Recommend
@@ -226,13 +228,13 @@ export default function BookChatPage() {
         </div>
       </div>
 
-      {error && <div className="panel" style={{ borderLeft: '4px solid #ef4444', color: '#ef4444' }}>{error}</div>}
+      {error && <div className="panel" style={{ borderLeft: '4px solid var(--error)', color: 'var(--error)' }}>{error}</div>}
 
       <div className="chat-layout">
         <aside className="chat-sidebar panel">
           <Button
             onClick={() => setIsModalOpen(true)}
-            style={{ width: '100%', marginBottom: '16px', background: '#111', color: '#fff' }}
+            style={{ width: '100%', marginBottom: '16px' }}
           >
             + Start New Chat
           </Button>
@@ -343,7 +345,7 @@ export default function BookChatPage() {
               <div>
                 <p style={{ textAlign: 'center', fontSize: '18px' }}>Select or start a new conversation to begin.</p>
                 {chatType === 'BOOK_CHAT' && purchasedBooks.length === 0 && (
-                  <p style={{ color: '#ef4444', fontSize: '14px', textAlign: 'center', marginTop: '10px' }}>
+                  <p style={{ color: 'var(--error)', fontSize: '14px', textAlign: 'center', marginTop: '10px' }}>
                     Warning: You do not have any purchased books to query.
                   </p>
                 )}
@@ -375,13 +377,13 @@ export default function BookChatPage() {
                 <div className="field">
                   <label>Select Books to Include in Chat Context (Multi-select)</label>
                   {purchasedBooks.length === 0 ? (
-                    <p style={{ color: '#ef4444', fontSize: '14px' }}>
+                    <p style={{ color: 'var(--error)', fontSize: '14px' }}>
                       You have no purchased books. Purchase books first to query them.
                     </p>
                   ) : (
-                    <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #ddd', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border)', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {purchasedBooks.map((book) => (
-                        <label key={book.bookId} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '14px', padding: '4px', borderBottom: '1px solid #eee' }}>
+                        <label key={book.bookId} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '14px', padding: '4px', borderBottom: '1px solid var(--border)' }}>
                           <input
                             type="checkbox"
                             checked={selectedBookIds.includes(book.bookId)}
@@ -389,9 +391,9 @@ export default function BookChatPage() {
                             style={{ width: 'auto' }}
                           />
                           {book.coverUrl ? (
-                            <img src={book.coverUrl} alt={book.title} style={{ width: '30px', height: '42px', objectFit: 'cover', border: '1px solid #ddd' }} />
+                            <img src={book.coverUrl} alt={book.title} style={{ width: '30px', height: '42px', objectFit: 'cover', border: '1px solid var(--border)' }} />
                           ) : (
-                            <div style={{ width: '30px', height: '42px', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', color: '#999' }}>No Cover</div>
+                            <div style={{ width: '30px', height: '42px', background: 'var(--surface-alt)', display: 'flex', alignItems: 'center', justifycontent: 'center', fontSize: '8px', color: 'var(--muted)' }}>No Cover</div>
                           )}
                           <span style={{ flex: 1 }}>{book.title}</span>
                         </label>

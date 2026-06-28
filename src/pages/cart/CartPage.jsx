@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CartItemRow from '../../components/cart/CartItemRow';
 import Button from '../../components/ui/Button';
-import { EmptyState } from '../../components/ui/State';
+import { EmptyState, LoadingState } from '../../components/ui/State';
 import { cartService } from '../../services/cartService';
 import { notifyCartUpdated } from '../../utils/cartEvents';
 import { formatCurrency } from '../../utils/formatters';
@@ -40,7 +40,7 @@ export default function CartPage() {
     };
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <LoadingState text="Loading cart..." />;
   if (!cart.items || cart.items.length === 0) {
     return (
       <section className="stack">

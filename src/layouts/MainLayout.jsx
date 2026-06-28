@@ -6,7 +6,9 @@ export default function MainLayout({ children }) {
     <>
       <Navbar />
       <main className="page">{children}</main>
-      <footer className="footer">BookVerse wireframe</footer>
+      <footer className="footer">
+        <div>&copy; {new Date().getFullYear()} BookVerse. All rights reserved.</div>
+      </footer>
       <AiChatbot />
     </>
   );

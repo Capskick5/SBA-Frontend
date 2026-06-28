@@ -54,9 +54,11 @@ export default function BookDetailPage() {
     <section className="detail-grid">
       <img className="detail-cover" src={book.coverUrl} alt={book.title} />
       <div className="stack">
-        <p className="muted">{book.category}</p>
-        <h1>{book.title}</h1>
-        <p>{book.author}</p>
+        <div>
+          <span className="badge">{book.category}</span>
+        </div>
+        <h1 style={{ marginTop: '8px' }}>{book.title}</h1>
+        <p className="muted">By <strong style={{ color: 'var(--text)' }}>{book.author}</strong></p>
         <section className="detail-purchase">
           <h2>{formatCurrency(book.price)}</h2>
           <p className={`stock-badge ${book.stock > 0 ? 'is-available' : 'is-empty'}`}>

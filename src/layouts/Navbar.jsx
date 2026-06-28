@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Sun, Moon, BookOpen } from 'lucide-react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { cartService } from '../services/cartService';
@@ -10,6 +10,14 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [cartItemCount, setCartItemCount] = useState(0);
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(nextTheme);
+    localStorage.setItem('theme', nextTheme);
+    document.documentElement.setAttribute('data-theme', nextTheme);
+  };
 
   useEffect(() => {
     if (!user || user.role === 'ADMIN') return undefined;
@@ -52,8 +60,20 @@ export default function Navbar() {
 
   return (
     <header className="navbar">
-      <Link className="brand" to="/">BookVerse</Link>
+      <Link className="brand" to="/">
+        <BookOpen size={26} className="brand-icon" />
+        <span>BookVerse</span>
+      </Link>
       <nav className="nav-links">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label="Toggle theme"
+          className="cart-nav-link"
+          style={{ cursor: 'pointer' }}
+        >
+          {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+        </button>
         {(!user || user.role !== 'ADMIN') && (
           <NavLink className="cart-nav-link" to="/cart" aria-label={`Cart${cartItemCount ? `, ${cartItemCount} items` : ''}`}>
             <ShoppingCart size={20} aria-hidden="true" />
