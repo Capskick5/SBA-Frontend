@@ -81,7 +81,7 @@ export default function Header() {
 
       <nav className="nav-links">
         <NavLink to="/" end>
-          Trang Chủ
+          Home
         </NavLink>
         {user && user.role !== 'ADMIN' && (
           <NavLink to="/books/chat">
@@ -135,24 +135,24 @@ export default function Header() {
                 <div className="dropdown-divider"></div>
                 <Link to="/profile" onClick={() => setDropdownOpen(false)} className="dropdown-item">
                   <User size={16} />
-                  <span>Trang cá nhân</span>
+                  <span>Profile</span>
                 </Link>
                 {user.role !== 'ADMIN' && (
                   <Link to="/orders" onClick={() => setDropdownOpen(false)} className="dropdown-item">
                     <ShoppingBag size={16} />
-                    <span>Đơn hàng của tôi</span>
+                    <span>My Orders</span>
                   </Link>
                 )}
                 {user.role === 'ADMIN' && (
                   <Link to="/admin" onClick={() => setDropdownOpen(false)} className="dropdown-item">
                     <Shield size={16} />
-                    <span>Trang quản trị</span>
+                    <span>Admin Dashboard</span>
                   </Link>
                 )}
                 <div className="dropdown-divider"></div>
                 <button type="button" onClick={handleLogout} className="dropdown-item logout-item">
                   <LogOut size={16} />
-                  <span>Đăng xuất</span>
+                  <span>Log Out</span>
                 </button>
               </div>
             )}
@@ -160,10 +160,10 @@ export default function Header() {
         ) : (
           <div className="auth-buttons">
             <Link to={`/login?redirect=${encodeURIComponent(location.pathname)}`} className="login-link">
-              Đăng nhập
+              Log In
             </Link>
             <Link to="/register" className="register-btn">
-              Đăng ký
+              Register
             </Link>
           </div>
         )}

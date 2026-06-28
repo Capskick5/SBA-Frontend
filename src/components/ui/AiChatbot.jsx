@@ -16,7 +16,7 @@ export default function AiChatbot() {
     {
       id: 1,
       sender: 'bot',
-      text: 'Xin chào! Tôi có thể giúp gì cho bạn? Hãy nhập yêu cầu tìm kiếm sách của bạn tại đây.',
+      text: 'Hi! Tell me what kind of book you are looking for, and I will help you find a good match.',
     },
   ]);
 
@@ -59,7 +59,7 @@ export default function AiChatbot() {
       const errorMsg = {
         id: Date.now() + 1,
         sender: 'bot',
-        text: 'Có lỗi xảy ra khi kết nối tới dịch vụ AI. Vui lòng thử lại sau.',
+        text: 'Something went wrong while connecting to the AI service. Please try again later.',
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -84,12 +84,12 @@ export default function AiChatbot() {
           className="ai-chatbot-trigger btn"
           onClick={() => setIsOpen(true)}
         >
-          💬 Trò chuyện AI
+          💬 AI Chat
         </button>
       ) : (
         <div className="ai-chatbot-window">
           <div className="ai-chatbot-header">
-            <h3>Trợ lý tìm sách AI</h3>
+            <h3>AI Book Assistant</h3>
             <button
               type="button"
               className="ai-chatbot-close"
@@ -118,7 +118,7 @@ export default function AiChatbot() {
                               onClick={() => navigate(`/books/${b.id}`)}
                               className="btn btn-sm"
                             >
-                              Chi tiết
+                              Details
                             </button>
                             <button
                               type="button"
@@ -126,7 +126,7 @@ export default function AiChatbot() {
                               disabled={b.stock === 0}
                               className="btn btn-sm"
                             >
-                              Thêm
+                              Add
                             </button>
                           </div>
                         </div>
@@ -138,7 +138,7 @@ export default function AiChatbot() {
             ))}
             {isLoading && (
               <div className="ai-chatbot-message is-bot is-loading">
-                <span>Đang xử lý yêu cầu...</span>
+                <span>Processing your request...</span>
               </div>
             )}
           </div>
@@ -146,15 +146,15 @@ export default function AiChatbot() {
           <div className="ai-chatbot-suggestions">
             <button
               type="button"
-              onClick={() => handleSuggestionClick('Tìm sách lập trình Java')}
+              onClick={() => handleSuggestionClick('Find Java programming books')}
             >
-              Lập trình Java
+              Java Programming
             </button>
             <button
               type="button"
-              onClick={() => handleSuggestionClick('Đề xuất sách giả tưởng phiêu lưu')}
+              onClick={() => handleSuggestionClick('Recommend adventure fantasy books')}
             >
-              Sách giả tưởng
+              Fantasy Books
             </button>
           </div>
 
@@ -167,13 +167,13 @@ export default function AiChatbot() {
           >
             <input
               type="text"
-              placeholder="Nhập nhu cầu tìm sách của bạn..."
+              placeholder="Describe the book you want to find..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               disabled={isLoading}
             />
             <button type="submit" className="btn" disabled={isLoading || !query.trim()}>
-              Gửi
+              Send
             </button>
           </form>
         </div>

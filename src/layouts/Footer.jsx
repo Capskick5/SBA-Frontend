@@ -11,7 +11,7 @@ export default function Footer() {
             <span>BookVerse</span>
           </Link>
           <p className="footer-description">
-            Khám phá thế giới tri thức vô tận cùng BookVerse. Chúng tôi cung cấp những tựa sách chất lượng cao, đa dạng thể loại và trải nghiệm đọc tuyệt vời cho mọi độc giả.
+            Explore an endless world of knowledge with BookVerse. We offer high-quality books across diverse categories and a smooth reading experience for every reader.
           </p>
           <div className="footer-socials">
             <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="footer-social-btn" aria-label="Facebook">
@@ -40,31 +40,31 @@ export default function Footer() {
         </div>
 
         <div className="footer-col">
-          <h3>Khám Phá</h3>
+          <h3>Explore</h3>
           <ul className="footer-links">
-            <li><Link to="/books">Tất Cả Sách</Link></li>
-            <li><Link to="/genres">Danh Mục Sách</Link></li>
-            <li><Link to="/about">Về Chúng Tôi</Link></li>
-            <li><Link to="/blog">Tin Tức & Sự Kiện</Link></li>
+            <li><Link to="/books">All Books</Link></li>
+            <li><Link to="/genres">Book Categories</Link></li>
+            <li><Link to="/about">About Us</Link></li>
+            <li><Link to="/blog">News & Events</Link></li>
           </ul>
         </div>
 
         <div className="footer-col">
-          <h3>Hỗ Trợ</h3>
+          <h3>Support</h3>
           <ul className="footer-links">
-            <li><Link to="/faqs">Câu Hỏi Thường Gặp</Link></li>
-            <li><Link to="/shipping">Chính Sách Vận Chuyển</Link></li>
-            <li><Link to="/privacy">Chính Sách Bảo Mật</Link></li>
-            <li><Link to="/terms">Điều Khoản Dịch Vụ</Link></li>
+            <li><Link to="/faqs">FAQs</Link></li>
+            <li><Link to="/shipping">Shipping Policy</Link></li>
+            <li><Link to="/privacy">Privacy Policy</Link></li>
+            <li><Link to="/terms">Terms of Service</Link></li>
           </ul>
         </div>
 
         <div className="footer-col">
-          <h3>Liên Hệ</h3>
+          <h3>Contact</h3>
           <div className="footer-contact">
             <div className="footer-contact-item">
               <MapPin size={18} />
-              <span>123 Đường Sách, Quận 1, TP. Hồ Chí Minh, Việt Nam</span>
+              <span>123 Book Street, District 1, Ho Chi Minh City, Vietnam</span>
             </div>
             <div className="footer-contact-item">
               <Mail size={18} />
@@ -76,7 +76,7 @@ export default function Footer() {
             </div>
             <div className="footer-contact-item">
               <Clock size={18} />
-              <span>Thứ 2 - Chủ Nhật / 8:00 - 22:00</span>
+              <span>Monday - Sunday / 8:00 - 22:00</span>
             </div>
           </div>
         </div>
@@ -84,7 +84,7 @@ export default function Footer() {
 
       <div className="footer-bottom">
         <div>
-          &copy; {new Date().getFullYear()} BookVerse. Bản quyền được bảo lưu.
+          &copy; {new Date().getFullYear()} BookVerse. All rights reserved.
         </div>
         <div className="footer-payments">
           <div className="payment-badge visa" title="Visa">
