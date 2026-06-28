@@ -13,6 +13,7 @@ export default function Header() {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
   const toggleTheme = () => {
     const nextTheme = theme === 'light' ? 'dark' : 'light';
@@ -98,13 +99,13 @@ export default function Header() {
             {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
           </button>
 
-          {(!user || user.role !== 'ADMIN') && (
+          {!isAuthPage && (!user || user.role !== 'ADMIN') && (
             <NavLink
               className="control-btn cart-btn"
               to="/cart"
               aria-label={`Cart${cartItemCount ? `, ${cartItemCount} items` : ''}`}
             >
-              <ShoppingCart size={20} aria-hidden="true" />
+              <ShoppingCart className="cart-icon" size={30} strokeWidth={2.4} aria-hidden="true" />
               {user && cartItemCount > 0 && <span className="cart-badge">{cartItemCount}</span>}
               <span className="sr-only">Cart</span>
             </NavLink>

@@ -228,6 +228,12 @@ textarea {
   transform: rotate(15deg);
 }
 
+.cart-btn .cart-icon {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 22px;
+}
+
 .cart-btn .cart-badge {
   position: absolute;
   top: -2px;
