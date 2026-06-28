@@ -7,10 +7,12 @@ import { bookService } from '../../services/bookService';
 import { cartService } from '../../services/cartService';
 import { reviewService } from '../../services/reviewService';
 import { formatCurrency } from '../../utils/formatters';
+import { useAuth } from '../../context/AuthContext';
 
 export default function BookDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [book, setBook] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +58,9 @@ export default function BookDetailPage() {
           <p className={`stock-badge ${book.stock > 0 ? 'is-available' : 'is-empty'}`}>
             {book.stock > 0 ? `In stock: ${book.stock}` : 'Out of stock'}
           </p>
-          <Button onClick={addToCart} disabled={book.stock === 0}>Add to Cart</Button>
+          {user?.role !== 'ADMIN' && (
+            <Button onClick={addToCart} disabled={book.stock === 0}>Add to Cart</Button>
+          )}
         </section>
         <section className="detail-section">
           <h2>Description</h2>

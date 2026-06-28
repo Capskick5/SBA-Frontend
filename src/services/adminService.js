@@ -60,7 +60,7 @@ export const adminService = {
   getReviews: () => Promise.resolve([]),
 
   toggleBookActive: (id, isActive) => {
-    return api.put(`/books/${id}/active`, null, { params: { active: isActive } });
+    return api.put(`/books/${id}/active`, { active: isActive });
   },
 
 

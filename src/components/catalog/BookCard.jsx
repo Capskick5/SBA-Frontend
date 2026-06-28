@@ -3,9 +3,12 @@ import Button from '../ui/Button';
 import { authService } from '../../services/authService';
 import { cartService } from '../../services/cartService';
 import { formatCurrency } from '../../utils/formatters';
+import { useAuth } from '../../context/AuthContext';
 
 export default function BookCard({ book }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
   const addToCart = async () => {
     if (!authService.getCurrentUser()) {
       navigate(`/login?redirect=/books/${book.id}`);
@@ -26,9 +29,11 @@ export default function BookCard({ book }) {
           {book.stock > 0 ? `In stock: ${book.stock}` : 'Out of stock'}
         </p>
       </div>
-      <div className="actions">
-        <Button onClick={addToCart} disabled={book.stock === 0}>Add to Cart</Button>
-      </div>
+      {user?.role !== 'ADMIN' && (
+        <div className="actions">
+          <Button onClick={addToCart} disabled={book.stock === 0}>Add to Cart</Button>
+        </div>
+      )}
     </article>
   );
 }

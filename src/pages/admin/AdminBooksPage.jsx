@@ -12,10 +12,17 @@ export default function AdminBooksPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [sortBy, setSortBy] = useState('id,desc');
+  const [statusFilter, setStatusFilter] = useState('all');
 
-  const loadBooks = useCallback((pageIndex, currentSort) => {
+  const loadBooks = useCallback((pageIndex, currentSort, currentStatus) => {
     setLoading(true);
-    adminService.getBooks({ page: pageIndex, size: 10, sort: currentSort })
+    const params = { page: pageIndex, size: 10, sort: currentSort };
+    if (currentStatus === 'active') {
+      params.active = true;
+    } else if (currentStatus === 'hidden') {
+      params.active = false;
+    }
+    adminService.getBooks(params)
       .then((res) => {
         const responseBody = res.data || res;
 
@@ -39,14 +46,14 @@ export default function AdminBooksPage() {
   }, []);
 
   useEffect(() => {
-    Promise.resolve().then(() => loadBooks(currentPage, sortBy));
-  }, [currentPage, sortBy, loadBooks]);
+    Promise.resolve().then(() => loadBooks(currentPage, sortBy, statusFilter));
+  }, [currentPage, sortBy, statusFilter, loadBooks]);
 
   const handleToggleActive = async (row) => {
     try {
       await adminService.toggleBookActive(row.id, !row.active);
       alert(`Book ${row.active ? 'hidden' : 'shown'} successfully.`);
-      loadBooks(currentPage, sortBy);
+      loadBooks(currentPage, sortBy, statusFilter);
     } catch (err) {
       alert('Failed to update book status: ' + (err.response?.data?.message || err.message));
     }
@@ -62,23 +69,42 @@ export default function AdminBooksPage() {
             + Add Book
           </Button>
 
-          <div>
-            <label htmlFor="sortSelect" style={{ marginRight: '8px', fontWeight: 'bold' }}>Sort:</label>
-            <select
-              id="sortSelect"
-              value={sortBy}
-              onChange={(event) => {
-                setSortBy(event.target.value);
-                setCurrentPage(0);
-              }}
-              style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
-            >
-              <option value="id,desc">ID: Newest first</option>
-              <option value="id,asc">ID: Oldest first</option>
-              <option value="price,asc">Price: Low to high</option>
-              <option value="price,desc">Price: High to low</option>
-              <option value="soldCount,desc">Best selling</option>
-            </select>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div>
+              <label htmlFor="statusSelect" style={{ marginRight: '8px', fontWeight: 'bold' }}>Status:</label>
+              <select
+                id="statusSelect"
+                value={statusFilter}
+                onChange={(event) => {
+                  setStatusFilter(event.target.value);
+                  setCurrentPage(0);
+                }}
+                style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
+              >
+                <option value="all">All</option>
+                <option value="active">Active</option>
+                <option value="hidden">Hidden</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="sortSelect" style={{ marginRight: '8px', fontWeight: 'bold' }}>Sort:</label>
+              <select
+                id="sortSelect"
+                value={sortBy}
+                onChange={(event) => {
+                  setSortBy(event.target.value);
+                  setCurrentPage(0);
+                }}
+                style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
+              >
+                <option value="id,desc">ID: Newest first</option>
+                <option value="id,asc">ID: Oldest first</option>
+                <option value="price,asc">Price: Low to high</option>
+                <option value="price,desc">Price: High to low</option>
+                <option value="soldCount,desc">Best selling</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>

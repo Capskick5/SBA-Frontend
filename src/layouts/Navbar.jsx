@@ -15,8 +15,8 @@ export default function Navbar() {
     <header className="navbar">
       <Link className="brand" to="/">BookVerse</Link>
       <nav className="nav-links">
-        <NavLink to="/cart">Cart</NavLink>
-        {user && <NavLink to="/orders">Orders</NavLink>}
+        {(!user || user.role !== 'ADMIN') && <NavLink to="/cart">Cart</NavLink>}
+        {user && user.role !== 'ADMIN' && <NavLink to="/orders">Orders</NavLink>}
         {user?.role === 'ADMIN' && <NavLink to="/admin">Admin</NavLink>}
         {user ? (
           <>

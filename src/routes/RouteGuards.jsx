@@ -12,6 +12,22 @@ export function ProtectedRoute({ children }) {
   return children;
 }
 
+export function CustomerRoute({ children }) {
+  const location = useLocation();
+  const { user, loading } = useAuth();
+
+  if (loading) return <LoadingState />;
+  if (!user) {
+    return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
+  }
+
+  if (user.role === 'ADMIN') {
+    return <Navigate to="/admin" replace />;
+  }
+
+  return children;
+}
+
 export function AdminRoute({ children }) {
   const { user, loading } = useAuth();
 
@@ -24,4 +40,5 @@ export function AdminRoute({ children }) {
 
   return children;
 }
+
 
