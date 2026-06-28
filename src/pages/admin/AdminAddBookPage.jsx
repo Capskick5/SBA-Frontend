@@ -12,7 +12,6 @@ export default function AdminAddBookPage() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
-    // Quản lý trạng thái upload file lên MinIO
     const [coverUrl, setCoverUrl] = useState('');
     const [bookFileUrl, setBookFileUrl] = useState('');
     const [uploadingCover, setUploadingCover] = useState(false);
@@ -21,11 +20,10 @@ export default function AdminAddBookPage() {
     useEffect(() => {
         bookService.getCategories()
             .then(setCategories)
-            .catch((err) => console.error("Lỗi load danh mục:", err))
+            .catch((err) => console.error('Failed to load categories:', err))
             .finally(() => setLoading(false));
     }, []);
 
-    // 1. Upload ảnh bìa
     const handleCoverChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -35,17 +33,15 @@ export default function AdminAddBookPage() {
             formData.append('file', file);
             const res = await adminService.uploadThumbnail(formData);
             setCoverUrl(res.data?.url || res.data || '');
-            alert("Đã upload ảnh bìa lên MinIO!");
+            alert('Cover uploaded to MinIO.');
         } catch (err) {
-            console.warn("MinIO Server lỗi, sử dụng URL ảnh giả để demo:");
-            // Gán một ảnh placeholder bất kỳ để tránh trống trường bắt buộc
-            setCoverUrl("https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500");
+            console.warn('MinIO upload failed. Using a demo cover URL:', err);
+            setCoverUrl('https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500');
         } finally {
             setUploadingCover(false);
         }
     };
 
-    // 2. Upload file sách (PDF/EPUB)
     const handleBookFileChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -55,10 +51,10 @@ export default function AdminAddBookPage() {
             formData.append('file', file);
             const res = await adminService.uploadBookFile(formData);
             setBookFileUrl(res.data?.url || res.data || '');
-            alert("Đã upload file tài liệu lên MinIO!");
+            alert('Book file uploaded to MinIO.');
         } catch (err) {
-            console.warn("MinIO Server lỗi, sử dụng file giả để demo:");
-            setBookFileUrl("http://localhost:8080/files/mock-document.pdf");
+            console.warn('MinIO upload failed. Using a demo file URL:', err);
+            setBookFileUrl('http://localhost:8080/files/mock-document.pdf');
         } finally {
             setUploadingFile(false);
         }
@@ -76,87 +72,84 @@ export default function AdminAddBookPage() {
                 title: data.title,
                 author: data.author,
                 price: Number(data.price) || 0,
-                stock: Number(data.stock) || 10, // Đảm bảo lấy đúng trường Số lượng từ ô input
+                stock: Number(data.stock) || 10,
                 categoryId: Number(data.categoryId),
-                description: data.description || "Mô tả sách",
-                isbn: data.isbn || "9780199256044",
-                publisher: "N/A",
+                description: data.description || 'Book description',
+                isbn: data.isbn || '9780199256044',
+                publisher: 'N/A',
                 publicationYear: 2026,
-                language: "vi",
-                coverKey: coverUrl || "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500", // Fallback phòng hờ
-                fileKey: bookFileUrl || "http://localhost:8080/files/mock-document.pdf",
+                language: 'vi',
+                coverKey: coverUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500',
+                fileKey: bookFileUrl || 'http://localhost:8080/files/mock-document.pdf',
                 active: true
             };
 
             await adminService.addBook(payload);
-            alert("Thêm sách thành công!");
+            alert('Book created successfully.');
             navigate('/admin/books');
         } catch (err) {
-            // Áp dụng bọc lỗi RAG Service nếu nó cũng sập khi tạo sách mới
             const errorMsg = err.response?.data?.message || err.message;
             const isRagError = /rag|vector|embedding|timeout|ai/i.test(errorMsg);
 
             if (isRagError) {
-                alert("Thêm sách thành công! (Tiến trình đồng bộ AI đang chạy ngầm)");
+                alert('Book created successfully. AI search sync is running in the background.');
                 navigate('/admin/books');
             } else {
-                alert("Lỗi thêm sách: " + errorMsg);
+                alert('Failed to create book: ' + errorMsg);
             }
         } finally {
             setSubmitting(false);
         }
     };
 
-    if (loading) return <p>Đang tải dữ liệu...</p>;
+    if (loading) return <p>Loading data...</p>;
 
     return (
         <section className="narrow">
-            <h1>Thêm sách mới</h1>
+            <h1>Add New Book</h1>
             <form className="form" onSubmit={handleSubmit}>
-                <Input name="title" label="Tên sách" required />
-                <Input name="author" label="Tác giả" required />
+                <Input name="title" label="Title" required />
+                <Input name="author" label="Author" required />
 
                 <div className="input-group" style={{ marginBottom: '16px' }}>
-                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>Thể loại</label>
+                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>Category</label>
                     <select
                         name="categoryId"
                         required
                         defaultValue=""
                         style={{ width: '100%', padding: '10px' }}
                     >
-                        <option value="" disabled>-- Chọn thể loại --</option>
+                        <option value="" disabled>-- Select category --</option>
                         {categories.map(cat => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
                         ))}
                     </select>
                 </div>
 
-                {/* UI Chọn ảnh bìa */}
                 <div className="input-group" style={{ marginBottom: '16px' }}>
-                    <label style={{ display: 'block', fontWeight: 'bold' }}>Ảnh bìa (Thumbnail)</label>
+                    <label style={{ display: 'block', fontWeight: 'bold' }}>Cover Image</label>
                     <input type="file" accept="image/*" onChange={handleCoverChange} />
-                    {uploadingCover && <p style={{ color: 'blue' }}>Đang xử lý ảnh bìa...</p>}
+                    {uploadingCover && <p style={{ color: 'blue' }}>Uploading cover...</p>}
                 </div>
 
-                {/* UI Chọn file tài liệu */}
                 <div className="input-group" style={{ marginBottom: '16px' }}>
-                    <label style={{ display: 'block', fontWeight: 'bold' }}>File sách (PDF/EPUB)</label>
+                    <label style={{ display: 'block', fontWeight: 'bold' }}>Book File (PDF/EPUB)</label>
                     <input type="file" accept=".pdf,.epub" onChange={handleBookFileChange} />
-                    {uploadingFile && <p style={{ color: 'blue' }}>Đang tải tài liệu lên đám mây...</p>}
+                    {uploadingFile && <p style={{ color: 'blue' }}>Uploading book file...</p>}
                 </div>
 
                 <div style={{ display: 'flex', gap: '16px' }}>
-                    <Input name="price" label="Giá" type="number" required />
-                    <Input name="stock" label="Số lượng" type="number" required />
+                    <Input name="price" label="Price" type="number" required />
+                    <Input name="stock" label="Stock" type="number" required />
                 </div>
 
-                <Input name="isbn" label="Mã ISBN" />
-                <Textarea name="description" label="Mô tả" rows={5} />
+                <Input name="isbn" label="ISBN" />
+                <Textarea name="description" label="Description" rows={5} />
 
                 <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-                    <Button type="button" onClick={() => navigate('/admin/books')}>Hủy</Button>
+                    <Button type="button" onClick={() => navigate('/admin/books')}>Cancel</Button>
                     <Button type="submit" variant="primary" loading={submitting} disabled={uploadingCover || uploadingFile}>
-                        Lưu sách
+                        Save Book
                     </Button>
                 </div>
             </form>

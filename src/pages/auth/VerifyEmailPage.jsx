@@ -29,7 +29,7 @@ export default function VerifyEmailPage() {
         email: form.get('email'),
         otp: form.get('otp'),
       });
-      setSuccess('Xac thuc email thanh cong. Ban co the dang nhap.');
+      setSuccess('Email verified successfully. You can now log in.');
     } catch (err) {
       captureFormError(err, setError, setFieldErrors);
     } finally {
@@ -44,7 +44,7 @@ export default function VerifyEmailPage() {
     setError(null);
     try {
       await authService.resendVerification({ email });
-      setSuccess('Ma OTP moi da duoc gui (neu email ton tai).');
+      setSuccess('A new OTP has been sent if the email exists.');
     } catch (err) {
       captureFormError(err, setError, setFieldErrors);
     } finally {
@@ -60,18 +60,18 @@ export default function VerifyEmailPage() {
         <Input label="Email" name="email" type="email" defaultValue={emailDefault} error={fieldErrors.email} required />
         <Input label="OTP" name="otp" error={fieldErrors.otp} required />
         <p className="form-hint">Demo OTP: {MOCK_OTP}</p>
-        <Button type="submit" disabled={loading}>{loading ? 'Dang xu ly...' : 'Verify'}</Button>
+        <Button type="submit" disabled={loading}>{loading ? 'Processing...' : 'Verify'}</Button>
       </form>
       <div className="actions">
         <Button type="button" onClick={handleResend} disabled={resendLoading}>
-          {resendLoading ? 'Dang gui...' : 'Gui lai OTP'}
+          {resendLoading ? 'Sending...' : 'Resend OTP'}
         </Button>
       </div>
       <AuthFormFooter>
         {success ? (
-          <Link to="/login?registered=1">Den trang dang nhap</Link>
+          <Link to="/login?registered=1">Go to login</Link>
         ) : (
-          <Link to="/login">Quay lai dang nhap</Link>
+          <Link to="/login">Back to login</Link>
         )}
       </AuthFormFooter>
     </section>

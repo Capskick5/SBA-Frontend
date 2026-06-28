@@ -17,6 +17,6 @@ export const profileService = {
   async changePassword({ currentPassword, newPassword }) {
     await apiClient.put('/users/me/password', { currentPassword, newPassword });
     tokenStorage.clear();
-    return { message: 'Doi mat khau thanh cong.' };
+    return { message: 'Password changed successfully.' };
   },
 };

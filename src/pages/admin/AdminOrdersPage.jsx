@@ -20,7 +20,7 @@ export default function AdminOrdersPage() {
         setTotalPages(page.totalPages || 1);
       })
       .catch((err) => {
-        console.error('Lỗi lấy danh sách đơn hàng:', err);
+        console.error('Failed to load orders:', err);
         setOrders([]);
         setTotalPages(1);
       })
@@ -34,9 +34,9 @@ export default function AdminOrdersPage() {
   return (
     <section className="stack">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Quản lý Đơn hàng</h1>
+        <h1>Order Management</h1>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-          <label htmlFor="sortOrders" style={{ fontWeight: 'bold' }}>Sắp xếp:</label>
+          <label htmlFor="sortOrders" style={{ fontWeight: 'bold' }}>Sort:</label>
           <select
             id="sortOrders"
             value={sortBy}
@@ -46,43 +46,43 @@ export default function AdminOrdersPage() {
             }}
             style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
           >
-            <option value="id,desc">Mã đơn: Mới nhất</option>
-            <option value="id,asc">Mã đơn: Cũ nhất</option>
-            <option value="total,desc">Giá trị: Cao đến thấp</option>
-            <option value="total,asc">Giá trị: Thấp đến cao</option>
+            <option value="id,desc">Order ID: Newest first</option>
+            <option value="id,asc">Order ID: Oldest first</option>
+            <option value="total,desc">Value: High to low</option>
+            <option value="total,asc">Value: Low to high</option>
           </select>
         </div>
       </div>
 
       {loading ? (
-        <p>Đang tải dữ liệu đơn hàng...</p>
+        <p>Loading orders...</p>
       ) : (
         <>
           <Table
             columns={[
-              { key: 'id', label: 'Mã đơn' },
-              { key: 'userId', label: 'Khách hàng', render: (row) => row.userId || 'N/A' },
+              { key: 'id', label: 'Order ID' },
+              { key: 'userId', label: 'Customer', render: (row) => row.userId || 'N/A' },
               {
                 key: 'createdAt',
-                label: 'Ngày đặt',
-                render: (row) => (row.createdAt ? new Date(row.createdAt).toLocaleDateString('vi-VN') : 'N/A'),
+                label: 'Order Date',
+                render: (row) => (row.createdAt ? new Date(row.createdAt).toLocaleDateString('en-US') : 'N/A'),
               },
-              { key: 'status', label: 'Trạng thái', render: (row) => <OrderStatusBadge status={row.status} /> },
-              { key: 'total', label: 'Tổng tiền', render: (row) => <strong style={{ color: '#e53e3e' }}>{formatCurrency(row.total)}</strong> },
-              { key: 'action', label: 'Hành động', render: (row) => <Link to={`/admin/orders/${row.id}`} className="btn-link">Chi tiết</Link> },
+              { key: 'status', label: 'Status', render: (row) => <OrderStatusBadge status={row.status} /> },
+              { key: 'total', label: 'Total', render: (row) => <strong style={{ color: '#e53e3e' }}>{formatCurrency(row.total)}</strong> },
+              { key: 'action', label: 'Actions', render: (row) => <Link to={`/admin/orders/${row.id}`} className="btn-link">Details</Link> },
             ]}
             rows={orders}
           />
 
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '20px' }}>
             <Button type="button" disabled={currentPage === 0} onClick={() => setCurrentPage((prev) => prev - 1)}>
-              &laquo; Trang trước
+              &laquo; Previous
             </Button>
             <span style={{ fontWeight: 'bold' }}>
-              Trang {currentPage + 1} / {totalPages}
+              Page {currentPage + 1} / {totalPages}
             </span>
             <Button type="button" disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage((prev) => prev + 1)}>
-              Trang sau &raquo;
+              Next &raquo;
             </Button>
           </div>
         </>

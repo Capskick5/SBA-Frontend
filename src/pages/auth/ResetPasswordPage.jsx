@@ -45,10 +45,10 @@ export default function ResetPasswordPage() {
         <Input label="OTP" name="otp" error={fieldErrors.otp} required />
         <Input label="New password" name="newPassword" type="password" error={fieldErrors.newPassword} required />
         <p className="form-hint">Demo OTP: {MOCK_OTP}</p>
-        <Button type="submit" disabled={loading}>{loading ? 'Dang xu ly...' : 'Reset'}</Button>
+        <Button type="submit" disabled={loading}>{loading ? 'Processing...' : 'Reset'}</Button>
       </form>
       <AuthFormFooter>
-        <Link to="/login">Quay lai dang nhap</Link>
+        <Link to="/login">Back to login</Link>
       </AuthFormFooter>
     </section>
   );

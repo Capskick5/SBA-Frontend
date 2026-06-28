@@ -43,7 +43,7 @@ export default function ProfilePage() {
       const updated = await profileService.updateProfile({ fullName: form.get('fullName') });
       setProfile(updated);
       refreshUser();
-      setSaveSuccess('Cap nhat ho so thanh cong.');
+      setSaveSuccess('Profile updated successfully.');
     } catch (err) {
       captureFormError(err, setSaveError, setSaveFieldErrors);
     } finally {
@@ -61,7 +61,7 @@ export default function ProfilePage() {
     const newPassword = form.get('newPassword');
     const confirmPassword = form.get('confirmPassword');
     if (newPassword !== confirmPassword) {
-      setPwdFieldErrors({ confirmPassword: 'Mat khau xac nhan khong khop.' });
+      setPwdFieldErrors({ confirmPassword: 'Password confirmation does not match.' });
       setPwdLoading(false);
       return;
     }
@@ -73,7 +73,7 @@ export default function ProfilePage() {
       await logout();
       navigate('/login', {
         replace: true,
-        state: { message: 'Doi mat khau thanh cong. Vui long dang nhap lai.' },
+        state: { message: 'Password changed successfully. Please log in again.' },
       });
     } catch (err) {
       captureFormError(err, setPwdError, setPwdFieldErrors);
@@ -89,11 +89,11 @@ export default function ProfilePage() {
     <section className="narrow stack">
       <h1>Profile</h1>
       <p className="auth-footer">
-        <Link to="/profile/addresses">Quan ly dia chi</Link>
+        <Link to="/profile/addresses">Manage addresses</Link>
       </p>
 
       <div className="form-section">
-        <h2>Thong tin ca nhan</h2>
+        <h2>Personal Information</h2>
         <AuthFormMessage error={saveError} success={saveSuccess} />
         <form className="form" onSubmit={handleSaveProfile} key={profile?.updatedAt}>
           <Input
@@ -105,13 +105,13 @@ export default function ProfilePage() {
           />
           <Input label="Email" defaultValue={profile?.email || ''} disabled />
           <Button type="submit" disabled={saveLoading}>
-            {saveLoading ? 'Dang luu...' : 'Save'}
+            {saveLoading ? 'Saving...' : 'Save'}
           </Button>
         </form>
       </div>
 
       <div className="form-section">
-        <h2>Doi mat khau</h2>
+        <h2>Change Password</h2>
         <AuthFormMessage error={pwdError} success={pwdSuccess} />
         <form className="form" onSubmit={handleChangePassword}>
           <Input
@@ -136,7 +136,7 @@ export default function ProfilePage() {
             required
           />
           <Button type="submit" disabled={pwdLoading}>
-            {pwdLoading ? 'Dang xu ly...' : 'Change password'}
+            {pwdLoading ? 'Processing...' : 'Change password'}
           </Button>
         </form>
       </div>

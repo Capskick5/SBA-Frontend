@@ -35,10 +35,10 @@ export default function ForgotPasswordPage() {
       <AuthFormMessage error={error} />
       <form className="form" onSubmit={handleSubmit}>
         <Input label="Email" name="email" type="email" error={fieldErrors.email} required />
-        <Button type="submit" disabled={loading}>{loading ? 'Dang xu ly...' : 'Send OTP'}</Button>
+        <Button type="submit" disabled={loading}>{loading ? 'Processing...' : 'Send OTP'}</Button>
       </form>
       <AuthFormFooter>
-        <Link to="/login">Quay lai dang nhap</Link>
+        <Link to="/login">Back to login</Link>
       </AuthFormFooter>
     </section>
   );

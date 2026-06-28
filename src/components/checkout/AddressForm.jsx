@@ -87,7 +87,7 @@ export default function AddressForm({
       </label>
       <div className="actions">
         <Button type="submit" disabled={loading}>
-          {loading ? 'Dang luu...' : submitLabel}
+          {loading ? 'Saving...' : submitLabel}
         </Button>
         {onCancel && (
           <Button type="button" onClick={onCancel}>Cancel</Button>
