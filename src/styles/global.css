@@ -1017,7 +1017,7 @@ textarea {
 
 .cart-row {
   display: grid;
-  grid-template-columns: 32px 80px minmax(0, 1fr) 140px 140px 48px;
+  grid-template-columns: 32px 80px minmax(0, 1fr) 140px 140px 96px;
   gap: 20px;
   align-items: center;
   border: 1px solid var(--border);
@@ -1055,17 +1055,30 @@ textarea {
 .quantity button {
   width: 36px;
   height: 36px;
+  min-height: 36px;
   border: 0;
+  border-radius: 0;
+  padding: 0;
   background: transparent;
+  color: var(--text);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: none;
   transition: background 0.2s ease;
 }
 
 .quantity button:hover {
   background: var(--surface-light);
+  color: var(--accent);
+  transform: none;
+  box-shadow: none;
+}
+
+.quantity button:disabled {
+  background: transparent;
+  color: var(--muted);
 }
 
 .quantity span {
@@ -1077,6 +1090,14 @@ textarea {
   font-weight: 600;
   border-left: 1px solid var(--border);
   border-right: 1px solid var(--border);
+}
+
+.cart-remove-btn {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 12px;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .summary-row {

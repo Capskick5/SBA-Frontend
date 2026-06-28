@@ -19,16 +19,23 @@ export default function CartItemRow({ item, selected, error, onSelect, onQuantit
       <div className="quantity">
         <Button
           type="button"
+          className="quantity-btn"
           onClick={() => onQuantity(item.itemId, item.quantity - 1)}
           disabled={item.quantity <= 1}
         >
           -
         </Button>
         <span>{item.quantity}</span>
-        <Button type="button" onClick={() => onQuantity(item.itemId, item.quantity + 1)}>+</Button>
+        <Button
+          type="button"
+          className="quantity-btn"
+          onClick={() => onQuantity(item.itemId, item.quantity + 1)}
+        >
+          +
+        </Button>
       </div>
       <strong>{formatCurrency(item.lineTotal)}</strong>
-      <Button type="button" onClick={() => onRemove(item.itemId)}>Remove</Button>
+      <Button type="button" className="cart-remove-btn" onClick={() => onRemove(item.itemId)}>Remove</Button>
       {error && <p className="cart-row-error">{error}</p>}
     </div>
   );
