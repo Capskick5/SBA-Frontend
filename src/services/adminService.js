@@ -52,7 +52,8 @@ export const adminService = {
   addCategory: (catData) => api.post('/categories', catData).then(res => res.data),
 
   getOrders: (params) => api.get('/orders', { params }).then(res => res.data),
-  updateOrderStatus: (id, status) => api.put(`/orders/${id}/status`, { status }).then(res => res.data),
+  updateOrderStatus: (id, status, shippingProvider, trackingCode) =>
+    api.put(`/orders/${id}/status`, { status, shippingProvider, trackingCode }).then(res => res.data),
 
   getUsers: (params) => api.get('/users', { params }).then(res => res.data),
   toggleUserStatus: (userId, enabled) => api.put(`/users/${userId}/enabled`, { enabled }).then(res => res.data),
