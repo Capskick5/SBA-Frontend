@@ -4,6 +4,7 @@ import CartItemRow from '../../components/cart/CartItemRow';
 import Button from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/State';
 import { cartService } from '../../services/cartService';
+import { notifyCartUpdated } from '../../utils/cartEvents';
 import { formatCurrency } from '../../utils/formatters';
 
 export default function CartPage() {
@@ -14,6 +15,7 @@ export default function CartPage() {
 
   const syncCart = (nextCart, options = {}) => {
     setCart(nextCart);
+    notifyCartUpdated(nextCart);
     setSelectedItemIds((currentIds) => {
       const validIds = (nextCart.items || []).map((item) => item.itemId);
       if (options.selectAll) return validIds;
@@ -37,7 +39,14 @@ export default function CartPage() {
   }, []);
 
   if (loading) return <div>Loading...</div>;
-  if (!cart.items || cart.items.length === 0) return <EmptyState text="Your cart is empty." />;
+  if (!cart.items || cart.items.length === 0) {
+    return (
+      <section className="stack">
+        <EmptyState text="Your cart is empty." />
+        <Button onClick={() => navigate('/')}>Continue Shopping</Button>
+      </section>
+    );
+  }
 
   const selectedItems = cart.items.filter((item) => selectedItemIds.includes(item.itemId));
   const selectedTotal = selectedItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
@@ -90,6 +99,7 @@ export default function CartPage() {
         />
       ))}
       <div className="summary-row">
+        <Button onClick={() => navigate('/')}>Continue Shopping</Button>
         <strong>Selected total: {formatCurrency(selectedTotal)}</strong>
         <Button onClick={goToCheckout} disabled={selectedItemIds.length === 0}>
           Checkout ({selectedItemIds.length})
