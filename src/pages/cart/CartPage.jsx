@@ -12,6 +12,7 @@ export default function CartPage() {
   const [cart, setCart] = useState({ items: [], subtotal: 0 });
   const [selectedItemIds, setSelectedItemIds] = useState([]);
   const [itemErrors, setItemErrors] = useState({});
+  const [itemToRemove, setItemToRemove] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const syncCart = (nextCart, options = {}) => {
@@ -95,8 +96,16 @@ export default function CartPage() {
       });
   };
 
-  const handleRemove = (itemId) => {
+  const requestRemove = (itemId) => {
+    const item = cart.items.find((cartItem) => cartItem.itemId === itemId);
+    if (item) setItemToRemove(item);
+  };
+
+  const confirmRemove = () => {
+    if (!itemToRemove) return;
+    const itemId = itemToRemove.itemId;
     clearItemError(itemId);
+    setItemToRemove(null);
     cartService.removeItem(itemId)
       .then((nextCart) => {
         syncCart(nextCart);
@@ -129,7 +138,7 @@ export default function CartPage() {
           error={itemErrors[item.itemId]}
           onSelect={() => toggleItem(item.itemId)}
           onQuantity={(_, quantity) => handleQuantityChange(item, quantity)}
-          onRemove={handleRemove}
+          onRemove={requestRemove}
         />
       ))}
       <div className="summary-row">
@@ -139,6 +148,23 @@ export default function CartPage() {
           Checkout ({selectedItemIds.length})
         </Button>
       </div>
+      {itemToRemove && (
+        <div className="modal-backdrop" role="presentation">
+          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="remove-cart-item-title">
+            <div className="stack">
+              <div>
+                <h2 id="remove-cart-item-title">Remove item?</h2>
+                <p className="muted">Are you sure you want to remove this book from your cart?</p>
+              </div>
+              <strong>{itemToRemove.title}</strong>
+              <div className="actions">
+                <Button type="button" onClick={() => setItemToRemove(null)}>Cancel</Button>
+                <Button type="button" onClick={confirmRemove}>Remove</Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
