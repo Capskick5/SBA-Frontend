@@ -15,7 +15,8 @@ export default function AdminBookDetailPage() {
   const [saving, setSaving] = useState(false);
 
   const [coverUrl, setCoverUrl] = useState('');
-  const [bookFileUrl, setBookFileUrl] = useState('');
+  const [coverKey, setCoverKey] = useState('');
+  const [fileKey, setFileKey] = useState('');
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
 
@@ -30,7 +31,8 @@ export default function AdminBookDetailPage() {
         setBook(actualBook);
 
         setCoverUrl(actualBook.coverUrl || '');
-        setBookFileUrl(actualBook.bookFileUrl || actualBook.fileUrl || '');
+        setCoverKey(actualBook.coverKey || '');
+        setFileKey(actualBook.fileKey || '');
       })
       .catch((err) => {
         console.error('Failed to load book detail:', err);
@@ -46,8 +48,10 @@ export default function AdminBookDetailPage() {
       const formData = new FormData();
       formData.append('file', file);
       const res = await adminService.uploadThumbnail(formData);
-      const resData = res.data || res;
-      setCoverUrl(resData.url || resData.coverUrl || resData);
+      const key = res.data?.data?.coverKey || res.data?.coverKey;
+      if (!key) throw new Error('Invalid upload response');
+      setCoverKey(key);
+      setCoverUrl(URL.createObjectURL(file));
       alert('Cover uploaded to MinIO.');
     } catch (err) {
       alert('Failed to upload cover: ' + err.message);
@@ -64,8 +68,9 @@ export default function AdminBookDetailPage() {
       const formData = new FormData();
       formData.append('file', file);
       const res = await adminService.uploadBookFile(formData);
-      const resData = res.data || res;
-      setBookFileUrl(resData.url || resData.bookFileUrl || resData.fileUrl || resData);
+      const key = res.data?.data?.fileKey || res.data?.fileKey;
+      if (!key) throw new Error('Invalid upload response');
+      setFileKey(key);
       alert('Book file uploaded to MinIO.');
     } catch (err) {
       alert('Failed to upload book file: ' + err.message);
@@ -94,11 +99,9 @@ export default function AdminBookDetailPage() {
         originalPrice: values.originalPrice ? Number(values.originalPrice) : Number(values.price),
         description: values.description || '',
 
-        coverUrl: coverUrl || book.coverUrl,
-        bookFileUrl: bookFileUrl || book.bookFileUrl || book.fileUrl || '',
-
-        fileKey: book.fileKey,
-        coverKey: book.coverKey,
+        coverUrl: coverUrl.startsWith('blob:') ? null : coverUrl,
+        fileKey: fileKey,
+        coverKey: coverKey,
         active: book.active ?? true,
       };
 
@@ -162,7 +165,7 @@ export default function AdminBookDetailPage() {
 
         <div className="input-group" style={{ marginBottom: '16px' }}>
           <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Current Book File (PDF/EPUB)</label>
-          {bookFileUrl && <p style={{ fontSize: '13px', color: '#666' }}>Path: <span style={{ wordBreak: 'break-all' }}>{bookFileUrl}</span></p>}
+          {fileKey && <p style={{ fontSize: '13px', color: '#666' }}>Path: <span style={{ wordBreak: 'break-all' }}>{fileKey}</span></p>}
           <input type="file" accept=".pdf,.epub" onChange={handleBookFileChange} />
           {uploadingFile && <p style={{ color: 'blue', fontSize: '14px' }}>Uploading book file...</p>}
         </div>

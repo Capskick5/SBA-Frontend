@@ -5,7 +5,7 @@ import Input from '../../components/ui/Input';
 import { AuthFormFooter, AuthFormMessage } from '../../components/auth/AuthFormFooter';
 import { captureFormError } from '../../utils/formErrorUtils';
 import { authService } from '../../services/authService';
-import { MOCK_OTP } from '../../mocks/mockStore';
+const MOCK_OTP = '123456';
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();

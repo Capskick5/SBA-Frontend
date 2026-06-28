@@ -12,8 +12,8 @@ export default function AdminAddBookPage() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
-    const [coverUrl, setCoverUrl] = useState('');
-    const [bookFileUrl, setBookFileUrl] = useState('');
+    const [coverKey, setCoverKey] = useState('');
+    const [fileKey, setFileKey] = useState('');
     const [uploadingCover, setUploadingCover] = useState(false);
     const [uploadingFile, setUploadingFile] = useState(false);
 
@@ -32,11 +32,12 @@ export default function AdminAddBookPage() {
             const formData = new FormData();
             formData.append('file', file);
             const res = await adminService.uploadThumbnail(formData);
-            setCoverUrl(res.data?.url || res.data || '');
+            const key = res.data?.data?.coverKey || res.data?.coverKey;
+            if (!key) throw new Error('Invalid upload response');
+            setCoverKey(key);
             alert('Cover uploaded to MinIO.');
         } catch (err) {
-            console.warn('MinIO upload failed. Using a demo cover URL:', err);
-            setCoverUrl('https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500');
+            alert('Failed to upload cover: ' + err.message);
         } finally {
             setUploadingCover(false);
         }
@@ -50,11 +51,12 @@ export default function AdminAddBookPage() {
             const formData = new FormData();
             formData.append('file', file);
             const res = await adminService.uploadBookFile(formData);
-            setBookFileUrl(res.data?.url || res.data || '');
+            const key = res.data?.data?.fileKey || res.data?.fileKey;
+            if (!key) throw new Error('Invalid upload response');
+            setFileKey(key);
             alert('Book file uploaded to MinIO.');
         } catch (err) {
-            console.warn('MinIO upload failed. Using a demo file URL:', err);
-            setBookFileUrl('http://localhost:8080/files/mock-document.pdf');
+            alert('Failed to upload book file: ' + err.message);
         } finally {
             setUploadingFile(false);
         }
@@ -63,6 +65,17 @@ export default function AdminAddBookPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
+
+        if (!coverKey) {
+            alert('Please upload a cover image first.');
+            setSubmitting(false);
+            return;
+        }
+        if (!fileKey) {
+            alert('Please upload a book file first.');
+            setSubmitting(false);
+            return;
+        }
 
         try {
             const formData = new FormData(e.target);
@@ -79,8 +92,8 @@ export default function AdminAddBookPage() {
                 publisher: 'N/A',
                 publicationYear: 2026,
                 language: 'vi',
-                coverKey: coverUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500',
-                fileKey: bookFileUrl || 'http://localhost:8080/files/mock-document.pdf',
+                coverKey: coverKey,
+                fileKey: fileKey,
                 active: true
             };
 

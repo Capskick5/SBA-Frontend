@@ -13,33 +13,7 @@ api.interceptors.request.use((config) => {
 });
 
 export const adminService = {
-  getStats: async () => {
-    try {
-      const [users, books, orders] = await Promise.all([
-        adminService.getUsers({ size: 1000 }),
-        adminService.getBooks({ size: 1000 }),
-        adminService.getOrders({ size: 1000 })
-      ]);
-
-      const usersList = users.data?.items || users.items || [];
-      const booksList = books.data?.items || books.items || [];
-      const ordersList = orders.data?.items || orders.items || [];
-
-      const revenue = ordersList
-        .filter(order => order.status !== 'CANCELLED')
-        .reduce((sum, order) => sum + (order.total || 0), 0);
-
-      return {
-        totalUsers: usersList.length,
-        totalBooks: booksList.length,
-        totalOrders: ordersList.length,
-        recognizedRevenue: revenue
-      };
-    } catch (error) {
-      console.error('Failed to build admin statistics:', error);
-      throw error;
-    }
-  },
+  getStats: () => api.get('/statistics/overview').then(res => res.data?.data || res.data),
 
   getBooks: (params) => api.get('/books', { params }).then(res => res.data),
 
@@ -58,7 +32,8 @@ export const adminService = {
   getUsers: (params) => api.get('/users', { params }).then(res => res.data),
   toggleUserStatus: (userId, enabled) => api.put(`/users/${userId}/enabled`, { enabled }).then(res => res.data),
 
-  getReviews: () => Promise.resolve([]),
+  getReviews: (params) => api.get('/admin/reviews', { params }).then(res => res.data?.data?.items || res.data?.data || []),
+  deleteReview: (id) => api.delete(`/reviews/${id}`).then(res => res.data),
 
   toggleBookActive: (id, isActive) => {
     return api.put(`/books/${id}/active`, { active: isActive });
