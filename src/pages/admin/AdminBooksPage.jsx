@@ -1,31 +1,153 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Table from '../../components/ui/Table';
+import Button from '../../components/ui/Button';
 import { adminService } from '../../services/adminService';
 import { formatCurrency } from '../../utils/formatters';
 
 export default function AdminBooksPage() {
+  const navigate = useNavigate();
   const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [sortBy, setSortBy] = useState('id,desc');
+
+  const loadBooks = useCallback((pageIndex, currentSort) => {
+    setLoading(true);
+    adminService.getBooks({ page: pageIndex, size: 10, sort: currentSort })
+      .then((res) => {
+        const responseBody = res.data || res;
+
+        if (responseBody?.data?.items && Array.isArray(responseBody.data.items)) {
+          setBooks(responseBody.data.items);
+          setTotalPages(responseBody.data.totalPages || 1);
+        } else if (responseBody?.items && Array.isArray(responseBody.items)) {
+          setBooks(responseBody.items);
+          setTotalPages(responseBody.totalPages || 1);
+        } else {
+          setBooks([]);
+          setTotalPages(1);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load books:', err);
+        setBooks([]);
+        setTotalPages(1);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
-    adminService.getBooks().then((data) => {
-      setBooks(data.items || data.content || (Array.isArray(data) ? data : []));
-    });
-  }, []);
+    Promise.resolve().then(() => loadBooks(currentPage, sortBy));
+  }, [currentPage, sortBy, loadBooks]);
+
+  const handleToggleActive = async (row) => {
+    try {
+      await adminService.toggleBookActive(row.id, !row.active);
+      alert(`Book ${row.active ? 'hidden' : 'shown'} successfully.`);
+      loadBooks(currentPage, sortBy);
+    } catch (err) {
+      alert('Failed to update book status: ' + (err.response?.data?.message || err.message));
+    }
+  };
 
   return (
     <section className="stack">
-      <h1>Quản lý Sách</h1>
-      <Table
-        columns={[
-          { key: 'title', label: 'Tên sách' },
-          { key: 'author', label: 'Tác giả' },
-          { key: 'price', label: 'Giá', render: (row) => formatCurrency(row.price) },
-          { key: 'stock', label: 'Kho' },
-          { key: 'action', label: 'Thao tác', render: (row) => <Link to={`/admin/books/${row.id}`}>Sửa</Link> },
-        ]}
-        rows={books}
-      />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h1>Book Inventory</h1>
+
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <Button variant="primary" onClick={() => navigate('/admin/books/new')}>
+            + Add Book
+          </Button>
+
+          <div>
+            <label htmlFor="sortSelect" style={{ marginRight: '8px', fontWeight: 'bold' }}>Sort:</label>
+            <select
+              id="sortSelect"
+              value={sortBy}
+              onChange={(event) => {
+                setSortBy(event.target.value);
+                setCurrentPage(0);
+              }}
+              style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
+            >
+              <option value="id,desc">ID: Newest first</option>
+              <option value="id,asc">ID: Oldest first</option>
+              <option value="price,asc">Price: Low to high</option>
+              <option value="price,desc">Price: High to low</option>
+              <option value="soldCount,desc">Best selling</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {loading ? (
+        <p>Loading books...</p>
+      ) : (
+        <>
+          <Table
+            columns={[
+              { key: 'id', label: 'ID' },
+              { key: 'title', label: 'Title' },
+              { key: 'author', label: 'Author' },
+              {
+                key: 'category',
+                label: 'Category',
+                render: (row) => row.category?.name || <em style={{ color: '#999' }}>Uncategorized</em>,
+              },
+              { key: 'price', label: 'Price', render: (row) => formatCurrency(row.price) },
+              { key: 'stock', label: 'Stock' },
+              {
+                key: 'active',
+                label: 'Status',
+                render: (row) => (
+                  <span style={{ color: row.active ? 'green' : 'red', fontWeight: 'bold' }}>
+                    {row.active ? 'Active' : 'Hidden'}
+                  </span>
+                ),
+              },
+              {
+                key: 'action',
+                label: 'Actions',
+                render: (row) => (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Link to={`/admin/books/${row.id}`} className="btn-link">Edit</Link>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleActive(row)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: row.active ? '#e53e3e' : '#3182ce',
+                        cursor: 'pointer',
+                        padding: 0,
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      {row.active ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+                ),
+              },
+            ]}
+            rows={books}
+          />
+
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '20px' }}>
+            <Button type="button" disabled={currentPage === 0} onClick={() => setCurrentPage((prev) => prev - 1)}>
+              &laquo; Previous
+            </Button>
+            <span style={{ fontWeight: 'bold' }}>
+              Page {currentPage + 1} / {totalPages}
+            </span>
+            <Button type="button" disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage((prev) => prev + 1)}>
+              Next &raquo;
+            </Button>
+          </div>
+        </>
+      )}
     </section>
   );
 }

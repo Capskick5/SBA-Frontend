@@ -46,7 +46,7 @@ async function parseErrorResponse(response) {
     if (err?.error_type) throw err;
     throw createError({
       code: response.status,
-      message: response.statusText || 'Co loi xay ra.',
+      message: response.statusText || 'Something went wrong.',
       error_type: inferErrorType(response.status),
     });
   }
@@ -83,8 +83,8 @@ async function getValidAccessToken() {
   return tokenStorage.getAccessToken();
 }
 
-async function request(path, { method = 'GET', body, auth = true, retry = true } = {}) {
-  const headers = { 'Content-Type': 'application/json' };
+async function request(path, { method = 'GET', body, auth = true, retry = true, headers: extraHeaders = {} } = {}) {
+  const headers = { 'Content-Type': 'application/json', ...extraHeaders };
   if (auth) {
     const token = await getValidAccessToken();
     if (token) headers.Authorization = `Bearer ${token}`;
@@ -103,7 +103,7 @@ async function request(path, { method = 'GET', body, auth = true, retry = true }
       });
     }
     await refreshPromise;
-    return request(path, { method, body, auth, retry: false });
+    return request(path, { method, body, auth, retry: false, headers: extraHeaders });
   }
 
   if (response.status === 204) {

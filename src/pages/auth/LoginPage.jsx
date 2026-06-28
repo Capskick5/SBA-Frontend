@@ -48,10 +48,10 @@ export default function LoginPage() {
     <section className="narrow">
       <h1>Login</h1>
       {registered && (
-        <p className="form-message form-message-success">Dang ky thanh cong. Vui long xac thuc email truoc khi dang nhap.</p>
+        <p className="form-message form-message-success">Registration completed. Please verify your email before logging in.</p>
       )}
       {reset && (
-        <p className="form-message form-message-success">Dat lai mat khau thanh cong. Vui long dang nhap.</p>
+        <p className="form-message form-message-success">Password reset completed. Please log in.</p>
       )}
       {location.state?.message && (
         <p className="form-message form-message-success">{location.state.message}</p>
@@ -59,7 +59,7 @@ export default function LoginPage() {
       <AuthFormMessage error={error} />
       {unverifiedEmail && (
         <p className="auth-footer">
-          <Link to={`/verify-email?email=${encodeURIComponent(unverifiedEmail)}`}>Xac thuc email</Link>
+          <Link to={`/verify-email?email=${encodeURIComponent(unverifiedEmail)}`}>Verify email</Link>
         </p>
       )}
       <form className="form" onSubmit={handleSubmit}>
@@ -67,7 +67,7 @@ export default function LoginPage() {
           label="Email"
           name="email"
           type="email"
-          defaultValue="customer@bookverse.local"
+          placeholder="you@example.com"
           error={fieldErrors.email}
           required
         />
@@ -75,16 +75,16 @@ export default function LoginPage() {
           label="Password"
           name="password"
           type="password"
-          defaultValue="ChangeMe123!"
+          placeholder="Enter your password"
           error={fieldErrors.password}
           required
         />
-        <Button type="submit" disabled={loading}>{loading ? 'Dang xu ly...' : 'Login'}</Button>
+        <Button type="submit" disabled={loading}>{loading ? 'Processing...' : 'Login'}</Button>
       </form>
       <AuthFormFooter>
-        <Link to="/register">Chua co tai khoan? Dang ky</Link>
+        <Link to="/register">Need an account? Register</Link>
         {' · '}
-        <Link to="/forgot-password">Quen mat khau?</Link>
+        <Link to="/forgot-password">Forgot password?</Link>
       </AuthFormFooter>
     </section>
   );

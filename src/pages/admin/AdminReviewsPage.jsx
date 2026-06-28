@@ -11,27 +11,28 @@ export default function AdminReviewsPage() {
   }, []);
 
   const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa đánh giá này?")) {
+    if (window.confirm('Are you sure you want to delete this review?')) {
       try {
-        await adminService.deleteReview(id); // Giả định service này tồn tại
+        await adminService.deleteReview(id);
         setReviews(reviews.filter(r => r.id !== id));
-      } catch (err) {
-        alert("Lỗi khi xóa đánh giá");
+      } catch {
+        alert('Failed to delete review.');
       }
     }
   };
 
   return (
     <section className="stack">
-      <h1>Quản lý Đánh giá</h1>
+      <h1>Review Management</h1>
+      <p className="muted">Review listing requires a backend admin list endpoint.</p>
       <Table
         columns={[
-          { key: 'userName', label: 'Người dùng' },
-          { key: 'rating', label: 'Đánh giá' },
-          { key: 'comment', label: 'Nội dung' },
+          { key: 'userName', label: 'User' },
+          { key: 'rating', label: 'Rating' },
+          { key: 'comment', label: 'Content' },
           {
-            key: 'action', label: 'Hành động', render: (row) =>
-              <Button onClick={() => handleDelete(row.id)}>Xóa</Button>
+            key: 'action', label: 'Actions', render: (row) =>
+              <Button onClick={() => handleDelete(row.id)}>Delete</Button>
           },
         ]}
         rows={reviews}

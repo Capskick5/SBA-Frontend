@@ -48,7 +48,7 @@ export const authService = {
       { email: normalizeEmail(email) },
       { auth: false },
     );
-    return { message: 'Neu email ton tai, ma OTP da duoc gui.' };
+    return { message: 'If the email exists, a new OTP has been sent.' };
   },
 
   async login({ email, password }) {
@@ -84,7 +84,7 @@ export const authService = {
       { email: normalizeEmail(email) },
       { auth: false },
     );
-    return { message: 'Neu email ton tai, ma OTP da duoc gui.' };
+    return { message: 'If the email exists, an OTP has been sent.' };
   },
 
   async resetPassword({ email, otp, newPassword }) {
@@ -97,6 +97,6 @@ export const authService = {
       },
       { auth: false },
     );
-    return { message: 'Dat lai mat khau thanh cong.' };
+    return { message: 'Password reset successfully.' };
   },
 };

@@ -9,19 +9,19 @@ export default function AdminOrderDetailPage() {
   const handleUpdateStatus = async (newStatus) => {
     try {
       await adminService.updateOrderStatus(id, newStatus);
-      window.location.reload(); // Refresh trang để cập nhật giao diện
+      window.location.reload();
     } catch (err) {
-      alert("Lỗi cập nhật: " + err.message);
+      alert('Failed to update order: ' + err.message);
     }
   };
 
   return (
     <>
       <div className="admin-actions">
-        <h3>Quản trị trạng thái</h3>
-        <Button onClick={() => handleUpdateStatus('PROCESSING')}>Xử lý</Button>
-        <Button onClick={() => handleUpdateStatus('SHIPPED')}>Đã giao</Button>
-        <Button onClick={() => handleUpdateStatus('CANCELLED')}>Huỷ</Button>
+        <h3>Status Management</h3>
+        <Button onClick={() => handleUpdateStatus('PROCESSING')}>Process</Button>
+        <Button onClick={() => handleUpdateStatus('SHIPPED')}>Ship</Button>
+        <Button onClick={() => handleUpdateStatus('CANCELLED')}>Cancel</Button>
       </div>
       <OrderDetailPage />
     </>

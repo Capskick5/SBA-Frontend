@@ -16,72 +16,16 @@ export default function AdminDashboardPage() {
     adminService.getStats().then(setStats);
   }, []);
 
-  const handleRagIngest = async (forceFull) => {
-    setIsIngesting(true);
-    setErrorMessage('');
-    setLogMessages([]);
-    setCurrentBook('');
-    setCompletedCount(0);
-    setTotalCount(0);
-
-    const limit = Math.min(Math.max(1, ragLimit), 10);
-
-    try {
-      setLogMessages((prev) => [...prev, 'Đang lấy danh sách sách từ hệ thống...']);
-      const response = await adminService.getBooks({ page: 0, size: limit });
-      const booksToIngest = response.items || [];
-
-      if (booksToIngest.length === 0) {
-        setLogMessages((prev) => [...prev, 'Không tìm thấy sách nào để nạp.']);
-        setIsIngesting(false);
-        return;
-      }
-
-      setTotalCount(booksToIngest.length);
-      setLogMessages((prev) => [...prev, `Bắt đầu xử lý ${booksToIngest.length} sách...`]);
-
-      for (let i = 0; i < booksToIngest.length; i++) {
-        const book = booksToIngest[i];
-        setCurrentBook(book.title);
-        setLogMessages((prev) => [...prev, `[${i + 1}/${booksToIngest.length}] Đang xử lý: ${book.title}...`]);
-
-        try {
-          if (forceFull) {
-            if (!book.fileKey) {
-              throw new Error('Sách chưa được tải file lên');
-            }
-            await adminService.ingestBookContent(book.id);
-            setLogMessages((prev) => [...prev, `  ✓ Đã nạp nội dung file thành công`]);
-          }
-
-          await adminService.upsertBookCatalog(book.id);
-          setLogMessages((prev) => [...prev, `  ✓ Đã cập nhật catalog thành công`]);
-          setCompletedCount(i + 1);
-        } catch (err) {
-          const detail = err.response?.data?.message || err.message || 'Lỗi không xác định';
-          setLogMessages((prev) => [...prev, `  ✗ Thất bại: ${detail}`]);
-        }
-      }
-
-      setLogMessages((prev) => [...prev, 'Hoàn thành tiến trình nạp RAG.']);
-    } catch (err) {
-      setErrorMessage('Không thể tải danh sách sách hoặc xảy ra lỗi trong quá trình nạp.');
-    } finally {
-      setIsIngesting(false);
-      setCurrentBook('');
-    }
-  };
-
-  if (!stats) return <p>Đang tải dữ liệu dashboard...</p>;
+  if (!stats) return <p>Loading dashboard...</p>;
 
   return (
     <section className="stack">
       <h1>Admin Dashboard</h1>
       <div className="stats-grid">
-        <div className="panel"><strong>Người dùng</strong><p>{stats.totalUsers}</p></div>
-        <div className="panel"><strong>Sách</strong><p>{stats.totalBooks}</p></div>
-        <div className="panel"><strong>Đơn hàng</strong><p>{stats.totalOrders}</p></div>
-        <div className="panel"><strong>Doanh thu</strong><p>{formatCurrency(stats.recognizedRevenue)}</p></div>
+        <div className="panel"><strong>Users</strong><p>{stats.totalUsers}</p></div>
+        <div className="panel"><strong>Books</strong><p>{stats.totalBooks}</p></div>
+        <div className="panel"><strong>Orders</strong><p>{stats.totalOrders}</p></div>
+        <div className="panel"><strong>Revenue</strong><p>{formatCurrency(stats.recognizedRevenue)}</p></div>
       </div>
 
       <div className="panel" style={{ marginTop: '24px' }}>

@@ -1,6 +1,12 @@
 import { apiClient } from './apiClient';
 
 export const orderService = {
-  getOrders: () => apiClient.get('/orders'),
-  getOrderById: (id) => apiClient.get(`/orders/${id}`),
+  async getOrders() {
+    const page = await apiClient.get('/orders?page=0&size=100');
+    return page?.items || [];
+  },
+
+  getOrderById(id) {
+    return apiClient.get(`/orders/${id}`);
+  },
 };

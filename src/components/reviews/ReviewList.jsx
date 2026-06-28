@@ -1,7 +1,7 @@
 import { EmptyState } from '../ui/State';
 
 export default function ReviewList({ reviews }) {
-  if (!reviews.length) return <EmptyState text="Chua co review." />;
+  if (!reviews.length) return <EmptyState text="No reviews yet." />;
   return (
     <div className="review-list">
       {reviews.map((review) => (

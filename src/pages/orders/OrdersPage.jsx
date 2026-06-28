@@ -10,21 +10,19 @@ export default function OrdersPage() {
 
   useEffect(() => {
     orderService.getOrders()
-      .then(data => {
-        setOrders(data.items || data.content || (Array.isArray(data) ? data : []));
-      })
-      .catch(err => console.error("Lỗi lấy danh sách đơn hàng:", err));
+      .then(setOrders)
+      .catch(err => console.error('Failed to load orders:', err));
   }, []);
 
   return (
     <section className="stack">
-      <h1>Đơn hàng của tôi</h1>
+      <h1>My Orders</h1>
       <Table
         columns={[
-          { key: 'id', label: 'Mã đơn' },
-          { key: 'status', label: 'Trạng thái', render: (row) => <OrderStatusBadge status={row.status} /> },
-          { key: 'total', label: 'Tổng tiền', render: (row) => formatCurrency(row.total) },
-          { key: 'action', label: 'Thao tác', render: (row) => <Link to={`/orders/${row.id}`}>Xem</Link> },
+          { key: 'id', label: 'Order ID' },
+          { key: 'status', label: 'Status', render: (row) => <OrderStatusBadge status={row.status} /> },
+          { key: 'total', label: 'Total', render: (row) => formatCurrency(row.total) },
+          { key: 'action', label: 'Actions', render: (row) => <Link to={`/orders/${row.id}`}>View</Link> },
         ]}
         rows={orders}
       />

@@ -1,7 +1,10 @@
-export default function Button({ children, className = '', ...props }) {
+export default function Button({ children, loading, ...props }) {
   return (
-    <button className={`btn ${className}`.trim()} {...props}>
-      {children}
+    <button
+      {...props}
+      disabled={props.disabled || loading}
+    >
+      {loading ? 'Processing...' : children}
     </button>
   );
 }

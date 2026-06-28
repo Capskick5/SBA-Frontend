@@ -7,6 +7,7 @@ const links = [
   ['/admin/orders', 'Orders'],
   ['/admin/users', 'Users'],
   ['/admin/reviews', 'Reviews'],
+  ['/', 'Main Page'],
 ];
 
 export default function AdminLayout({ children }) {

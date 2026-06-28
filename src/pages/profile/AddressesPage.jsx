@@ -119,7 +119,7 @@ export default function AddressesPage() {
     <section className="stack">
       <h1>Addresses</h1>
       {error && <ErrorState text={error} />}
-      {!addresses.length && !error && <EmptyState text="Chua co dia chi nao." />}
+      {!addresses.length && !error && <EmptyState text="No addresses yet." />}
       {addresses.map((address) => (
         <div className="panel" key={address.id}>
           <strong>{address.recipient}</strong>
