@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { bookService } from '../../services/bookService';
 import CatalogFilters from '../../components/catalog/CatalogFilters';
 import BookGrid from '../../components/catalog/BookGrid';
 import Pagination from '../../components/catalog/Pagination';
+import { ErrorState, LoadingState } from '../../components/ui/State';
 
 const PAGE_SIZE = 20;
 const DEFAULT_SORT = 'title_asc';
@@ -20,7 +21,9 @@ export default function CatalogPage() {
   const [categories, setCategories] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
 
   const query = searchParams.get('query') || '';
   const category = searchParams.get('category') || DEFAULT_CATEGORY;
@@ -31,27 +34,43 @@ export default function CatalogPage() {
     bookService.getCategories().then(setCategories).catch(() => setCategories([]));
   }, []);
 
-  useEffect(() => {
+  const loadBooks = useCallback(() => {
+    let active = true;
+
     bookService
       .getBooks({ query, category, sort, page: currentPage - 1, size: PAGE_SIZE })
       .then((result) => {
+        if (!active) return;
         setBooks(result.items);
         setTotalItems(result.totalItems);
         setTotalPages(result.totalPages);
         setError('');
       })
       .catch(() => {
+        if (!active) return;
         setBooks([]);
         setTotalItems(0);
         setTotalPages(0);
         setError('Could not load books from backend.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
       });
+
+    return () => {
+      active = false;
+    };
   }, [query, category, sort, currentPage]);
+
+  useEffect(() => loadBooks(), [loadBooks, retryCount]);
 
   const showingStart = totalItems === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const showingEnd = Math.min((currentPage - 1) * PAGE_SIZE + books.length, totalItems);
 
   const updateCatalogUrl = (changes, { resetPage = false } = {}) => {
+    setLoading(true);
+    setError('');
+
     const nextParams = new URLSearchParams(searchParams);
 
     Object.entries(changes).forEach(([key, value]) => {
@@ -76,6 +95,12 @@ export default function CatalogPage() {
     setSearchParams(nextParams, { replace: true });
   };
 
+  const retryLoadBooks = () => {
+    setLoading(true);
+    setError('');
+    setRetryCount((count) => count + 1);
+  };
+
   return (
     <section className="stack">
       <div>
@@ -91,16 +116,29 @@ export default function CatalogPage() {
         setSort={(value) => updateCatalogUrl({ sort: value }, { resetPage: true })}
         categories={categories}
       />
-      <p className="muted">
-        Showing {showingStart}-{showingEnd} of {totalItems} books
-      </p>
-      {error && <p className="form-error">{error}</p>}
-      <BookGrid books={books} />
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={(page) => updateCatalogUrl({ page })}
-      />
+      {!loading && !error && (
+        <p className="muted">
+          Showing {showingStart}-{showingEnd} of {totalItems} books
+        </p>
+      )}
+      {loading && <LoadingState text="Loading books..." />}
+      {!loading && error && (
+        <ErrorState text={error}>
+          <button className="btn" type="button" onClick={retryLoadBooks}>
+            Retry
+          </button>
+        </ErrorState>
+      )}
+      {!loading && !error && (
+        <>
+          <BookGrid books={books} />
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => updateCatalogUrl({ page })}
+          />
+        </>
+      )}
     </section>
   );
 }

@@ -446,6 +446,10 @@ td {
   text-align: center;
 }
 
+.state p {
+  margin: 0 0 12px;
+}
+
 .state-error {
   border-color: #111;
 }
