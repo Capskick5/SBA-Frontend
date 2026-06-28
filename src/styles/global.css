@@ -313,6 +313,8 @@ textarea {
 .auth-footer {
   margin-top: 12px;
   color: #555;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .form-section {
@@ -340,11 +342,26 @@ textarea {
 
 .cart-row {
   display: grid;
-  grid-template-columns: 72px 1fr auto auto auto;
+  grid-template-columns: 24px 72px minmax(0, 1fr) 122px 130px auto;
   gap: 14px;
   align-items: center;
   border: 1px solid #ddd;
   padding: 12px;
+}
+
+.cart-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  font-weight: 600;
+}
+
+.cart-row-check {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #111;
 }
 
 .cart-row img {
@@ -355,9 +372,28 @@ textarea {
 }
 
 .quantity {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 34px 46px 34px;
+  gap: 6px;
   align-items: center;
+  justify-content: center;
+  width: 122px;
+}
+
+.quantity button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
+.quantity span {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 46px;
+  height: 34px;
+  border: 1px solid #ddd;
+  font-variant-numeric: tabular-nums;
 }
 
 .summary-row {
@@ -365,6 +401,8 @@ textarea {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+  border-top: 1px solid #ddd;
+  padding-top: 12px;
 }
 
 .checkout-grid {

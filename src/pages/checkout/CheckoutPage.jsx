@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import AddressForm from '../../components/checkout/AddressForm';
 import CheckoutSummary from '../../components/checkout/CheckoutSummary';
@@ -9,6 +10,7 @@ import { cartService } from '../../services/cartService';
 import { checkoutService } from '../../services/checkoutService';
 
 export default function CheckoutPage() {
+  const [searchParams] = useSearchParams();
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [cartItemIds, setCartItemIds] = useState([]);
@@ -32,7 +34,12 @@ export default function CheckoutPage() {
     Promise.all([addressService.list(), cartService.getCart()])
       .then(([addrList, cart]) => {
         if (!active) return;
-        const itemIds = (cart.items || []).map((item) => item.itemId);
+        const cartIds = (cart.items || []).map((item) => item.itemId);
+        const requestedIds = (searchParams.get('items') || '')
+          .split(',')
+          .map((id) => Number(id))
+          .filter((id) => cartIds.includes(id));
+        const itemIds = requestedIds.length > 0 ? requestedIds : cartIds;
         const defaultAddress = addrList.find((address) => address.isDefault) || addrList[0];
 
         setAddresses(addrList);
@@ -45,12 +52,12 @@ export default function CheckoutPage() {
         setPreview({ items: [], subtotal: 0, shippingFee: 0, total: 0 });
         return null;
       })
-      .catch((err) => console.error("Lỗi tải trang checkout:", err));
+      .catch((err) => console.error('Failed to load checkout page:', err));
 
     return () => {
       active = false;
     };
-  }, []);
+  }, [searchParams]);
 
   const handleAddressChange = async (event) => {
     const addressId = Number(event.target.value);
@@ -58,7 +65,7 @@ export default function CheckoutPage() {
     try {
       await refreshPreview(addressId, cartItemIds);
     } catch (err) {
-      console.error("Lỗi tải preview:", err);
+      console.error('Failed to load checkout preview:', err);
     }
   };
 
@@ -67,12 +74,11 @@ export default function CheckoutPage() {
       const key = uuidv4();
       const result = await checkoutService.checkout(selectedAddressId, cartItemIds, key);
 
-      // Redirect sang cổng thanh toán VNPAY từ backend
       if (result.checkoutUrl) {
         window.location.href = result.checkoutUrl;
       }
     } catch (err) {
-      alert("Checkout thất bại: " + (err.response?.data?.message || "Lỗi hệ thống"));
+      alert('Checkout failed: ' + (err.response?.data?.message || 'System error'));
     }
   };
 
