@@ -1,50 +1,54 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import Button from '../../components/ui/Button';
-import ReviewList from '../../components/reviews/ReviewList';
-import { authService } from '../../services/authService';
+import { useParams } from 'react-router-dom';
+import AddToCartButton from '../../components/catalog/AddToCartButton';
+import { ErrorState, LoadingState } from '../../components/ui/State';
 import { bookService } from '../../services/bookService';
-import { cartService } from '../../services/cartService';
-import { reviewService } from '../../services/reviewService';
 import { formatCurrency } from '../../utils/formatters';
-import { useAuth } from '../../context/AuthContext';
 
 export default function BookDetailPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const { user } = useAuth();
   const [book, setBook] = useState(null);
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
+    let active = true;
+
     bookService
       .getBookById(id)
       .then((result) => {
+        if (!active) return;
         setBook(result);
         setError('');
       })
       .catch(() => {
+        if (!active) return;
         setBook(null);
         setError('Could not load book detail from backend.');
-      })
-      .finally(() => setLoading(false));
-    reviewService.getReviewsByBookId(id).then(setReviews);
-  }, [id]);
+      });
 
-  if (loading) return <p>Loading book...</p>;
-  if (error) return <p className="form-error">{error}</p>;
-  if (!book) return <p>Book not found.</p>;
+    return () => {
+      active = false;
+    };
+  }, [id, retryCount]);
 
-  const addToCart = async () => {
-    if (!authService.getCurrentUser()) {
-      navigate(`/login?redirect=/books/${book.id}`);
-      return;
-    }
-    await cartService.addItem(book, 1);
-    navigate('/cart');
+  const retryLoadBook = () => {
+    setBook(null);
+    setError('');
+    setRetryCount((count) => count + 1);
   };
+
+  if (!error && String(book?.id || '') !== String(id)) return <LoadingState text="Loading book..." />;
+  if (error) {
+    return (
+      <ErrorState text={error}>
+        <button className="btn" type="button" onClick={retryLoadBook}>
+          Retry
+        </button>
+      </ErrorState>
+    );
+  }
+  if (!book) return <ErrorState text="Book not found." />;
 
   return (
     <section className="detail-grid">
@@ -58,17 +62,12 @@ export default function BookDetailPage() {
           <p className={`stock-badge ${book.stock > 0 ? 'is-available' : 'is-empty'}`}>
             {book.stock > 0 ? `In stock: ${book.stock}` : 'Out of stock'}
           </p>
-          {user?.role !== 'ADMIN' && (
-            <Button onClick={addToCart} disabled={book.stock === 0}>Add to Cart</Button>
-          )}
+          <AddToCartButton book={book} redirectTo={`/books/${book.id}`} />
         </section>
         <section className="detail-section">
           <h2>Description</h2>
           <p>{book.description}</p>
         </section>
-        <h2>Reviews</h2>
-        <ReviewList reviews={reviews} />
-        <p className="muted">You can review this book after a delivered order includes it.</p>
       </div>
     </section>
   );
