@@ -286,10 +286,11 @@ textarea {
   box-shadow: 0 4px 12px var(--accent-glow);
 }
 
-.register-btn:hover {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px var(--accent-glow);
+.auth-buttons .register-btn:hover {
+  background: var(--accent);
+  color: #fff !important;
+  transform: translateY(-1px) scale(1.04);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.26);
 }
 
 /* Profile Dropdown */
