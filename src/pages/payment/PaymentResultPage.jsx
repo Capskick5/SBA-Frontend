@@ -1,20 +1,41 @@
-import { Link, useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
 import Button from '../../components/ui/Button';
+import { paymentService } from '../../services/paymentService';
 
 export default function PaymentResultPage() {
-  const [params] = useSearchParams();
-  const status = params.get('status') || 'pending';
+  const [searchParams] = useSearchParams();
+  const [status, setStatus] = useState('loading');
+
+  useEffect(() => {
+    const verify = async () => {
+      try {
+        const params = Object.fromEntries([...searchParams]);
+        const result = await paymentService.verifyPayment(params);
+        setStatus(result.status === 'PAID' ? 'success' : 'failed');
+      } catch {
+        setStatus('failed');
+      }
+    };
+    verify();
+  }, [searchParams]);
+
+  if (status === 'loading') return <div>Verifying payment...</div>;
+
   return (
-    <section className="narrow stack">
-      <h1>Payment Result</h1>
-      <div className="panel">
-        <p>Status: <strong>{status}</strong></p>
-        <p>This screen supports mock states for success, failed, cancelled, and pending.</p>
-      </div>
-      <div className="actions">
-        <Link to="/orders/1001"><Button>View Order</Button></Link>
-        <Link to="/"><Button>Back Home</Button></Link>
-      </div>
+    <section className="center-panel">
+      {status === 'success' ? (
+        <>
+          <h1 style={{ color: 'green' }}>Payment Successful</h1>
+          <p>Thank you for shopping at BookVerse.</p>
+        </>
+      ) : (
+        <>
+          <h1 style={{ color: 'red' }}>Payment Failed</h1>
+          <p>Please check your order or try again later.</p>
+        </>
+      )}
+      <Link to="/orders"><Button>View My Orders</Button></Link>
     </section>
   );
 }

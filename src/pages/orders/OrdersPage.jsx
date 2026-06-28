@@ -7,17 +7,22 @@ import { formatCurrency } from '../../utils/formatters';
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
-  useEffect(() => { orderService.getOrders().then(setOrders); }, []);
+
+  useEffect(() => {
+    orderService.getOrders()
+      .then(setOrders)
+      .catch(err => console.error('Failed to load orders:', err));
+  }, []);
 
   return (
     <section className="stack">
       <h1>My Orders</h1>
       <Table
         columns={[
-          { key: 'id', label: 'Order' },
+          { key: 'id', label: 'Order ID' },
           { key: 'status', label: 'Status', render: (row) => <OrderStatusBadge status={row.status} /> },
           { key: 'total', label: 'Total', render: (row) => formatCurrency(row.total) },
-          { key: 'action', label: 'Action', render: (row) => <Link to={`/orders/${row.id}`}>View</Link> },
+          { key: 'action', label: 'Actions', render: (row) => <Link to={`/orders/${row.id}`}>View</Link> },
         ]}
         rows={orders}
       />

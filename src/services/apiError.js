@@ -1,18 +1,18 @@
 export const ERROR_MESSAGES = {
-  VALIDATION_ERROR: 'Du lieu khong hop le.',
-  UNAUTHORIZED: 'Email hoac mat khau khong dung.',
-  FORBIDDEN: 'Ban khong co quyen thuc hien thao tac nay.',
-  RESOURCE_NOT_FOUND: 'Khong tim thay tai nguyen.',
-  DUPLICATE_RESOURCE: 'Email da duoc su dung.',
-  EMAIL_NOT_VERIFIED: 'Email chua duoc xac thuc. Vui long xac thuc truoc khi dang nhap.',
-  ACCOUNT_DISABLED: 'Tai khoan da bi vo hieu hoa.',
-  OTP_INVALID: 'Ma OTP khong dung.',
-  OTP_EXPIRED: 'Ma OTP da het han.',
-  RATE_LIMITED: 'Vui long thu lai sau it phut.',
+  VALIDATION_ERROR: 'The submitted data is invalid.',
+  UNAUTHORIZED: 'Email or password is incorrect.',
+  FORBIDDEN: 'You do not have permission to perform this action.',
+  RESOURCE_NOT_FOUND: 'Resource not found.',
+  DUPLICATE_RESOURCE: 'Email is already in use.',
+  EMAIL_NOT_VERIFIED: 'Email is not verified. Please verify it before logging in.',
+  ACCOUNT_DISABLED: 'This account has been disabled.',
+  OTP_INVALID: 'OTP is invalid.',
+  OTP_EXPIRED: 'OTP has expired.',
+  RATE_LIMITED: 'Please try again in a few minutes.',
 };
 
 export function createError({ code = 400, message, error_type, errors = null }) {
-  const err = new Error(message || ERROR_MESSAGES[error_type] || 'Co loi xay ra.');
+  const err = new Error(message || ERROR_MESSAGES[error_type] || 'Something went wrong.');
   err.code = code;
   err.error_type = error_type;
   err.errors = errors;

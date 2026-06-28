@@ -1,27 +1,18 @@
-import { mockAddresses } from '../mocks/mockData';
-import { addressService } from './addressService';
-import { cartService } from './cartService';
+import { apiClient } from './apiClient';
+
+const payloadFor = (addressId, cartItemIds) => ({
+  addressId,
+  cartItemIds,
+});
 
 export const checkoutService = {
-  getAddresses() {
-    return addressService.list().catch(() => Promise.resolve(mockAddresses));
+  preview(addressId, cartItemIds) {
+    return apiClient.post('/orders/preview', payloadFor(addressId, cartItemIds));
   },
-  async preview(address = mockAddresses[0]) {
-    const cart = await cartService.getCart();
-    const shippingFee = cart.items.length ? 30000 : 0;
-    return {
-      items: cart.items,
-      subtotal: cart.subtotal,
-      shippingFee,
-      total: cart.subtotal + shippingFee,
-      address,
-    };
-  },
-  checkout() {
-    return Promise.resolve({
-      orderId: 1001,
-      paymentId: 501,
-      checkoutUrl: '/payment/result?status=pending',
+
+  checkout(addressId, cartItemIds, idempotencyKey) {
+    return apiClient.post('/orders', payloadFor(addressId, cartItemIds), {
+      headers: { 'Idempotency-Key': idempotencyKey },
     });
   },
 };

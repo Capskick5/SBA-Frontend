@@ -26,10 +26,10 @@ textarea {
 }
 
 .navbar {
-  display: grid;
-  grid-template-columns: auto minmax(180px, 1fr) auto;
+  display: flex;
   gap: 16px;
   align-items: center;
+  justify-content: space-between;
   padding: 14px 24px;
   border-bottom: 1px solid #ddd;
 }
@@ -40,7 +40,6 @@ textarea {
   text-decoration: none;
 }
 
-.nav-search,
 .field input,
 .field select,
 .field textarea {
@@ -103,10 +102,9 @@ textarea {
 .book-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 18px;
+  gap: 22px;
 }
 
-.book-card,
 .panel,
 .summary {
   border: 1px solid #ddd;
@@ -116,14 +114,70 @@ textarea {
 
 .book-card {
   display: grid;
-  gap: 12px;
+  align-content: start;
+  gap: 10px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid transparent;
+}
+
+.book-card:hover {
+  border-color: #ddd;
+}
+
+.book-card-cover {
+  display: grid;
+  place-items: center;
+  text-decoration: none;
 }
 
 .book-card img {
-  width: 100%;
+  width: min(100%, 188px);
   aspect-ratio: 3 / 4;
   object-fit: cover;
   border: 1px solid #ddd;
+}
+
+.book-card-title {
+  min-height: 60px;
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.12;
+}
+
+.book-card-title a {
+  display: -webkit-box;
+  overflow: hidden;
+  text-decoration: none;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.book-card-title a:hover {
+  text-decoration: none;
+}
+
+.book-card-author {
+  min-height: 20px;
+  margin: 8px 0;
+  color: #555;
+}
+
+.book-card-price {
+  display: block;
+  margin: 8px 0;
+  font-size: 20px;
+}
+
+.stock-badge {
+  display: block;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+}
+
+.stock-badge.is-empty {
+  color: #666;
 }
 
 .muted {
@@ -149,6 +203,26 @@ textarea {
   cursor: not-allowed;
 }
 
+.pagination {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.pagination-pages {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pagination .is-active {
+  background: #111;
+  color: #fff;
+}
+
 .detail-grid {
   grid-template-columns: minmax(220px, 340px) 1fr;
   align-items: start;
@@ -157,6 +231,48 @@ textarea {
 .detail-cover {
   width: 100%;
   border: 1px solid #ddd;
+}
+
+.detail-purchase {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+  border: 1px solid #ddd;
+  padding: 16px;
+}
+
+.detail-purchase h2 {
+  margin: 0;
+}
+
+.detail-section {
+  display: grid;
+  gap: 8px;
+}
+
+.detail-section h2,
+.detail-section p {
+  margin: 0;
+}
+
+.review-list {
+  display: grid;
+  gap: 12px;
+}
+
+.review-card {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #ddd;
+  padding: 14px;
+}
+
+.review-card p {
+  margin: 0;
+}
+
+.review-stars {
+  letter-spacing: 1px;
 }
 
 .form {
@@ -197,6 +313,8 @@ textarea {
 .auth-footer {
   margin-top: 12px;
   color: #555;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .form-section {
@@ -224,11 +342,26 @@ textarea {
 
 .cart-row {
   display: grid;
-  grid-template-columns: 72px 1fr auto auto auto;
+  grid-template-columns: 24px 72px minmax(0, 1fr) 122px 130px auto;
   gap: 14px;
   align-items: center;
   border: 1px solid #ddd;
   padding: 12px;
+}
+
+.cart-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  font-weight: 600;
+}
+
+.cart-row-check {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #111;
 }
 
 .cart-row img {
@@ -239,9 +372,28 @@ textarea {
 }
 
 .quantity {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 34px 46px 34px;
+  gap: 6px;
   align-items: center;
+  justify-content: center;
+  width: 122px;
+}
+
+.quantity button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
+.quantity span {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 46px;
+  height: 34px;
+  border: 1px solid #ddd;
+  font-variant-numeric: tabular-nums;
 }
 
 .summary-row {
@@ -249,6 +401,8 @@ textarea {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+  border-top: 1px solid #ddd;
+  padding-top: 12px;
 }
 
 .checkout-grid {
@@ -342,7 +496,11 @@ td {
 }
 
 @media (max-width: 760px) {
-  .navbar,
+  .navbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .filters,
   .detail-grid,
   .checkout-grid,

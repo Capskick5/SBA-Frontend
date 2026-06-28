@@ -2,24 +2,91 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import OrderStatusBadge from '../../components/orders/OrderStatusBadge';
 import Table from '../../components/ui/Table';
+import Button from '../../components/ui/Button';
 import { adminService } from '../../services/adminService';
 import { formatCurrency } from '../../utils/formatters';
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
-  useEffect(() => { adminService.getOrders().then(setOrders); }, []);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [sortBy, setSortBy] = useState('id,desc');
+
+  const loadOrders = (pageIndex, currentSort) => {
+    adminService.getOrders({ page: pageIndex, size: 10, sort: currentSort })
+      .then((page) => {
+        setOrders(page.items || []);
+        setTotalPages(page.totalPages || 1);
+      })
+      .catch((err) => {
+        console.error('Failed to load orders:', err);
+        setOrders([]);
+        setTotalPages(1);
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadOrders(currentPage, sortBy);
+  }, [currentPage, sortBy]);
+
   return (
     <section className="stack">
-      <h1>Manage Orders</h1>
-      <Table
-        columns={[
-          { key: 'id', label: 'Order' },
-          { key: 'status', label: 'Status', render: (row) => <OrderStatusBadge status={row.status} /> },
-          { key: 'total', label: 'Total', render: (row) => formatCurrency(row.total) },
-          { key: 'action', label: 'Action', render: (row) => <Link to={`/admin/orders/${row.id}`}>View</Link> },
-        ]}
-        rows={orders}
-      />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Order Management</h1>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <label htmlFor="sortOrders" style={{ fontWeight: 'bold' }}>Sort:</label>
+          <select
+            id="sortOrders"
+            value={sortBy}
+            onChange={(event) => {
+              setSortBy(event.target.value);
+              setCurrentPage(0);
+            }}
+            style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
+          >
+            <option value="id,desc">Order ID: Newest first</option>
+            <option value="id,asc">Order ID: Oldest first</option>
+            <option value="total,desc">Value: High to low</option>
+            <option value="total,asc">Value: Low to high</option>
+          </select>
+        </div>
+      </div>
+
+      {loading ? (
+        <p>Loading orders...</p>
+      ) : (
+        <>
+          <Table
+            columns={[
+              { key: 'id', label: 'Order ID' },
+              { key: 'userId', label: 'Customer', render: (row) => row.userId || 'N/A' },
+              {
+                key: 'createdAt',
+                label: 'Order Date',
+                render: (row) => (row.createdAt ? new Date(row.createdAt).toLocaleDateString('en-US') : 'N/A'),
+              },
+              { key: 'status', label: 'Status', render: (row) => <OrderStatusBadge status={row.status} /> },
+              { key: 'total', label: 'Total', render: (row) => <strong style={{ color: '#e53e3e' }}>{formatCurrency(row.total)}</strong> },
+              { key: 'action', label: 'Actions', render: (row) => <Link to={`/admin/orders/${row.id}`} className="btn-link">Details</Link> },
+            ]}
+            rows={orders}
+          />
+
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '20px' }}>
+            <Button type="button" disabled={currentPage === 0} onClick={() => setCurrentPage((prev) => prev - 1)}>
+              &laquo; Previous
+            </Button>
+            <span style={{ fontWeight: 'bold' }}>
+              Page {currentPage + 1} / {totalPages}
+            </span>
+            <Button type="button" disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage((prev) => prev + 1)}>
+              Next &raquo;
+            </Button>
+          </div>
+        </>
+      )}
     </section>
   );
 }

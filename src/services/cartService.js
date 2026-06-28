@@ -1,43 +1,49 @@
-import { mockCartItems } from '../mocks/mockData';
+import { apiClient } from './apiClient';
 
-let cartItems = [...mockCartItems];
+const fallbackCover = (title) => `https://placehold.co/120x170?text=${encodeURIComponent(title || 'Book')}`;
 
-const recalculate = () =>
-  cartItems.map((item) => ({ ...item, lineTotal: item.price * item.quantity }));
+function mapCartItem(item) {
+  const title = item.bookTitle || 'Untitled book';
+  return {
+    itemId: item.id,
+    bookId: item.bookId,
+    title,
+    coverUrl: item.bookCoverUrl || fallbackCover(title),
+    price: item.bookPrice || 0,
+    quantity: item.quantity || 1,
+    lineTotal: item.lineTotal || 0,
+    available: item.available,
+  };
+}
+
+function mapCart(cart) {
+  return {
+    id: cart?.id,
+    items: (cart?.items || []).map(mapCartItem),
+    subtotal: cart?.subtotal || 0,
+  };
+}
 
 export const cartService = {
-  getCart() {
-    cartItems = recalculate();
-    return Promise.resolve({
-      items: cartItems,
-      subtotal: cartItems.reduce((sum, item) => sum + item.lineTotal, 0),
-    });
+  async getCart() {
+    return mapCart(await apiClient.get('/cart'));
   },
-  addItem(book, quantity = 1) {
-    const existing = cartItems.find((item) => item.bookId === book.id);
-    if (existing) {
-      existing.quantity += quantity;
-    } else {
-      cartItems.push({
-        itemId: Date.now(),
-        bookId: book.id,
-        title: book.title,
-        coverUrl: book.coverUrl,
-        price: book.price,
-        quantity,
-        lineTotal: book.price * quantity,
-      });
-    }
-    return this.getCart();
+
+  async addItem(book, quantity = 1) {
+    return mapCart(await apiClient.post('/cart/items', {
+      bookId: book.id,
+      quantity,
+    }));
   },
-  updateQuantity(itemId, quantity) {
-    cartItems = cartItems.map((item) =>
-      item.itemId === itemId ? { ...item, quantity: Math.max(1, quantity) } : item,
-    );
-    return this.getCart();
+
+  async updateQuantity(itemId, bookId, quantity) {
+    return mapCart(await apiClient.put(`/cart/items/${itemId}`, {
+      bookId: bookId,
+      quantity: Math.max(1, quantity),
+    }));
   },
-  removeItem(itemId) {
-    cartItems = cartItems.filter((item) => item.itemId !== itemId);
-    return this.getCart();
+
+  async removeItem(itemId) {
+    return mapCart(await apiClient.delete(`/cart/items/${itemId}`));
   },
 };

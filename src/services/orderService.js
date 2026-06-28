@@ -1,10 +1,12 @@
-import { mockOrders } from '../mocks/mockData';
+import { apiClient } from './apiClient';
 
 export const orderService = {
-  getOrders() {
-    return Promise.resolve(mockOrders);
+  async getOrders() {
+    const page = await apiClient.get('/orders?page=0&size=100');
+    return page?.items || [];
   },
+
   getOrderById(id) {
-    return Promise.resolve(mockOrders.find((order) => String(order.id) === String(id)) || mockOrders[0]);
+    return apiClient.get(`/orders/${id}`);
   },
 };

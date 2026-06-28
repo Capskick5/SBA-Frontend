@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import ReviewList from '../../components/reviews/ReviewList';
-import ReviewForm from '../../components/reviews/ReviewForm';
 import { authService } from '../../services/authService';
 import { bookService } from '../../services/bookService';
 import { cartService } from '../../services/cartService';
@@ -14,12 +13,26 @@ export default function BookDetailPage() {
   const navigate = useNavigate();
   const [book, setBook] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    bookService.getBookById(id).then(setBook);
+    bookService
+      .getBookById(id)
+      .then((result) => {
+        setBook(result);
+        setError('');
+      })
+      .catch(() => {
+        setBook(null);
+        setError('Could not load book detail from backend.');
+      })
+      .finally(() => setLoading(false));
     reviewService.getReviewsByBookId(id).then(setReviews);
   }, [id]);
 
+  if (loading) return <p>Loading book...</p>;
+  if (error) return <p className="form-error">{error}</p>;
   if (!book) return <p>Book not found.</p>;
 
   const addToCart = async () => {
@@ -38,13 +51,20 @@ export default function BookDetailPage() {
         <p className="muted">{book.category}</p>
         <h1>{book.title}</h1>
         <p>{book.author}</p>
-        <h2>{formatCurrency(book.price)}</h2>
-        <p>{book.stock > 0 ? `In stock: ${book.stock}` : 'Out of stock'}</p>
-        <p>{book.description}</p>
-        <Button onClick={addToCart} disabled={book.stock === 0}>Add to Cart</Button>
+        <section className="detail-purchase">
+          <h2>{formatCurrency(book.price)}</h2>
+          <p className={`stock-badge ${book.stock > 0 ? 'is-available' : 'is-empty'}`}>
+            {book.stock > 0 ? `In stock: ${book.stock}` : 'Out of stock'}
+          </p>
+          <Button onClick={addToCart} disabled={book.stock === 0}>Add to Cart</Button>
+        </section>
+        <section className="detail-section">
+          <h2>Description</h2>
+          <p>{book.description}</p>
+        </section>
         <h2>Reviews</h2>
         <ReviewList reviews={reviews} />
-        <ReviewForm />
+        <p className="muted">You can review this book after a delivered order includes it.</p>
       </div>
     </section>
   );

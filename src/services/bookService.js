@@ -1,28 +1,43 @@
-import { mockBooks, mockCategories } from '../mocks/mockData';
-import { normalizeText } from '../utils/formatters';
+import { apiGet } from './apiClient';
+
+const coverFor = (book) => `https://placehold.co/240x340?text=${encodeURIComponent(book.title || 'Book')}`;
+
+function mapBook(book) {
+  return {
+    ...book,
+    category: book.category?.name || 'General',
+    categoryId: book.category?.id,
+    coverUrl: book.coverUrl || coverFor(book),
+    ratingAvg: Number(book.ratingAvg || 0),
+  };
+}
+
+function mapSort(sort) {
+  if (sort === 'title_asc') return 'title,asc';
+  return sort;
+}
 
 export const bookService = {
-  getBooks({ query = '', category = 'all', sort = 'title_asc' } = {}) {
-    const q = normalizeText(query);
-    let books = mockBooks.filter((book) => {
-      const matchesQuery = !q || normalizeText(`${book.title} ${book.author}`).includes(q);
-      const matchesCategory = category === 'all' || book.category === category;
-      return matchesQuery && matchesCategory;
+  async getBooks({ query = '', category = 'all', sort = 'title_asc', page = 0, size = 20 } = {}) {
+    const pageData = await apiGet('/books', {
+      query,
+      categoryId: category === 'all' ? undefined : category,
+      sort: mapSort(sort),
+      page,
+      size,
     });
 
-    books = [...books].sort((a, b) => {
-      if (sort === 'price_asc') return a.price - b.price;
-      if (sort === 'price_desc') return b.price - a.price;
-      if (sort === 'rating_desc') return b.ratingAvg - a.ratingAvg;
-      return a.title.localeCompare(b.title);
-    });
-
-    return Promise.resolve(books);
+    return {
+      ...pageData,
+      items: (pageData.items || []).map(mapBook),
+    };
   },
-  getBookById(id) {
-    return Promise.resolve(mockBooks.find((book) => String(book.id) === String(id)) || null);
+  async getBookById(id) {
+    const book = await apiGet(`/books/${id}`);
+    return mapBook(book);
   },
-  getCategories() {
-    return Promise.resolve(mockCategories);
+  async getCategories() {
+    const page = await apiGet('/categories', { page: 0, size: 100 });
+    return page.items || [];
   },
 };

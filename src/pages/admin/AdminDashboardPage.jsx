@@ -4,8 +4,13 @@ import { formatCurrency } from '../../utils/formatters';
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState(null);
-  useEffect(() => { adminService.getStats().then(setStats); }, []);
+
+  useEffect(() => {
+    adminService.getStats().then(setStats);
+  }, []);
+
   if (!stats) return <p>Loading dashboard...</p>;
+
   return (
     <section className="stack">
       <h1>Admin Dashboard</h1>

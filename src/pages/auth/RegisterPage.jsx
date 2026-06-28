@@ -41,10 +41,10 @@ export default function RegisterPage() {
         <Input label="Full name" name="fullName" error={fieldErrors.fullName} required />
         <Input label="Email" name="email" type="email" error={fieldErrors.email} required />
         <Input label="Password" name="password" type="password" error={fieldErrors.password} required />
-        <Button type="submit" disabled={loading}>{loading ? 'Dang xu ly...' : 'Create account'}</Button>
+        <Button type="submit" disabled={loading}>{loading ? 'Processing...' : 'Create account'}</Button>
       </form>
       <AuthFormFooter>
-        <Link to="/login">Da co tai khoan? Dang nhap</Link>
+        <Link to="/login">Already have an account? Log in</Link>
       </AuthFormFooter>
     </section>
   );

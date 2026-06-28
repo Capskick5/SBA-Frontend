@@ -5,16 +5,43 @@ import { adminService } from '../../services/adminService';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
-  useEffect(() => { adminService.getUsers().then(setUsers); }, []);
+
+  const fetchUsers = () => {
+    adminService.getUsers()
+      .then((res) => {
+        const list = res.data?.items || res.items || (Array.isArray(res) ? res : []);
+        setUsers(list);
+      })
+      .catch((err) => console.error('Failed to load users:', err));
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleToggle = async (user) => {
+    try {
+      await adminService.toggleUserStatus(user.id, !user.enabled);
+      fetchUsers();
+    } catch {
+      alert('Failed to update user status.');
+    }
+  };
+
   return (
     <section className="stack">
-      <h1>Manage Users</h1>
+      <h1>User Management</h1>
       <Table
         columns={[
           { key: 'email', label: 'Email' },
           { key: 'fullName', label: 'Name' },
-          { key: 'role', label: 'Role' },
-          { key: 'action', label: 'Action', render: () => <Button>Enable/Disable</Button> },
+          { key: 'enabled', label: 'Status', render: (row) => row.enabled ? 'Active' : 'Locked' },
+          {
+            key: 'action', label: 'Actions', render: (row) =>
+              <Button onClick={() => handleToggle(row)}>
+                {row.enabled ? 'Lock' : 'Unlock'}
+              </Button>
+          },
         ]}
         rows={users}
       />
