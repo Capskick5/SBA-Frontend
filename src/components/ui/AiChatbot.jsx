@@ -1,10 +1,21 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../../context/AuthContext';
 import { aiChatService } from '../../services/aiChatService';
 import { cartService } from '../../services/cartService';
 import { formatCurrency } from '../../utils/formatters';
+import { showToast } from '../../utils/toast';
+import { notifyCartUpdated } from '../../utils/cartEvents';
+
+function debounce(func, delay) {
+  let timeout;
+  return function (...args) {
+    const context = this;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(context, args), delay);
+  };
+}
 
 export default function AiChatbot() {
   const { user } = useAuth();
@@ -12,6 +23,7 @@ export default function AiChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isAddingMap, setIsAddingMap] = useState({});
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -19,6 +31,20 @@ export default function AiChatbot() {
       text: 'Hi! Tell me what kind of book you are looking for, and I will help you find a good match.',
     },
   ]);
+
+  const debouncedAddToCart = useRef(
+    debounce(async (book) => {
+      try {
+        const updatedCart = await cartService.addItem(book, 1);
+        notifyCartUpdated(updatedCart);
+        showToast(`Added "${book.title}" to cart!`);
+      } catch (err) {
+        showToast(err.message || 'Failed to add book to cart', 'error');
+      } finally {
+        setIsAddingMap((prev) => ({ ...prev, [book.id]: false }));
+      }
+    }, 500)
+  ).current;
 
   if (!user) {
     return null;
@@ -71,9 +97,11 @@ export default function AiChatbot() {
     handleSend(text);
   };
 
-  const handleAddToCart = async (book) => {
-    await cartService.addItem(book, 1);
-    navigate('/cart');
+
+
+  const handleAddToCart = (book) => {
+    setIsAddingMap((prev) => ({ ...prev, [book.id]: true }));
+    debouncedAddToCart(book);
   };
 
   return (
@@ -123,10 +151,10 @@ export default function AiChatbot() {
                             <button
                               type="button"
                               onClick={() => handleAddToCart(b)}
-                              disabled={b.stock === 0}
+                              disabled={b.stock === 0 || isAddingMap[b.id]}
                               className="btn btn-sm"
                             >
-                              Add
+                              {isAddingMap[b.id] ? 'Adding...' : 'Add'}
                             </button>
                           </div>
                         </div>
@@ -146,15 +174,21 @@ export default function AiChatbot() {
           <div className="ai-chatbot-suggestions">
             <button
               type="button"
-              onClick={() => handleSuggestionClick('Find Java programming books')}
+              onClick={() => handleSuggestionClick('Find books about AI and technology')}
             >
-              Java Programming
+              AI & Technology
             </button>
             <button
               type="button"
-              onClick={() => handleSuggestionClick('Recommend adventure fantasy books')}
+              onClick={() => handleSuggestionClick('Recommend books about psychology and self-help')}
             >
-              Fantasy Books
+              Psychology & Self-Help
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSuggestionClick('Find fiction and literature books')}
+            >
+              Fiction & Literature
             </button>
           </div>
 

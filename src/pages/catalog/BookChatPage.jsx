@@ -108,15 +108,16 @@ export default function BookChatPage() {
 
   const handleCreateSession = async (e) => {
     e.preventDefault();
-    if (chatType === 'BOOK_CHAT' && selectedBookIds.length === 0) {
-      alert('Please select at least one book to chat about.');
+    const bookIds = purchasedBooks.map((b) => b.bookId);
+    if (bookIds.length === 0) {
+      alert('You have no purchased books to chat about.');
       return;
     }
 
-    const title = newChatTitle.trim() || (chatType === 'BOOK_CHAT' ? 'Book Q&A Chat' : 'Catalog Assistant Chat');
+    const title = newChatTitle.trim() || 'Book Q&A Chat';
 
     try {
-      const newSession = await aiChatService.createSession(chatType, title, selectedBookIds);
+      const newSession = await aiChatService.createSession('BOOK_CHAT', title, bookIds);
       setIsModalOpen(false);
       setNewChatTitle('');
       setSelectedBookIds([]);
@@ -196,35 +197,6 @@ export default function BookChatPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1>AI Assistant</h1>
-          <p className="muted">Chat with AI about your books or ask for new recommendations.</p>
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Button
-            onClick={() => {
-              setChatType('BOOK_CHAT');
-              setCurrentSession(null);
-            }}
-            style={{
-              background: chatType === 'BOOK_CHAT' ? 'var(--accent)' : 'var(--surface-alt)',
-              color: chatType === 'BOOK_CHAT' ? '#fff' : 'var(--muted)',
-              borderColor: chatType === 'BOOK_CHAT' ? 'var(--accent)' : 'var(--border)',
-            }}
-          >
-            Book Q&A
-          </Button>
-          <Button
-            onClick={() => {
-              setChatType('BOOK_RECOMMEND');
-              setCurrentSession(null);
-            }}
-            style={{
-              background: chatType === 'BOOK_RECOMMEND' ? 'var(--accent)' : 'var(--surface-alt)',
-              color: chatType === 'BOOK_RECOMMEND' ? '#fff' : 'var(--muted)',
-              borderColor: chatType === 'BOOK_RECOMMEND' ? 'var(--accent)' : 'var(--border)',
-            }}
-          >
-            Catalog Recommend
-          </Button>
         </div>
       </div>
 
@@ -373,39 +345,17 @@ export default function BookChatPage() {
                 />
               </div>
 
-              {chatType === 'BOOK_CHAT' && (
+              {purchasedBooks.length === 0 && (
                 <div className="field">
-                  <label>Select Books to Include in Chat Context (Multi-select)</label>
-                  {purchasedBooks.length === 0 ? (
-                    <p style={{ color: 'var(--error)', fontSize: '14px' }}>
-                      You have no purchased books. Purchase books first to query them.
-                    </p>
-                  ) : (
-                    <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border)', padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {purchasedBooks.map((book) => (
-                        <label key={book.bookId} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '14px', padding: '4px', borderBottom: '1px solid var(--border)' }}>
-                          <input
-                            type="checkbox"
-                            checked={selectedBookIds.includes(book.bookId)}
-                            onChange={() => toggleBookSelection(book.bookId)}
-                            style={{ width: 'auto' }}
-                          />
-                          {book.coverUrl ? (
-                            <img src={book.coverUrl} alt={book.title} style={{ width: '30px', height: '42px', objectFit: 'cover', border: '1px solid var(--border)' }} />
-                          ) : (
-                            <div style={{ width: '30px', height: '42px', background: 'var(--surface-alt)', display: 'flex', alignItems: 'center', justifycontent: 'center', fontSize: '8px', color: 'var(--muted)' }}>No Cover</div>
-                          )}
-                          <span style={{ flex: 1 }}>{book.title}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
+                  <p style={{ color: 'var(--error)', fontSize: '14px' }}>
+                    You have no purchased books. Please purchase books first to start a chat.
+                  </p>
                 </div>
               )}
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
                 <Button type="button" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                <Button type="submit" disabled={chatType === 'BOOK_CHAT' && purchasedBooks.length === 0}>Create Chat</Button>
+                <Button type="submit" disabled={purchasedBooks.length === 0}>Create Chat</Button>
               </div>
             </form>
           </div>

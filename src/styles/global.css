@@ -1376,6 +1376,13 @@ tr:last-child td {
   line-height: 1.5;
 }
 
+.ai-chatbot-message p {
+  margin: 0 0 8px 0;
+}
+.ai-chatbot-message p:last-child {
+  margin-bottom: 0;
+}
+
 .ai-chatbot-message.is-bot {
   align-self: flex-start;
   background: var(--surface);
@@ -1655,6 +1662,13 @@ tr:last-child td {
   line-height: 1.6;
 }
 
+.chat-message-bubble p {
+  margin: 0 0 8px 0;
+}
+.chat-message-bubble p:last-child {
+  margin-bottom: 0;
+}
+
 .chat-message-bubble.user {
   align-self: flex-end;
   background: var(--accent);
@@ -1871,4 +1885,55 @@ tr:last-child td {
 }
 .vnpay-vn {
   color: #ea1c24;
+}
+
+#toast-container {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 24px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  font-size: 14px;
+  font-weight: 500;
+  pointer-events: auto;
+  animation: slideIn 0.3s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast-success {
+  border-left: 4px solid var(--accent);
+}
+
+.toast-error {
+  border-left: 4px solid var(--error);
+}
+
+.toast.fade-out {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
