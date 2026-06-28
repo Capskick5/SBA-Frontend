@@ -77,8 +77,18 @@ export const adminService = {
   },
 
   checkRagHealth: () => api.get('/admin/rag/health').then(res => res.data),
-  ingestBookContent: (bookId) => api.post(`/admin/rag/ingest/${bookId}`).then(res => res.data),
-  ingestBooksBulk: (bookIds) => api.post('/admin/rag/ingest/bulk', bookIds).then(res => res.data),
+  ingestBookContent: (bookId, chunkSize, overlapSize) => {
+    const params = {};
+    if (chunkSize) params.chunkSize = chunkSize;
+    if (overlapSize) params.overlapSize = overlapSize;
+    return api.post(`/admin/rag/ingest/${bookId}`, null, { params }).then(res => res.data);
+  },
+  ingestBooksBulk: (bookIds, chunkSize, overlapSize) => {
+    const params = {};
+    if (chunkSize) params.chunkSize = chunkSize;
+    if (overlapSize) params.overlapSize = overlapSize;
+    return api.post('/admin/rag/ingest/bulk', bookIds, { params }).then(res => res.data);
+  },
   deleteBookIndex: (bookId) => api.delete(`/admin/rag/index/${bookId}`).then(res => res.data),
   deleteBooksIndicesBulk: (bookIds) => api.delete('/admin/rag/index/bulk', { data: bookIds }).then(res => res.data),
   getBookIndexStatus: (bookId) => api.get(`/admin/rag/index/${bookId}/status`).then(res => res.data),

@@ -17,6 +17,7 @@ export default function Navbar() {
       <nav className="nav-links">
         <NavLink to="/cart">Cart</NavLink>
         {user && <NavLink to="/orders">Orders</NavLink>}
+        {user && <NavLink to="/books/chat">AI Chat</NavLink>}
         {user?.role === 'ADMIN' && <NavLink to="/admin">Admin</NavLink>}
         {user ? (
           <>

@@ -16,6 +16,7 @@ import OrdersPage from '../pages/orders/OrdersPage';
 import OrderDetailPage from '../pages/orders/OrderDetailPage';
 import ProfilePage from '../pages/profile/ProfilePage';
 import AddressesPage from '../pages/profile/AddressesPage';
+import BookChatPage from '../pages/catalog/BookChatPage';
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import AdminBooksPage from '../pages/admin/AdminBooksPage';
 import AdminBookDetailPage from '../pages/admin/AdminBookDetailPage';
@@ -52,6 +53,7 @@ export default function AppRoutes() {
       <Route path="/payment/cancel" element={protectedPage(<PaymentResultPage />)} />
       <Route path="/orders" element={protectedPage(<OrdersPage />)} />
       <Route path="/orders/:id" element={protectedPage(<OrderDetailPage />)} />
+      <Route path="/books/chat" element={protectedPage(<BookChatPage />)} />
       <Route path="/profile" element={protectedPage(<ProfilePage />)} />
       <Route path="/profile/addresses" element={protectedPage(<AddressesPage />)} />
       <Route path="/admin" element={admin(<AdminDashboardPage />)} />

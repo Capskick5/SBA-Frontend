@@ -18,6 +18,8 @@ export default function AdminRagPage() {
   const [actionLoading, setActionLoading] = useState({});
   const [bulkProcessing, setBulkProcessing] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [chunkSize, setChunkSize] = useState(500);
+  const [overlapSize, setOverlapSize] = useState(100);
 
   const loadHealth = () => {
     setHealthLoading(true);
@@ -163,7 +165,7 @@ export default function AdminRagPage() {
     setActionLoading(prev => ({ ...prev, [bookId]: 'ingest' }));
     setMessage({ type: '', text: '' });
     try {
-      await adminService.ingestBookContent(bookId);
+      await adminService.ingestBookContent(bookId, chunkSize, overlapSize);
       setMessage({ type: 'success', text: 'Ingested book successfully.' });
       loadBooks(currentPage, searchQuery);
     } catch (err) {
@@ -226,7 +228,7 @@ export default function AdminRagPage() {
     setBulkProcessing(true);
     setMessage({ type: '', text: '' });
     try {
-      await adminService.ingestBooksBulk(ingestableIds);
+      await adminService.ingestBooksBulk(ingestableIds, chunkSize, overlapSize);
       setMessage({ type: 'success', text: `Successfully processed bulk ingestion for ${ingestableIds.length} books.` });
       setSelectedIds([]);
       loadBooks(currentPage, searchQuery);
@@ -369,6 +371,51 @@ export default function AdminRagPage() {
           {message.text}
         </div>
       )}
+
+      <div className="panel" style={{
+        padding: '16px 20px',
+        marginBottom: '20px',
+        background: '#f8fafc',
+        border: '1px solid #e2e8f0',
+        borderRadius: '6px',
+        display: 'flex',
+        gap: '24px',
+        alignItems: 'center'
+      }}>
+        <div style={{ fontWeight: '600', color: '#334155', fontSize: '15px' }}>
+          Ingestion Settings
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <label style={{ fontSize: '14px', color: '#475569', fontWeight: '500' }}>Chunk Size:</label>
+          <input
+            type="number"
+            value={chunkSize}
+            onChange={(e) => setChunkSize(Math.max(1, parseInt(e.target.value) || 0))}
+            style={{
+              width: '80px',
+              padding: '6px 10px',
+              border: '1px solid #cbd5e1',
+              borderRadius: '4px',
+              fontSize: '14px'
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <label style={{ fontSize: '14px', color: '#475569', fontWeight: '500' }}>Overlap Size:</label>
+          <input
+            type="number"
+            value={overlapSize}
+            onChange={(e) => setOverlapSize(Math.max(0, parseInt(e.target.value) || 0))}
+            style={{
+              width: '80px',
+              padding: '6px 10px',
+              border: '1px solid #cbd5e1',
+              borderRadius: '4px',
+              fontSize: '14px'
+            }}
+          />
+        </div>
+      </div>
 
       <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '20px' }}>
         <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '8px', flex: 1 }}>
