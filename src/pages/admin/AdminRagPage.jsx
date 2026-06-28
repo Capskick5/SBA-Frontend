@@ -152,11 +152,10 @@ export default function AdminRagPage() {
   };
 
   const toggleSelectAll = () => {
-    const ingestableBooks = books.filter(b => b.fileKey);
-    if (selectedIds.length === ingestableBooks.length) {
+    if (selectedIds.length === books.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(ingestableBooks.map(b => b.id));
+      setSelectedIds(books.map(b => b.id));
     }
   };
 
@@ -214,17 +213,68 @@ export default function AdminRagPage() {
 
   const handleBulkIngest = async () => {
     if (selectedIds.length === 0) return;
+    const ingestableIds = selectedIds.filter(id => {
+      const book = books.find(b => b.id === id);
+      return book && book.fileKey;
+    });
+
+    if (ingestableIds.length === 0) {
+      setMessage({ type: 'error', text: 'None of the selected books have a PDF/EPUB file uploaded for ingestion.' });
+      return;
+    }
+
     setBulkProcessing(true);
     setMessage({ type: '', text: '' });
     try {
-      await adminService.ingestBooksBulk(selectedIds);
-      setMessage({ type: 'success', text: `Successfully processed bulk ingestion for ${selectedIds.length} books.` });
+      await adminService.ingestBooksBulk(ingestableIds);
+      setMessage({ type: 'success', text: `Successfully processed bulk ingestion for ${ingestableIds.length} books.` });
       setSelectedIds([]);
       loadBooks(currentPage, searchQuery);
     } catch (err) {
       setMessage({
         type: 'error',
         text: 'Bulk ingestion failed: ' + (err.response?.data?.message || err.message)
+      });
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleBulkSyncCatalog = async () => {
+    if (selectedIds.length === 0) return;
+    setBulkProcessing(true);
+    setMessage({ type: '', text: '' });
+    try {
+      await adminService.upsertBooksCatalogBulk(selectedIds);
+      setMessage({ type: 'success', text: `Successfully synced catalog for ${selectedIds.length} books.` });
+      setSelectedIds([]);
+      loadBooks(currentPage, searchQuery);
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: 'Bulk catalog sync failed: ' + (err.response?.data?.message || err.message)
+      });
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`Are you sure you want to delete indexing and metadata for ${selectedIds.length} selected books?`)) {
+      return;
+    }
+    setBulkProcessing(true);
+    setMessage({ type: '', text: '' });
+    try {
+      await adminService.deleteBooksIndicesBulk(selectedIds);
+      setMessage({ type: 'success', text: `Successfully deleted RAG index for ${selectedIds.length} books.` });
+      setSelectedIds([]);
+      loadBooks(currentPage, searchQuery);
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: 'Bulk delete failed: ' + (err.response?.data?.message || err.message)
       });
     } finally {
       setBulkProcessing(false);
@@ -332,13 +382,62 @@ export default function AdminRagPage() {
           <Button type="submit">Search</Button>
         </form>
 
-        <Button
-          onClick={handleBulkIngest}
-          disabled={selectedIds.length === 0 || bulkProcessing}
-          variant="primary"
-        >
-          {bulkProcessing ? 'Ingesting Selected...' : `Ingest Selected (${selectedIds.length})`}
-        </Button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            type="button"
+            onClick={handleBulkIngest}
+            disabled={selectedIds.length === 0 || bulkProcessing}
+            style={{
+              background: selectedIds.length === 0 ? '#cbd5e1' : '#4f46e5',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '10px 16px',
+              cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer',
+              fontWeight: 'bold',
+              transition: 'background 0.2s',
+              minHeight: '40px'
+            }}
+          >
+            {bulkProcessing ? 'Ingesting...' : `Ingest Content (${selectedIds.length})`}
+          </button>
+          <button
+            type="button"
+            onClick={handleBulkSyncCatalog}
+            disabled={selectedIds.length === 0 || bulkProcessing}
+            style={{
+              background: selectedIds.length === 0 ? '#cbd5e1' : '#0ea5e9',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '10px 16px',
+              cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer',
+              fontWeight: 'bold',
+              transition: 'background 0.2s',
+              minHeight: '40px'
+            }}
+          >
+            Sync Catalog ({selectedIds.length})
+          </button>
+          <button
+            type="button"
+            onClick={handleBulkDelete}
+            disabled={selectedIds.length === 0 || bulkProcessing}
+            style={{
+              background: selectedIds.length === 0 ? '#cbd5e1' : '#ef4444',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '10px 16px',
+              cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer',
+              fontWeight: 'bold',
+              transition: 'background 0.2s',
+              minHeight: '40px'
+            }}
+          >
+            Delete ({selectedIds.length})
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -352,9 +451,8 @@ export default function AdminRagPage() {
                 label: (
                   <input
                     type="checkbox"
-                    checked={isIngestable && selectedIds.length === books.filter(b => b.fileKey).length}
+                    checked={books.length > 0 && selectedIds.length === books.length}
                     onChange={toggleSelectAll}
-                    disabled={!isIngestable}
                   />
                 ),
                 render: (row) => (
@@ -362,7 +460,6 @@ export default function AdminRagPage() {
                     type="checkbox"
                     checked={selectedIds.includes(row.id)}
                     onChange={() => toggleSelect(row.id)}
-                    disabled={!row.fileKey}
                   />
                 )
               },
