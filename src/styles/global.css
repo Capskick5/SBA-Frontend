@@ -310,6 +310,16 @@ textarea {
   font-size: 13px;
 }
 
+.form-hint-error {
+  color: #111;
+}
+
+.add-to-cart-control {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
 .auth-footer {
   margin-top: 12px;
   color: #555;
