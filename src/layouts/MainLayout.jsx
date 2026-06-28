@@ -1,14 +1,13 @@
-import Navbar from './Navbar';
+import Header from './Header';
+import Footer from './Footer';
 import AiChatbot from '../components/ui/AiChatbot';
 
 export default function MainLayout({ children }) {
   return (
     <>
-      <Navbar />
+      <Header />
       <main className="page">{children}</main>
-      <footer className="footer">
-        <div>&copy; {new Date().getFullYear()} BookVerse. All rights reserved.</div>
-      </footer>
+      <Footer />
       <AiChatbot />
     </>
   );
