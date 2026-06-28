@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import AddToCartButton from './AddToCartButton';
 import { formatCurrency } from '../../utils/formatters';
 
 export default function BookCard({ book }) {
@@ -14,7 +13,6 @@ export default function BookCard({ book }) {
           {book.stock > 0 ? `In stock: ${book.stock}` : 'Out of stock'}
         </p>
       </div>
-      <AddToCartButton book={book} redirectTo={`/books/${book.id}`} />
     </article>
   );
 }
