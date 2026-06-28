@@ -541,6 +541,31 @@ td {
   border: 1px solid #ddd;
 }
 
+.ai-chatbot-message p {
+  margin: 0 0 8px 0;
+}
+
+.ai-chatbot-message p:last-child {
+  margin-bottom: 0;
+}
+
+.ai-chatbot-message ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.ai-chatbot-message li {
+  margin-bottom: 6px;
+}
+
+.ai-chatbot-message li:last-child {
+  margin-bottom: 0;
+}
+
+.chat-spacer {
+  margin: 4px 0;
+}
+
 .ai-chatbot-message.is-bot {
   align-self: flex-start;
   background: #fff;

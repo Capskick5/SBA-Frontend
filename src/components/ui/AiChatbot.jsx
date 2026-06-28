@@ -5,6 +5,48 @@ import { aiChatService } from '../../services/aiChatService';
 import { cartService } from '../../services/cartService';
 import { formatCurrency } from '../../utils/formatters';
 
+
+const renderMarkdown = (text) => {
+  if (!text) return null;
+  const lines = text.split('\n');
+  const elements = [];
+  let currentList = [];
+
+  const parseInline = (line) => {
+    const parts = line.split('**');
+    return parts.map((part, index) => {
+      if (index % 2 === 1) {
+        return <strong key={index}>{part}</strong>;
+      }
+      return part;
+    });
+  };
+
+  lines.forEach((line, index) => {
+    const trimmedLine = line.trim();
+    if (trimmedLine.startsWith('- ')) {
+      const content = trimmedLine.substring(2);
+      currentList.push(<li key={index}>{parseInline(content)}</li>);
+    } else {
+      if (currentList.length > 0) {
+        elements.push(<ul key={`list-${index}`}>{currentList}</ul>);
+        currentList = [];
+      }
+      if (trimmedLine === '') {
+        elements.push(<div key={`br-${index}`} className="chat-spacer" style={{ height: '8px' }} />);
+      } else {
+        elements.push(<p key={index}>{parseInline(line)}</p>);
+      }
+    }
+  });
+
+  if (currentList.length > 0) {
+    elements.push(<ul key="list-final">{currentList}</ul>);
+  }
+
+  return elements;
+};
+
 export default function AiChatbot() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -92,7 +134,7 @@ export default function AiChatbot() {
           <div className="ai-chatbot-messages">
             {messages.map((msg) => (
               <div key={msg.id} className={`ai-chatbot-message is-${msg.sender}`}>
-                <div className="message-text">{msg.text}</div>
+                <div className="message-text">{renderMarkdown(msg.text)}</div>
                 {msg.books && msg.books.length > 0 && (
                   <div className="chatbot-books-list">
                     {msg.books.map((b) => (
