@@ -19,7 +19,8 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
           <Button
             key={page}
             type="button"
-            className={page === currentPage ? 'is-active' : ''}
+            className={`pagination-page ${page === currentPage ? 'is-active' : ''}`.trim()}
+            aria-current={page === currentPage ? 'page' : undefined}
             onClick={() => onPageChange(page)}
           >
             {page}

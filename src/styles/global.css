@@ -845,10 +845,25 @@ textarea {
   border-radius: var(--radius-md);
 }
 
-.pagination .is-active {
+.pagination .pagination-page {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+  box-shadow: none;
+}
+
+.pagination .pagination-page:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 4px 14px var(--accent-glow);
+}
+
+.pagination .pagination-page.is-active {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--border-focus), 0 8px 20px var(--accent-glow);
+  transform: none;
 }
 
 .detail-grid {
