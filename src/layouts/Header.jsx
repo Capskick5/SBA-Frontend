@@ -1,25 +1,38 @@
-import { useEffect, useState, useRef } from 'react';
-import { ShoppingCart, Sun, Moon, BookOpen, User, ShoppingBag, Shield, LogOut, ChevronDown } from 'lucide-react';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { cartService } from '../services/cartService';
-import { CART_UPDATED_EVENT, getCartItemCount } from '../utils/cartEvents';
+import { useEffect, useState, useRef } from "react";
+import {
+  ShoppingCart,
+  Sun,
+  Moon,
+  BookOpen,
+  User,
+  ShoppingBag,
+  Shield,
+  LogOut,
+  ChevronDown,
+} from "lucide-react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { cartService } from "../services/cartService";
+import { CART_UPDATED_EVENT, getCartItemCount } from "../utils/cartEvents";
 
 export default function Header() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [cartItemCount, setCartItemCount] = useState(0);
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("theme") || "light",
+  );
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isAuthPage =
+    location.pathname === "/login" || location.pathname === "/register";
 
   const toggleTheme = () => {
-    const nextTheme = theme === 'light' ? 'dark' : 'light';
+    const nextTheme = theme === "light" ? "dark" : "light";
     setTheme(nextTheme);
-    localStorage.setItem('theme', nextTheme);
-    document.documentElement.setAttribute('data-theme', nextTheme);
+    localStorage.setItem("theme", nextTheme);
+    document.documentElement.setAttribute("data-theme", nextTheme);
   };
 
   useEffect(() => {
@@ -28,12 +41,12 @@ export default function Header() {
         setDropdownOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
-    if (!user || user.role === 'ADMIN') return undefined;
+    if (!user || user.role === "ADMIN") return undefined;
 
     let active = true;
 
@@ -49,7 +62,7 @@ export default function Header() {
     };
 
     const handleCartUpdated = (event) => {
-      if (typeof event.detail?.count === 'number') {
+      if (typeof event.detail?.count === "number") {
         setCartItemCount(event.detail.count);
       } else {
         loadCartCount();
@@ -69,7 +82,7 @@ export default function Header() {
     setDropdownOpen(false);
     await logout();
     setCartItemCount(0);
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -83,10 +96,8 @@ export default function Header() {
         <NavLink to="/" end>
           Home
         </NavLink>
-        {user && user.role !== 'ADMIN' && (
-          <NavLink to="/books/chat">
-            AI Chat
-          </NavLink>
+        {user && user.role !== "ADMIN" && (
+          <NavLink to="/books/chat">AI Chat</NavLink>
         )}
 
         <div className="nav-controls">
@@ -96,17 +107,24 @@ export default function Header() {
             aria-label="Toggle theme"
             className="control-btn"
           >
-            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+            {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
           </button>
 
-          {!isAuthPage && (!user || user.role !== 'ADMIN') && (
+          {!isAuthPage && (!user || user.role !== "ADMIN") && (
             <NavLink
               className="control-btn cart-btn"
               to="/cart"
-              aria-label={`Cart${cartItemCount ? `, ${cartItemCount} items` : ''}`}
+              aria-label={`Cart${cartItemCount ? `, ${cartItemCount} items` : ""}`}
             >
-              <ShoppingCart className="cart-icon" size={30} strokeWidth={2.4} aria-hidden="true" />
-              {user && cartItemCount > 0 && <span className="cart-badge">{cartItemCount}</span>}
+              <ShoppingCart
+                className="cart-icon"
+                size={30}
+                strokeWidth={2.4}
+                aria-hidden="true"
+              />
+              {user && cartItemCount > 0 && (
+                <span className="cart-badge">{cartItemCount}</span>
+              )}
               <span className="sr-only">Cart</span>
             </NavLink>
           )}
@@ -120,10 +138,15 @@ export default function Header() {
               onClick={() => setDropdownOpen(!dropdownOpen)}
             >
               <div className="avatar-circle">
-                {user.fullName?.[0]?.toUpperCase() || 'U'}
+                {user.fullName?.[0]?.toUpperCase() || "U"}
               </div>
-              <span className="user-name">{user.fullName?.split(' ').pop()}</span>
-              <ChevronDown size={14} className={`chevron-icon ${dropdownOpen ? 'rotated' : ''}`} />
+              <span className="user-name">
+                {user.fullName?.split(" ").pop()}
+              </span>
+              <ChevronDown
+                size={14}
+                className={`chevron-icon ${dropdownOpen ? "rotated" : ""}`}
+              />
             </button>
 
             {dropdownOpen && (
@@ -133,24 +156,40 @@ export default function Header() {
                   <p className="user-info-email">{user.email}</p>
                 </div>
                 <div className="dropdown-divider"></div>
-                <Link to="/profile" onClick={() => setDropdownOpen(false)} className="dropdown-item">
+                <Link
+                  to="/profile"
+                  onClick={() => setDropdownOpen(false)}
+                  className="dropdown-item"
+                >
                   <User size={16} />
                   <span>Profile</span>
                 </Link>
-                {user.role !== 'ADMIN' && (
-                  <Link to="/orders" onClick={() => setDropdownOpen(false)} className="dropdown-item">
+                {user.role !== "ADMIN" && (
+                  <Link
+                    to="/orders"
+                    onClick={() => setDropdownOpen(false)}
+                    className="dropdown-item"
+                  >
                     <ShoppingBag size={16} />
                     <span>My Orders</span>
                   </Link>
                 )}
-                {user.role === 'ADMIN' && (
-                  <Link to="/admin" onClick={() => setDropdownOpen(false)} className="dropdown-item">
+                {user.role === "ADMIN" && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setDropdownOpen(false)}
+                    className="dropdown-item"
+                  >
                     <Shield size={16} />
                     <span>Admin Dashboard</span>
                   </Link>
                 )}
                 <div className="dropdown-divider"></div>
-                <button type="button" onClick={handleLogout} className="dropdown-item logout-item">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="dropdown-item logout-item"
+                >
                   <LogOut size={16} />
                   <span>Log Out</span>
                 </button>
@@ -159,7 +198,10 @@ export default function Header() {
           </div>
         ) : (
           <div className="auth-buttons">
-            <Link to={`/login?redirect=${encodeURIComponent(location.pathname)}`} className="login-link">
+            <Link
+              to={`/login?redirect=${encodeURIComponent(location.pathname)}`}
+              className="login-link"
+            >
               Log In
             </Link>
             <Link to="/register" className="register-btn">
