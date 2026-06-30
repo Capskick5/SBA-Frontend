@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import AddToCartButton from '../../components/catalog/AddToCartButton';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { bookService } from '../../services/bookService';
@@ -54,16 +54,25 @@ export default function BookDetailPage() {
     <section className="detail-grid">
       <img className="detail-cover" src={book.coverUrl} alt={book.title} />
       <div className="stack">
+        <Link className="detail-back-link" to="/">
+          Back to home page
+        </Link>
         <div>
           <span className="badge">{book.category}</span>
         </div>
         <h1 style={{ marginTop: '8px' }}>{book.title}</h1>
         <p className="muted">By <strong style={{ color: 'var(--text)' }}>{book.author}</strong></p>
         <section className="detail-purchase">
-          <h2>{formatCurrency(book.price)}</h2>
-          <p className={`stock-badge ${book.stock > 0 ? 'is-available' : 'is-empty'}`}>
-            {book.stock > 0 ? `In stock: ${book.stock}` : 'Out of stock'}
-          </p>
+          <div className="detail-purchase-heading">
+            <span className="muted">Purchase options</span>
+            <h2>{formatCurrency(book.price)}</h2>
+          </div>
+          <div className="detail-stock-row">
+            <span className={`stock-badge ${book.stock > 0 ? 'is-available' : 'is-empty'}`}>
+              {book.stock > 0 ? 'Available now' : 'Out of stock'}
+            </span>
+            {book.stock > 0 && <span className="muted">{book.stock} left</span>}
+          </div>
           <AddToCartButton book={book} redirectTo={`/books/${book.id}`} />
         </section>
         <section className="detail-section">
