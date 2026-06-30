@@ -9,11 +9,14 @@ import { formatCurrency } from '../../utils/formatters';
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [sortBy, setSortBy] = useState('id,desc');
 
   const loadOrders = (pageIndex, currentSort) => {
+    setLoading(true);
+    setError(null);
     adminService.getOrders({ page: pageIndex, size: 10, sort: currentSort })
       .then((res) => {
         const responseBody = res.data || res;
@@ -30,6 +33,7 @@ export default function AdminOrdersPage() {
       })
       .catch((err) => {
         console.error('Failed to load orders:', err);
+        setError('Failed to load orders. Please try again later.');
         setOrders([]);
         setTotalPages(1);
       })
@@ -64,7 +68,19 @@ export default function AdminOrdersPage() {
       </div>
 
       {loading ? (
-        <p>Loading orders...</p>
+        <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+          <p>Loading orders...</p>
+        </div>
+      ) : error ? (
+        <div style={{ padding: '40px', textAlign: 'center', color: '#e53e3e', background: '#fff5f5', borderRadius: '8px' }}>
+          <p>{error}</p>
+          <Button onClick={() => loadOrders(currentPage, sortBy)} style={{ marginTop: '16px' }}>Retry</Button>
+        </div>
+      ) : orders.length === 0 ? (
+        <div style={{ padding: '60px', textAlign: 'center', background: '#f9fafb', borderRadius: '8px', color: '#6b7280' }}>
+          <p style={{ fontSize: '1.2rem', marginBottom: '8px' }}>No orders found</p>
+          <p style={{ fontSize: '0.9rem' }}>There are currently no orders in the system.</p>
+        </div>
       ) : (
         <>
           <Table
