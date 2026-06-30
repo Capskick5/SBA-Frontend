@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -11,9 +12,15 @@ export default function CartItemRow({ item, selected, error, onSelect, onQuantit
         onChange={onSelect}
         aria-label={`Select ${item.title}`}
       />
-      <img src={item.coverUrl} alt={item.title} />
+      <Link className="cart-item-cover-link" to={`/books/${item.bookId}`} aria-label={`View ${item.title}`}>
+        <img src={item.coverUrl} alt={item.title} />
+      </Link>
       <div>
-        <strong>{item.title}</strong>
+        <strong>
+          <Link className="cart-item-title-link" to={`/books/${item.bookId}`}>
+            {item.title}
+          </Link>
+        </strong>
         <p>{formatCurrency(item.price)}</p>
       </div>
       <div className="quantity">

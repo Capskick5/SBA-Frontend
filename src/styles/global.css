@@ -1180,6 +1180,20 @@ textarea {
   object-fit: cover;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.cart-item-cover-link:hover img {
+  border-color: var(--accent);
+  transform: scale(1.03);
+}
+
+.cart-item-title-link {
+  color: var(--text);
+}
+
+.cart-item-title-link:hover {
+  color: var(--accent);
 }
 
 .quantity {
