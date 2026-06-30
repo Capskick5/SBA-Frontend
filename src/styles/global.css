@@ -673,6 +673,36 @@ textarea {
   border: 1px solid var(--border);
 }
 
+.search-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-control input {
+  width: 100%;
+  padding-right: 76px;
+}
+
+.search-control button {
+  position: absolute;
+  right: 8px;
+  min-height: 32px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
+  background: var(--surface-alt);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.search-control button:hover {
+  background: var(--surface-light);
+  color: var(--text);
+}
+
 .book-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -706,12 +736,16 @@ textarea {
   box-shadow: 0 12px 30px var(--accent-glow);
 }
 
+.book-card-cover-frame {
+  position: relative;
+  margin-bottom: 16px;
+}
+
 .book-card-cover {
   display: block;
   width: 100%;
   border-radius: var(--radius-md);
   overflow: hidden;
-  margin-bottom: 16px;
   background: var(--surface-alt);
 }
 
@@ -724,6 +758,42 @@ textarea {
 
 .book-card:hover img {
   transform: scale(1.05);
+}
+
+.book-card-cart-action {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+  display: grid;
+  gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.book-card:hover .book-card-cart-action,
+.book-card:focus-within .book-card-cart-action {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.book-card-cart-action .btn {
+  width: 100%;
+  min-height: 40px;
+  border-color: rgba(255, 255, 255, 0.9);
+  background: rgba(79, 70, 229, 0.94);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.24);
+}
+
+.book-card-cart-action .form-hint {
+  margin: 0;
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .book-card-title {
@@ -886,15 +956,51 @@ textarea {
   border: 1px solid var(--border);
 }
 
+.detail-back-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.detail-back-link:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--surface-alt);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px var(--accent-glow);
+}
+
 .detail-purchase {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow-md);
+  padding: 26px;
+  box-shadow: var(--shadow-lg);
+}
+
+.detail-purchase-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.detail-purchase-heading .muted {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .detail-purchase h2 {
@@ -902,6 +1008,13 @@ textarea {
   font-size: 28px;
   font-weight: 700;
   color: var(--accent);
+}
+
+.detail-stock-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
 }
 
 .detail-section {
@@ -993,6 +1106,11 @@ textarea {
   display: flex;
   gap: 12px;
   align-items: center;
+}
+
+.add-to-cart-control.book-card-cart-action {
+  display: grid;
+  align-items: stretch;
 }
 
 .auth-footer {
@@ -1303,6 +1421,7 @@ tr:last-child td {
   .nav-links {
     gap: 12px;
   }
+
 }
 
 .ai-chatbot-container {
