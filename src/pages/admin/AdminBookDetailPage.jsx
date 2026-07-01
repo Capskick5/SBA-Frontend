@@ -5,6 +5,7 @@ import Input from '../../components/ui/Input';
 import Textarea from '../../components/ui/Textarea';
 import PricingFields from '../../components/admin/PricingFields';
 import { LoadingState } from '../../components/ui/State';
+import Modal from '../../components/ui/Modal';
 import { adminService } from '../../services/adminService';
 import { bookService } from '../../services/bookService';
 import { deriveDiscountPercent } from '../../utils/pricing';
@@ -24,6 +25,7 @@ export default function AdminBookDetailPage() {
   const [stockDelta, setStockDelta] = useState('');
   const [stockNote, setStockNote] = useState('');
   const [updatingStock, setUpdatingStock] = useState(false);
+  const [showStockModal, setShowStockModal] = useState(false);
 
   const [coverUrl, setCoverUrl] = useState('');
   const [coverKey, setCoverKey] = useState('');
@@ -133,6 +135,7 @@ export default function AdminBookDetailPage() {
       }));
       setStockDelta('');
       setStockNote('');
+      setShowStockModal(false);
       alert('Stock updated successfully.');
     } catch (err) {
       alert('Failed to update stock: ' + (err.response?.data?.message || err.message));
@@ -248,29 +251,47 @@ export default function AdminBookDetailPage() {
       </form>
 
       <section className="form" style={{ marginTop: '32px' }}>
-        <h2>Stock</h2>
-        <label className="field">
-          <span>Current Stock</span>
-          <input type="text" readOnly value={book.stock ?? 0} />
-        </label>
-        <form className="form" onSubmit={handleStockUpdate}>
-          <Input
-            label="Adjust by"
-            type="number"
-            value={stockDelta}
-            onChange={(event) => setStockDelta(event.target.value)}
-            placeholder="e.g. 5 or -2"
-          />
-          <Input
-            label="Note"
-            value={stockNote}
-            onChange={(event) => setStockNote(event.target.value)}
-            placeholder="Optional adjustment note"
-          />
-          <Button type="submit" variant="primary" loading={updatingStock}>
-            Save
-          </Button>
-        </form>
+        <h2>Stock Management</h2>
+        <div style={{ marginBottom: '16px' }}>
+          <strong>Current Stock: </strong> {book.stock ?? 0}
+        </div>
+        
+        <Button onClick={() => setShowStockModal(true)} variant="primary">
+          Create Import / Export Request
+        </Button>
+
+        {showStockModal && (
+          <Modal title="Import / Export Stock Request" onClose={() => setShowStockModal(false)}>
+            <form onSubmit={handleStockUpdate} style={{ padding: '16px' }}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Quantity (+ to Import, - to Export)</label>
+                <input
+                  type="number"
+                  value={stockDelta}
+                  onChange={(event) => setStockDelta(event.target.value)}
+                  placeholder="e.g. 5 or -2"
+                  style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                />
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Note / Reason</label>
+                <input
+                  type="text"
+                  value={stockNote}
+                  onChange={(event) => setStockNote(event.target.value)}
+                  placeholder="Reason for adjustment"
+                  style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <Button type="button" onClick={() => setShowStockModal(false)}>Cancel</Button>
+                <Button type="submit" variant="primary" loading={updatingStock}>
+                  Submit Request
+                </Button>
+              </div>
+            </form>
+          </Modal>
+        )}
       </section>
     </section>
   );
