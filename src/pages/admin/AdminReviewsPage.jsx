@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Button from '../../components/ui/Button';
 import Table from '../../components/ui/Table';
+import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 
 export default function AdminReviewsPage() {
@@ -43,21 +44,14 @@ export default function AdminReviewsPage() {
       <h1>Review Management</h1>
       <p className="muted">Review listing requires a backend admin list endpoint.</p>
       {loading ? (
-        <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-          <p>Loading reviews...</p>
-        </div>
+        <LoadingState text="Loading reviews..." />
       ) : error ? (
-        <div style={{ padding: '40px', textAlign: 'center', color: '#e53e3e', background: '#fff5f5', borderRadius: '8px' }}>
-          <p>{error}</p>
-          <Button onClick={loadReviews} style={{ marginTop: '16px' }}>Retry</Button>
-        </div>
-      ) : reviews.length === 0 ? (
-        <div style={{ padding: '60px', textAlign: 'center', background: '#f9fafb', borderRadius: '8px', color: '#6b7280' }}>
-          <p style={{ fontSize: '1.2rem', marginBottom: '8px' }}>No reviews found</p>
-          <p style={{ fontSize: '0.9rem' }}>There are currently no reviews in the system.</p>
-        </div>
+        <ErrorState text={error}>
+          <Button onClick={loadReviews}>Retry</Button>
+        </ErrorState>
       ) : (
         <Table
+          emptyText="No reviews found."
           columns={[
             { key: 'userName', label: 'User' },
             { key: 'rating', label: 'Rating' },

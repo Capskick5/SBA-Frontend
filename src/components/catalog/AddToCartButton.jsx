@@ -51,7 +51,9 @@ export default function AddToCartButton({ book, redirectTo, className = '' }) {
 
 
 
-  const addToCart = () => {
+  const addToCart = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
     setError('');
 
     if (!authService.getCurrentUser()) {
@@ -63,10 +65,12 @@ export default function AddToCartButton({ book, redirectTo, className = '' }) {
     debouncedAddToCart(book);
   };
 
+  const isOutOfStock = book.stock <= 0;
+
   return (
     <div className={`add-to-cart-control ${className}`.trim()}>
-      <Button onClick={addToCart} disabled={book.stock === 0} loading={adding}>
-        Add to Cart
+      <Button onClick={addToCart} disabled={isOutOfStock} loading={adding}>
+        {isOutOfStock ? 'Out of stock' : 'Add to Cart'}
       </Button>
       {error && <p className="form-hint form-hint-error">{error}</p>}
     </div>

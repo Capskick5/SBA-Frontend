@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { adminService } from '../../services/adminService';
 import { formatCurrency } from '../../utils/formatters';
 
+import { LoadingState } from '../../components/ui/State';
+
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState(null);
 
@@ -9,7 +11,7 @@ export default function AdminDashboardPage() {
     adminService.getStats().then(setStats);
   }, []);
 
-  if (!stats) return <p>Loading dashboard...</p>;
+  if (!stats) return <LoadingState text="Loading dashboard..." />;
 
   return (
     <section className="stack">

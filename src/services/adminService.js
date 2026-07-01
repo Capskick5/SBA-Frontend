@@ -17,6 +17,10 @@ export const adminService = {
 
   getBooks: (params) => api.get('/books', { params }).then(res => res.data),
 
+  getBooksAdmin: (params) => api.get('/books/admin', { params }).then(res => res.data),
+
+  adjustStock: (id, body) => api.post(`/books/${id}/stock-adjustments`, body).then(res => res.data),
+
   getBookById: (id) => api.get(`/books/${id}`).then(res => res.data),
 
   addBook: (bookData) => { return api.post('/books', bookData); },

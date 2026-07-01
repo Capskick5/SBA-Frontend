@@ -32,7 +32,7 @@ export default function AdminOrderDetailPage() {
         <Button onClick={() => handleUpdateStatus('PROCESSING')}>Process</Button>
         <Button onClick={() => handleUpdateStatus('SHIPPED')}>Ship</Button>
         <Button onClick={() => handleUpdateStatus('DELIVERED')}>Deliver</Button>
-        <Button onClick={() => handleUpdateStatus('CANCELLED')}>Cancel</Button>
+        <Button onClick={() => handleUpdateStatus('CANCELLED')}>Cancel Order</Button>
       </div>
       <OrderDetailPage />
     </>

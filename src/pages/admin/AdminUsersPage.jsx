@@ -32,6 +32,7 @@ export default function AdminUsersPage() {
     <section className="stack">
       <h1>User Management</h1>
       <Table
+        emptyText="No users found."
         columns={[
           { key: 'email', label: 'Email' },
           { key: 'fullName', label: 'Name' },

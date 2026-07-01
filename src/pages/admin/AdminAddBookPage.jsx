@@ -5,6 +5,8 @@ import { bookService } from '../../services/bookService';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Textarea from '../../components/ui/Textarea';
+import PricingFields from '../../components/admin/PricingFields';
+import { LoadingState } from '../../components/ui/State';
 
 export default function AdminAddBookPage() {
     const navigate = useNavigate();
@@ -85,6 +87,7 @@ export default function AdminAddBookPage() {
                 title: data.title,
                 author: data.author,
                 price: Number(data.price) || 0,
+                originalPrice: Number(data.originalPrice) || Number(data.price) || 0,
                 stock: Number(data.stock) || 10,
                 categoryId: Number(data.categoryId),
                 description: data.description || 'Book description',
@@ -115,14 +118,14 @@ export default function AdminAddBookPage() {
         }
     };
 
-    if (loading) return <p>Loading data...</p>;
+    if (loading) return <LoadingState text="Loading data..." />;
 
     return (
         <section className="narrow">
             <h1>Add New Book</h1>
             <form className="form" onSubmit={handleSubmit}>
-                <Input name="title" label="Title" required />
-                <Input name="author" label="Author" required />
+                <Input name="title" label="Title" required placeholder="Enter book title" />
+                <Input name="author" label="Author" required placeholder="Enter author name" />
 
                 <div className="input-group" style={{ marginBottom: '16px' }}>
                     <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>Category</label>
@@ -152,17 +155,19 @@ export default function AdminAddBookPage() {
                 </div>
 
                 <div style={{ display: 'flex', gap: '16px' }}>
-                    <Input name="price" label="Price" type="number" required />
-                    <Input name="stock" label="Stock" type="number" required />
+                    <div style={{ flex: 1 }}>
+                        <PricingFields />
+                    </div>
+                    <Input name="stock" label="Stock" type="number" required placeholder="Initial stock quantity" />
                 </div>
 
-                <Input name="isbn" label="ISBN" />
+                <Input name="isbn" label="ISBN" placeholder="Enter ISBN" />
                 <Textarea name="description" label="Description" rows={5} />
 
                 <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
                     <Button type="button" onClick={() => navigate('/admin/books')}>Cancel</Button>
                     <Button type="submit" variant="primary" loading={submitting} disabled={uploadingCover || uploadingFile}>
-                        Save Book
+                        Save
                     </Button>
                 </div>
             </form>

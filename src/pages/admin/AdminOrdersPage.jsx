@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import OrderStatusBadge from '../../components/orders/OrderStatusBadge';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
+import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -68,22 +69,15 @@ export default function AdminOrdersPage() {
       </div>
 
       {loading ? (
-        <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-          <p>Loading orders...</p>
-        </div>
+        <LoadingState text="Loading orders..." />
       ) : error ? (
-        <div style={{ padding: '40px', textAlign: 'center', color: '#e53e3e', background: '#fff5f5', borderRadius: '8px' }}>
-          <p>{error}</p>
-          <Button onClick={() => loadOrders(currentPage, sortBy)} style={{ marginTop: '16px' }}>Retry</Button>
-        </div>
-      ) : orders.length === 0 ? (
-        <div style={{ padding: '60px', textAlign: 'center', background: '#f9fafb', borderRadius: '8px', color: '#6b7280' }}>
-          <p style={{ fontSize: '1.2rem', marginBottom: '8px' }}>No orders found</p>
-          <p style={{ fontSize: '0.9rem' }}>There are currently no orders in the system.</p>
-        </div>
+        <ErrorState text={error}>
+          <Button onClick={() => loadOrders(currentPage, sortBy)}>Retry</Button>
+        </ErrorState>
       ) : (
         <>
           <Table
+            emptyText="No orders found."
             columns={[
               { key: 'id', label: 'Order ID' },
               { key: 'userId', label: 'Customer', render: (row) => row.userId || 'N/A' },
@@ -94,22 +88,24 @@ export default function AdminOrdersPage() {
               },
               { key: 'status', label: 'Status', render: (row) => <OrderStatusBadge status={row.status} /> },
               { key: 'total', label: 'Total', render: (row) => <strong style={{ color: '#e53e3e' }}>{formatCurrency(row.total)}</strong> },
-              { key: 'action', label: 'Actions', render: (row) => <Link to={`/admin/orders/${row.id}`} className="btn-link">Details</Link> },
+              { key: 'action', label: 'Actions', render: (row) => <Link to={`/admin/orders/${row.id}`} className="btn-link">View</Link> },
             ]}
             rows={orders}
           />
 
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '20px' }}>
-            <Button type="button" disabled={currentPage === 0} onClick={() => setCurrentPage((prev) => prev - 1)}>
-              &laquo; Previous
-            </Button>
-            <span style={{ fontWeight: 'bold' }}>
-              Page {currentPage + 1} / {totalPages}
-            </span>
-            <Button type="button" disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage((prev) => prev + 1)}>
-              Next &raquo;
-            </Button>
-          </div>
+          {orders.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '20px' }}>
+              <Button type="button" disabled={currentPage === 0} onClick={() => setCurrentPage((prev) => prev - 1)}>
+                &laquo; Previous
+              </Button>
+              <span style={{ fontWeight: 'bold' }}>
+                Page {currentPage + 1} / {totalPages}
+              </span>
+              <Button type="button" disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage((prev) => prev + 1)}>
+                Next &raquo;
+              </Button>
+            </div>
+          )}
         </>
       )}
     </section>

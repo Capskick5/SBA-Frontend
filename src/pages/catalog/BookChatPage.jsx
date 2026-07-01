@@ -4,6 +4,7 @@ import { aiChatService } from '../../services/aiChatService';
 import { orderService } from '../../services/orderService';
 import { bookService } from '../../services/bookService';
 import Button from '../../components/ui/Button';
+import { LoadingState } from '../../components/ui/State';
 
 export default function BookChatPage() {
   const [chatType, setChatType] = useState('BOOK_CHAT');
@@ -212,7 +213,7 @@ export default function BookChatPage() {
           </Button>
 
           {loading ? (
-            <p className="muted" style={{ textAlign: 'center' }}>Loading history...</p>
+            <LoadingState text="Loading history..." />
           ) : sessions.length === 0 ? (
             <p className="muted" style={{ textAlign: 'center', fontSize: '14px', marginTop: '20px' }}>No chat history found.</p>
           ) : (

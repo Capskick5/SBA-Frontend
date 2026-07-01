@@ -146,7 +146,7 @@ export default function AiChatbot() {
                               onClick={() => navigate(`/books/${b.id}`)}
                               className="btn btn-sm"
                             >
-                              Details
+                              View
                             </button>
                             <button
                               type="button"

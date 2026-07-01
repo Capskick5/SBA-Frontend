@@ -15,7 +15,7 @@ const defaultValues = {
 export default function AddressForm({
   initialValues = defaultValues,
   onSubmit,
-  submitLabel = 'Save address',
+  submitLabel = 'Save',
   loading = false,
   onCancel,
   fieldErrors = {},
@@ -36,6 +36,7 @@ export default function AddressForm({
       <Input
         label="Recipient"
         name="recipient"
+        placeholder="Recipient name"
         value={values.recipient}
         onChange={(e) => setField('recipient', e.target.value)}
         error={fieldErrors.recipient}
@@ -44,6 +45,7 @@ export default function AddressForm({
       <Input
         label="Phone"
         name="phone"
+        placeholder="Phone number"
         value={values.phone}
         onChange={(e) => setField('phone', e.target.value)}
         error={fieldErrors.phone}
@@ -52,6 +54,7 @@ export default function AddressForm({
       <Input
         label="Line"
         name="line"
+        placeholder="Street address"
         value={values.line}
         onChange={(e) => setField('line', e.target.value)}
         error={fieldErrors.line}
@@ -60,18 +63,21 @@ export default function AddressForm({
       <Input
         label="Ward"
         name="ward"
+        placeholder="Ward"
         value={values.ward}
         onChange={(e) => setField('ward', e.target.value)}
       />
       <Input
         label="District"
         name="district"
+        placeholder="District"
         value={values.district}
         onChange={(e) => setField('district', e.target.value)}
       />
       <Input
         label="City"
         name="city"
+        placeholder="City"
         value={values.city}
         onChange={(e) => setField('city', e.target.value)}
         error={fieldErrors.city}

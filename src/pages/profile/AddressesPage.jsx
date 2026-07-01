@@ -143,7 +143,7 @@ export default function AddressesPage() {
           initialValues={formValues}
           fieldErrors={formFieldErrors}
           onSubmit={handleSubmit}
-          submitLabel={editingId ? 'Update address' : 'Save address'}
+          submitLabel="Save"
           loading={formLoading}
           onCancel={editingId ? resetForm : undefined}
         />

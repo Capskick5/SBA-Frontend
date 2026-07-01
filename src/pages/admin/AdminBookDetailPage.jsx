@@ -1,18 +1,29 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Textarea from '../../components/ui/Textarea';
+import PricingFields from '../../components/admin/PricingFields';
+import { LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 import { bookService } from '../../services/bookService';
+import { deriveDiscountPercent } from '../../utils/pricing';
+
+function unwrapBook(response) {
+  return response?.data || response;
+}
 
 export default function AdminBookDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [book, setBook] = useState(null);
+  const location = useLocation();
+  const [book, setBook] = useState(location.state?.book || null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [stockDelta, setStockDelta] = useState('');
+  const [stockNote, setStockNote] = useState('');
+  const [updatingStock, setUpdatingStock] = useState(false);
 
   const [coverUrl, setCoverUrl] = useState('');
   const [coverKey, setCoverKey] = useState('');
@@ -20,25 +31,48 @@ export default function AdminBookDetailPage() {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
 
-  useEffect(() => {
-    Promise.all([
-      bookService.getCategories(),
-      adminService.getBookById(id),
-    ])
-      .then(([categoryList, bookData]) => {
-        setCategories(categoryList || []);
-        const actualBook = bookData.data || bookData;
-        setBook(actualBook);
+  const applyBook = (actualBook) => {
+    setBook(actualBook);
+    setCoverUrl(actualBook.coverUrl || '');
+    setCoverKey(actualBook.coverKey || '');
+    setFileKey(actualBook.fileKey || '');
+  };
 
-        setCoverUrl(actualBook.coverUrl || '');
-        setCoverKey(actualBook.coverKey || '');
-        setFileKey(actualBook.fileKey || '');
-      })
-      .catch((err) => {
-        console.error('Failed to load book detail:', err);
-      })
-      .finally(() => setLoading(false));
-  }, [id]);
+  useEffect(() => {
+    let active = true;
+
+    const loadBook = async () => {
+      setLoading(true);
+      try {
+        const categoryList = await bookService.getCategories();
+        if (!active) return;
+        setCategories(categoryList || []);
+
+        if (location.state?.book) {
+          applyBook(location.state.book);
+          return;
+        }
+
+        try {
+          const bookData = await adminService.getBookById(id);
+          if (!active) return;
+          applyBook(unwrapBook(bookData));
+        } catch (err) {
+          console.error('Failed to load book detail:', err);
+          if (!active) return;
+          setBook(null);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    loadBook();
+
+    return () => {
+      active = false;
+    };
+  }, [id, location.state?.book]);
 
   const handleCoverChange = async (e) => {
     const file = e.target.files[0];
@@ -79,6 +113,34 @@ export default function AdminBookDetailPage() {
     }
   };
 
+  const handleStockUpdate = async (event) => {
+    event.preventDefault();
+    const quantityDelta = Number(stockDelta);
+    if (!Number.isFinite(quantityDelta) || quantityDelta === 0) {
+      alert('Enter a non-zero adjustment amount.');
+      return;
+    }
+
+    setUpdatingStock(true);
+    try {
+      await adminService.adjustStock(id, {
+        quantityDelta,
+        note: stockNote.trim() || undefined,
+      });
+      setBook((current) => ({
+        ...current,
+        stock: Math.max(0, (current.stock || 0) + quantityDelta),
+      }));
+      setStockDelta('');
+      setStockNote('');
+      alert('Stock updated successfully.');
+    } catch (err) {
+      alert('Failed to update stock: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setUpdatingStock(false);
+    }
+  };
+
   const handleSave = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -98,7 +160,6 @@ export default function AdminBookDetailPage() {
         price: Number(values.price),
         originalPrice: values.originalPrice ? Number(values.originalPrice) : Number(values.price),
         description: values.description || '',
-
         coverUrl: coverUrl.startsWith('blob:') ? null : coverUrl,
         fileKey: fileKey,
         coverKey: coverKey,
@@ -110,7 +171,6 @@ export default function AdminBookDetailPage() {
       navigate('/admin/books');
     } catch (err) {
       const errorMsg = err.response?.data?.message || err.message;
-
       const isRagError = /rag|ingest|vector|index|embedding|timeout|ai/i.test(errorMsg);
 
       if (isRagError) {
@@ -125,16 +185,18 @@ export default function AdminBookDetailPage() {
     }
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <LoadingState text="Loading book..." />;
   if (!book) return <p>Book not found.</p>;
+
+  const discountPercent = deriveDiscountPercent(book.originalPrice || book.price, book.price);
 
   return (
     <section className="narrow">
       <h1>Edit Book: #{id}</h1>
       <form className="form" onSubmit={handleSave}>
-        <Input name="title" label="Title" defaultValue={book.title} required />
-        <Input name="author" label="Author" defaultValue={book.author} required />
-        <Input name="isbn" label="ISBN" defaultValue={book.isbn || ''} />
+        <Input name="title" label="Title" defaultValue={book.title} required placeholder="Enter book title" />
+        <Input name="author" label="Author" defaultValue={book.author} required placeholder="Enter author name" />
+        <Input name="isbn" label="ISBN" defaultValue={book.isbn || ''} placeholder="Enter ISBN" />
         <Input name="publisher" label="Publisher" defaultValue={book.publisher || ''} />
         <Input name="publicationYear" label="Publication Year" type="number" defaultValue={book.publicationYear || ''} />
         <Input name="language" label="Language" defaultValue={book.language || 'vi'} />
@@ -170,18 +232,46 @@ export default function AdminBookDetailPage() {
           {uploadingFile && <p style={{ color: 'blue', fontSize: '14px' }}>Uploading book file...</p>}
         </div>
 
-        <Input name="price" label="Price" type="number" defaultValue={book.price} required />
-        <Input name="originalPrice" label="Original Price" type="number" defaultValue={book.originalPrice || book.price} />
-        <Input name="stock" label="Current Stock" type="number" defaultValue={book.stock} disabled />
+        <PricingFields
+          key={`${book.id}-${book.price}-${book.originalPrice}`}
+          initialOriginalPrice={book.originalPrice || book.price}
+          initialDiscountPercent={discountPercent}
+        />
         <Textarea name="description" label="Description" defaultValue={book.description} rows={5} />
 
         <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
           <Button type="button" onClick={() => navigate('/admin/books')}>Cancel</Button>
           <Button type="submit" variant="primary" loading={saving} disabled={uploadingCover || uploadingFile}>
-            Save Changes
+            Save
           </Button>
         </div>
       </form>
+
+      <section className="form" style={{ marginTop: '32px' }}>
+        <h2>Stock</h2>
+        <label className="field">
+          <span>Current Stock</span>
+          <input type="text" readOnly value={book.stock ?? 0} />
+        </label>
+        <form className="form" onSubmit={handleStockUpdate}>
+          <Input
+            label="Adjust by"
+            type="number"
+            value={stockDelta}
+            onChange={(event) => setStockDelta(event.target.value)}
+            placeholder="e.g. 5 or -2"
+          />
+          <Input
+            label="Note"
+            value={stockNote}
+            onChange={(event) => setStockNote(event.target.value)}
+            placeholder="Optional adjustment note"
+          />
+          <Button type="submit" variant="primary" loading={updatingStock}>
+            Save
+          </Button>
+        </form>
+      </section>
     </section>
   );
 }

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import AddToCartButton from '../../components/catalog/AddToCartButton';
+import BookPrice from '../../components/catalog/BookPrice';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { bookService } from '../../services/bookService';
-import { formatCurrency } from '../../utils/formatters';
 
 export default function BookDetailPage() {
   const { id } = useParams();
@@ -65,7 +65,7 @@ export default function BookDetailPage() {
         <section className="detail-purchase">
           <div className="detail-purchase-heading">
             <span className="muted">Purchase options</span>
-            <h2>{formatCurrency(book.price)}</h2>
+            <BookPrice book={book} className="detail-price" />
           </div>
           <div className="detail-stock-row">
             <span className={`stock-badge ${book.stock > 0 ? 'is-available' : 'is-empty'}`}>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
+import { LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -22,7 +23,7 @@ export default function AdminBooksPage() {
     } else if (currentStatus === 'hidden') {
       params.active = false;
     }
-    adminService.getBooks(params)
+    adminService.getBooksAdmin(params)
       .then((res) => {
         const responseBody = res.data || res;
 
@@ -110,10 +111,11 @@ export default function AdminBooksPage() {
       </div>
 
       {loading ? (
-        <p>Loading books...</p>
+        <LoadingState text="Loading books..." />
       ) : (
         <>
           <Table
+            emptyText="No books found."
             columns={[
               { key: 'id', label: 'ID' },
               { key: 'title', label: 'Title' },
@@ -139,18 +141,18 @@ export default function AdminBooksPage() {
                 label: 'Actions',
                 render: (row) => (
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <Link to={`/admin/books/${row.id}`} className="btn-link">Edit</Link>
+                    <Link
+                      to={`/admin/books/${row.id}`}
+                      state={{ book: row }}
+                      className="btn-link"
+                    >
+                      Edit
+                    </Link>
                     <button
                       type="button"
                       onClick={() => handleToggleActive(row)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: row.active ? '#e53e3e' : '#3182ce',
-                        cursor: 'pointer',
-                        padding: 0,
-                        textDecoration: 'underline',
-                      }}
+                      className="btn-link"
+                      style={{ color: row.active ? '#e53e3e' : '#3182ce' }}
                     >
                       {row.active ? 'Hide' : 'Show'}
                     </button>
@@ -161,6 +163,7 @@ export default function AdminBooksPage() {
             rows={books}
           />
 
+          {books.length > 0 && (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '20px' }}>
             <Button type="button" disabled={currentPage === 0} onClick={() => setCurrentPage((prev) => prev - 1)}>
               &laquo; Previous
@@ -172,6 +175,7 @@ export default function AdminBooksPage() {
               Next &raquo;
             </Button>
           </div>
+          )}
         </>
       )}
     </section>

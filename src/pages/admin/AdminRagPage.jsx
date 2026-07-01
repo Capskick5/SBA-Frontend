@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { adminService } from '../../services/adminService';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
+import { LoadingState } from '../../components/ui/State';
 
 export default function AdminRagPage() {
   const [books, setBooks] = useState([]);
@@ -421,7 +422,7 @@ export default function AdminRagPage() {
         <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '8px', flex: 1 }}>
           <input
             type="text"
-            placeholder="Search books by title..."
+            placeholder="Search by title or author"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', flex: 1 }}
@@ -488,10 +489,11 @@ export default function AdminRagPage() {
       </div>
 
       {loading ? (
-        <p>Loading books list...</p>
+        <LoadingState text="Loading books..." />
       ) : (
         <>
           <Table
+            emptyText="No books found."
             columns={[
               {
                 key: 'select',
