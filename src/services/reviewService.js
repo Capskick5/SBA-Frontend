@@ -1,7 +1,8 @@
-import { mockReviews } from '../mocks/mockData';
+import { apiClient } from './apiClient';
 
 export const reviewService = {
-  getReviewsByBookId(bookId) {
-    return Promise.resolve(mockReviews.filter((review) => String(review.bookId) === String(bookId)));
+  async getReviewsByBookId(bookId) {
+    const page = await apiClient.get(`/books/${bookId}/reviews`);
+    return page?.items || page?.content || [];
   },
 };

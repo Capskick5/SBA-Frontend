@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import AdminLayout from '../layouts/AdminLayout';
-import { AdminRoute, ProtectedRoute } from './RouteGuards';
+import { AdminRoute, CustomerRoute, ProtectedRoute } from './RouteGuards';
 import CatalogPage from '../pages/catalog/CatalogPage';
 import BookDetailPage from '../pages/catalog/BookDetailPage';
 import LoginPage from '../pages/auth/LoginPage';
@@ -16,6 +16,7 @@ import OrdersPage from '../pages/orders/OrdersPage';
 import OrderDetailPage from '../pages/orders/OrderDetailPage';
 import ProfilePage from '../pages/profile/ProfilePage';
 import AddressesPage from '../pages/profile/AddressesPage';
+import BookChatPage from '../pages/catalog/BookChatPage';
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import AdminBooksPage from '../pages/admin/AdminBooksPage';
 import AdminBookDetailPage from '../pages/admin/AdminBookDetailPage';
@@ -25,9 +26,12 @@ import AdminOrderDetailPage from '../pages/admin/AdminOrderDetailPage';
 import AdminUsersPage from '../pages/admin/AdminUsersPage';
 import AdminReviewsPage from '../pages/admin/AdminReviewsPage';
 import AdminAddBookPage from '../pages/admin/AdminAddBookPage';
+import AdminRagPage from '../pages/admin/AdminRagPage';
+import AdminInventoryPage from '../pages/admin/AdminInventoryPage';
 
 const main = (page) => <MainLayout>{page}</MainLayout>;
 const protectedPage = (page) => main(<ProtectedRoute>{page}</ProtectedRoute>);
+const customerPage = (page) => main(<CustomerRoute>{page}</CustomerRoute>);
 const admin = (page) => (
   <AdminRoute>
     <AdminLayout>{page}</AdminLayout>
@@ -44,13 +48,14 @@ export default function AppRoutes() {
       <Route path="/verify-email" element={main(<VerifyEmailPage />)} />
       <Route path="/forgot-password" element={main(<ForgotPasswordPage />)} />
       <Route path="/reset-password" element={main(<ResetPasswordPage />)} />
-      <Route path="/cart" element={protectedPage(<CartPage />)} />
-      <Route path="/checkout" element={protectedPage(<CheckoutPage />)} />
-      <Route path="/payment/result" element={protectedPage(<PaymentResultPage />)} />
-      <Route path="/payment/success" element={protectedPage(<PaymentResultPage />)} />
-      <Route path="/payment/cancel" element={protectedPage(<PaymentResultPage />)} />
-      <Route path="/orders" element={protectedPage(<OrdersPage />)} />
-      <Route path="/orders/:id" element={protectedPage(<OrderDetailPage />)} />
+      <Route path="/cart" element={customerPage(<CartPage />)} />
+      <Route path="/checkout" element={customerPage(<CheckoutPage />)} />
+      <Route path="/payment/result" element={customerPage(<PaymentResultPage />)} />
+      <Route path="/payment/success" element={customerPage(<PaymentResultPage />)} />
+      <Route path="/payment/cancel" element={customerPage(<PaymentResultPage />)} />
+      <Route path="/orders" element={customerPage(<OrdersPage />)} />
+      <Route path="/orders/:id" element={customerPage(<OrderDetailPage />)} />
+      <Route path="/books/chat" element={customerPage(<BookChatPage />)} />
       <Route path="/profile" element={protectedPage(<ProfilePage />)} />
       <Route path="/profile/addresses" element={protectedPage(<AddressesPage />)} />
       <Route path="/admin" element={admin(<AdminDashboardPage />)} />
@@ -62,6 +67,8 @@ export default function AppRoutes() {
       <Route path="/admin/orders/:id" element={admin(<AdminOrderDetailPage />)} />
       <Route path="/admin/users" element={admin(<AdminUsersPage />)} />
       <Route path="/admin/reviews" element={admin(<AdminReviewsPage />)} />
+      <Route path="/admin/inventory" element={admin(<AdminInventoryPage />)} />
+      <Route path="/admin/rag" element={admin(<AdminRagPage />)} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

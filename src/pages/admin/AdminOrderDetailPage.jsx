@@ -8,10 +8,20 @@ export default function AdminOrderDetailPage() {
 
   const handleUpdateStatus = async (newStatus) => {
     try {
-      await adminService.updateOrderStatus(id, newStatus);
+      let shippingProvider = undefined;
+      let trackingCode = undefined;
+
+      if (newStatus === 'SHIPPED') {
+        shippingProvider = prompt('Enter Shipping Provider:', 'GHTK');
+        if (!shippingProvider) return;
+        trackingCode = prompt('Enter Tracking Code:', 'TRK' + Date.now());
+        if (!trackingCode) return;
+      }
+
+      await adminService.updateOrderStatus(id, newStatus, shippingProvider, trackingCode);
       window.location.reload();
     } catch (err) {
-      alert('Failed to update order: ' + err.message);
+      alert('Failed to update order: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -21,7 +31,8 @@ export default function AdminOrderDetailPage() {
         <h3>Status Management</h3>
         <Button onClick={() => handleUpdateStatus('PROCESSING')}>Process</Button>
         <Button onClick={() => handleUpdateStatus('SHIPPED')}>Ship</Button>
-        <Button onClick={() => handleUpdateStatus('CANCELLED')}>Cancel</Button>
+        <Button onClick={() => handleUpdateStatus('DELIVERED')}>Deliver</Button>
+        <Button onClick={() => handleUpdateStatus('CANCELLED')}>Cancel Order</Button>
       </div>
       <OrderDetailPage />
     </>

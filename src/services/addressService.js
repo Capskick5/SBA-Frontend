@@ -4,7 +4,8 @@ import { apiClient } from './apiClient';
 export const addressService = {
   async list() {
     const data = await apiClient.get('/users/me/addresses');
-    return (data || []).map(mapAddressFromApi);
+    const addresses = Array.isArray(data) ? data : data?.items || [];
+    return addresses.map(mapAddressFromApi);
   },
 
   async create(payload) {

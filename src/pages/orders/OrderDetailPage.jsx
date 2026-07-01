@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import OrderStatusBadge from '../../components/orders/OrderStatusBadge';
 import OrderTimeline from '../../components/orders/OrderTimeline';
 import Table from '../../components/ui/Table';
+import { LoadingState } from '../../components/ui/State';
 import { orderService } from '../../services/orderService';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -16,7 +17,7 @@ export default function OrderDetailPage() {
       .catch(err => console.error('Failed to load order detail:', err));
   }, [id]);
 
-  if (!order) return <p>Loading order detail...</p>;
+  if (!order) return <LoadingState text="Loading order detail..." />;
 
   const address = typeof order.addressSnapshot === 'string'
     ? JSON.parse(order.addressSnapshot)

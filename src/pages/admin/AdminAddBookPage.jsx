@@ -5,6 +5,8 @@ import { bookService } from '../../services/bookService';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Textarea from '../../components/ui/Textarea';
+import PricingFields from '../../components/admin/PricingFields';
+import { LoadingState } from '../../components/ui/State';
 
 export default function AdminAddBookPage() {
     const navigate = useNavigate();
@@ -12,8 +14,8 @@ export default function AdminAddBookPage() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
-    const [coverUrl, setCoverUrl] = useState('');
-    const [bookFileUrl, setBookFileUrl] = useState('');
+    const [coverKey, setCoverKey] = useState('');
+    const [fileKey, setFileKey] = useState('');
     const [uploadingCover, setUploadingCover] = useState(false);
     const [uploadingFile, setUploadingFile] = useState(false);
 
@@ -32,11 +34,12 @@ export default function AdminAddBookPage() {
             const formData = new FormData();
             formData.append('file', file);
             const res = await adminService.uploadThumbnail(formData);
-            setCoverUrl(res.data?.url || res.data || '');
+            const key = res.data?.data?.coverKey || res.data?.coverKey;
+            if (!key) throw new Error('Invalid upload response');
+            setCoverKey(key);
             alert('Cover uploaded to MinIO.');
         } catch (err) {
-            console.warn('MinIO upload failed. Using a demo cover URL:', err);
-            setCoverUrl('https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500');
+            alert('Failed to upload cover: ' + err.message);
         } finally {
             setUploadingCover(false);
         }
@@ -50,11 +53,12 @@ export default function AdminAddBookPage() {
             const formData = new FormData();
             formData.append('file', file);
             const res = await adminService.uploadBookFile(formData);
-            setBookFileUrl(res.data?.url || res.data || '');
+            const key = res.data?.data?.fileKey || res.data?.fileKey;
+            if (!key) throw new Error('Invalid upload response');
+            setFileKey(key);
             alert('Book file uploaded to MinIO.');
         } catch (err) {
-            console.warn('MinIO upload failed. Using a demo file URL:', err);
-            setBookFileUrl('http://localhost:8080/files/mock-document.pdf');
+            alert('Failed to upload book file: ' + err.message);
         } finally {
             setUploadingFile(false);
         }
@@ -64,6 +68,17 @@ export default function AdminAddBookPage() {
         e.preventDefault();
         setSubmitting(true);
 
+        if (!coverKey) {
+            alert('Please upload a cover image first.');
+            setSubmitting(false);
+            return;
+        }
+        if (!fileKey) {
+            alert('Please upload a book file first.');
+            setSubmitting(false);
+            return;
+        }
+
         try {
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData.entries());
@@ -72,6 +87,7 @@ export default function AdminAddBookPage() {
                 title: data.title,
                 author: data.author,
                 price: Number(data.price) || 0,
+                originalPrice: Number(data.originalPrice) || Number(data.price) || 0,
                 stock: Number(data.stock) || 10,
                 categoryId: Number(data.categoryId),
                 description: data.description || 'Book description',
@@ -79,8 +95,8 @@ export default function AdminAddBookPage() {
                 publisher: 'N/A',
                 publicationYear: 2026,
                 language: 'vi',
-                coverKey: coverUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=500',
-                fileKey: bookFileUrl || 'http://localhost:8080/files/mock-document.pdf',
+                coverKey: coverKey,
+                fileKey: fileKey,
                 active: true
             };
 
@@ -102,14 +118,14 @@ export default function AdminAddBookPage() {
         }
     };
 
-    if (loading) return <p>Loading data...</p>;
+    if (loading) return <LoadingState text="Loading data..." />;
 
     return (
         <section className="narrow">
             <h1>Add New Book</h1>
             <form className="form" onSubmit={handleSubmit}>
-                <Input name="title" label="Title" required />
-                <Input name="author" label="Author" required />
+                <Input name="title" label="Title" required placeholder="Enter book title" />
+                <Input name="author" label="Author" required placeholder="Enter author name" />
 
                 <div className="input-group" style={{ marginBottom: '16px' }}>
                     <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>Category</label>
@@ -139,17 +155,19 @@ export default function AdminAddBookPage() {
                 </div>
 
                 <div style={{ display: 'flex', gap: '16px' }}>
-                    <Input name="price" label="Price" type="number" required />
-                    <Input name="stock" label="Stock" type="number" required />
+                    <div style={{ flex: 1 }}>
+                        <PricingFields />
+                    </div>
+                    <Input name="stock" label="Stock" type="number" required placeholder="Initial stock quantity" />
                 </div>
 
-                <Input name="isbn" label="ISBN" />
+                <Input name="isbn" label="ISBN" placeholder="Enter ISBN" />
                 <Textarea name="description" label="Description" rows={5} />
 
                 <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
                     <Button type="button" onClick={() => navigate('/admin/books')}>Cancel</Button>
                     <Button type="submit" variant="primary" loading={submitting} disabled={uploadingCover || uploadingFile}>
-                        Save Book
+                        Save
                     </Button>
                 </div>
             </form>

@@ -61,7 +61,7 @@ export default function AdminCategoriesPage() {
         <div style={{ flex: 1 }}>
           <Input 
             label="New Category Name" 
-            placeholder="Enter category name..." 
+            placeholder="Enter category name"
             value={newCatName}
             onChange={(e) => setNewCatName(e.target.value)}
             required
@@ -73,6 +73,7 @@ export default function AdminCategoriesPage() {
       </form>
 
       <Table
+        emptyText="No categories found."
         columns={[
           { key: 'id', label: 'ID' },
           { key: 'name', label: 'Category Name' },

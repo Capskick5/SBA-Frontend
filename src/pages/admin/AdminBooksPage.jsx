@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
+import { LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -12,10 +13,17 @@ export default function AdminBooksPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [sortBy, setSortBy] = useState('id,desc');
+  const [statusFilter, setStatusFilter] = useState('all');
 
-  const loadBooks = useCallback((pageIndex, currentSort) => {
+  const loadBooks = useCallback((pageIndex, currentSort, currentStatus) => {
     setLoading(true);
-    adminService.getBooks({ page: pageIndex, size: 10, sort: currentSort })
+    const params = { page: pageIndex, size: 10, sort: currentSort };
+    if (currentStatus === 'active') {
+      params.active = true;
+    } else if (currentStatus === 'hidden') {
+      params.active = false;
+    }
+    adminService.getBooksAdmin(params)
       .then((res) => {
         const responseBody = res.data || res;
 
@@ -39,14 +47,14 @@ export default function AdminBooksPage() {
   }, []);
 
   useEffect(() => {
-    Promise.resolve().then(() => loadBooks(currentPage, sortBy));
-  }, [currentPage, sortBy, loadBooks]);
+    Promise.resolve().then(() => loadBooks(currentPage, sortBy, statusFilter));
+  }, [currentPage, sortBy, statusFilter, loadBooks]);
 
   const handleToggleActive = async (row) => {
     try {
       await adminService.toggleBookActive(row.id, !row.active);
       alert(`Book ${row.active ? 'hidden' : 'shown'} successfully.`);
-      loadBooks(currentPage, sortBy);
+      loadBooks(currentPage, sortBy, statusFilter);
     } catch (err) {
       alert('Failed to update book status: ' + (err.response?.data?.message || err.message));
     }
@@ -62,32 +70,52 @@ export default function AdminBooksPage() {
             + Add Book
           </Button>
 
-          <div>
-            <label htmlFor="sortSelect" style={{ marginRight: '8px', fontWeight: 'bold' }}>Sort:</label>
-            <select
-              id="sortSelect"
-              value={sortBy}
-              onChange={(event) => {
-                setSortBy(event.target.value);
-                setCurrentPage(0);
-              }}
-              style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
-            >
-              <option value="id,desc">ID: Newest first</option>
-              <option value="id,asc">ID: Oldest first</option>
-              <option value="price,asc">Price: Low to high</option>
-              <option value="price,desc">Price: High to low</option>
-              <option value="soldCount,desc">Best selling</option>
-            </select>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div>
+              <label htmlFor="statusSelect" style={{ marginRight: '8px', fontWeight: 'bold' }}>Status:</label>
+              <select
+                id="statusSelect"
+                value={statusFilter}
+                onChange={(event) => {
+                  setStatusFilter(event.target.value);
+                  setCurrentPage(0);
+                }}
+                style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
+              >
+                <option value="all">All</option>
+                <option value="active">Active</option>
+                <option value="hidden">Hidden</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="sortSelect" style={{ marginRight: '8px', fontWeight: 'bold' }}>Sort:</label>
+              <select
+                id="sortSelect"
+                value={sortBy}
+                onChange={(event) => {
+                  setSortBy(event.target.value);
+                  setCurrentPage(0);
+                }}
+                style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
+              >
+                <option value="id,desc">ID: Newest first</option>
+                <option value="id,asc">ID: Oldest first</option>
+                <option value="price,asc">Price: Low to high</option>
+                <option value="price,desc">Price: High to low</option>
+                <option value="soldCount,desc">Best selling</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
       {loading ? (
-        <p>Loading books...</p>
+        <LoadingState text="Loading books..." />
       ) : (
         <>
           <Table
+            emptyText="No books found."
             columns={[
               { key: 'id', label: 'ID' },
               { key: 'title', label: 'Title' },
@@ -113,18 +141,18 @@ export default function AdminBooksPage() {
                 label: 'Actions',
                 render: (row) => (
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <Link to={`/admin/books/${row.id}`} className="btn-link">Edit</Link>
+                    <Link
+                      to={`/admin/books/${row.id}`}
+                      state={{ book: row }}
+                      className="btn-link"
+                    >
+                      Edit
+                    </Link>
                     <button
                       type="button"
                       onClick={() => handleToggleActive(row)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: row.active ? '#e53e3e' : '#3182ce',
-                        cursor: 'pointer',
-                        padding: 0,
-                        textDecoration: 'underline',
-                      }}
+                      className="btn-link"
+                      style={{ color: row.active ? '#e53e3e' : '#3182ce' }}
                     >
                       {row.active ? 'Hide' : 'Show'}
                     </button>
@@ -135,6 +163,7 @@ export default function AdminBooksPage() {
             rows={books}
           />
 
+          {books.length > 0 && (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '20px' }}>
             <Button type="button" disabled={currentPage === 0} onClick={() => setCurrentPage((prev) => prev - 1)}>
               &laquo; Previous
@@ -146,6 +175,7 @@ export default function AdminBooksPage() {
               Next &raquo;
             </Button>
           </div>
+          )}
         </>
       )}
     </section>

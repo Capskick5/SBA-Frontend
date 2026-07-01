@@ -1,16 +1,18 @@
-import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
-import { AuthFormFooter, AuthFormMessage } from '../../components/auth/AuthFormFooter';
-import { captureFormError } from '../../utils/formErrorUtils';
-import { authService } from '../../services/authService';
-import { MOCK_OTP } from '../../mocks/mockStore';
+import { useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import Button from "../../components/ui/Button";
+import Input from "../../components/ui/Input";
+import {
+  AuthFormFooter,
+  AuthFormMessage,
+} from "../../components/auth/AuthFormFooter";
+import { captureFormError } from "../../utils/formErrorUtils";
+import { authService } from "../../services/authService";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const emailDefault = params.get('email') || '';
+  const emailDefault = params.get("email") || "";
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -24,11 +26,11 @@ export default function ResetPasswordPage() {
     const form = new FormData(event.currentTarget);
     try {
       await authService.resetPassword({
-        email: form.get('email'),
-        otp: form.get('otp'),
-        newPassword: form.get('newPassword'),
+        email: form.get("email"),
+        otp: form.get("otp"),
+        newPassword: form.get("newPassword"),
       });
-      navigate('/login?reset=1');
+      navigate("/login?reset=1");
     } catch (err) {
       captureFormError(err, setError, setFieldErrors);
     } finally {
@@ -41,11 +43,25 @@ export default function ResetPasswordPage() {
       <h1>Reset Password</h1>
       <AuthFormMessage error={error} />
       <form className="form" onSubmit={handleSubmit}>
-        <Input label="Email" name="email" type="email" defaultValue={emailDefault} error={fieldErrors.email} required />
+        <Input
+          label="Email"
+          name="email"
+          type="email"
+          defaultValue={emailDefault}
+          error={fieldErrors.email}
+          required
+        />
         <Input label="OTP" name="otp" error={fieldErrors.otp} required />
-        <Input label="New password" name="newPassword" type="password" error={fieldErrors.newPassword} required />
-        <p className="form-hint">Demo OTP: {MOCK_OTP}</p>
-        <Button type="submit" disabled={loading}>{loading ? 'Processing...' : 'Reset'}</Button>
+        <Input
+          label="New password"
+          name="newPassword"
+          type="password"
+          error={fieldErrors.newPassword}
+          required
+        />
+        <Button type="submit" disabled={loading}>
+          {loading ? "Processing..." : "Reset"}
+        </Button>
       </form>
       <AuthFormFooter>
         <Link to="/login">Back to login</Link>
