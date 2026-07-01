@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from "react";
 import {
-  ShoppingCart,
   Sun,
   Moon,
   BookOpen,
@@ -8,12 +7,27 @@ import {
   ShoppingBag,
   Shield,
   LogOut,
-  ChevronDown,
+  Search,
 } from "lucide-react";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { cartService } from "../services/cartService";
 import { CART_UPDATED_EVENT, getCartItemCount } from "../utils/cartEvents";
+
+const bottomLinks = [
+  { label: "New Books", to: "/?sort=rating_desc" },
+  { label: "Ebooks", to: "/?query=ebook" },
+  { label: "Best Sellers", to: "/?sort=rating_desc" },
+  { label: "Pre-Order Offers", to: "/?query=pre-order" },
+  { label: "Kids", to: "/?query=kids" },
+  { label: "Fiction ▾", to: "/?query=fiction" },
+  { label: "Nonfiction ▾", to: "/?query=nonfiction" },
+  { label: "YA", to: "/?query=ya" },
+  { label: "Games & Puzzles", to: "/?query=games" },
+  { label: "Stationery & Gifts", to: "/?query=stationery" },
+  { label: "Gift Cards", to: "/?query=gift" },
+  { label: "Offers ▾", to: "/?query=offer" },
+];
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -25,6 +39,10 @@ export default function Header() {
   );
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  
+  const queryParam = new URLSearchParams(location.search).get("query") || "";
+  const [searchQuery, setSearchQuery] = useState(queryParam);
+
   const isAuthPage =
     location.pathname === "/login" || location.pathname === "/register";
 
@@ -34,6 +52,10 @@ export default function Header() {
     localStorage.setItem("theme", nextTheme);
     document.documentElement.setAttribute("data-theme", nextTheme);
   };
+
+  useEffect(() => {
+    setSearchQuery(queryParam);
+  }, [queryParam]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -85,131 +107,162 @@ export default function Header() {
     navigate("/");
   };
 
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/?query=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate("/");
+    }
+  };
+
   return (
     <header className="navbar">
-      <Link className="brand" to="/">
-        <BookOpen size={26} className="brand-icon" />
-        <span>BookVerse</span>
-      </Link>
+      {/* Top Row */}
+      <div className="navbar-top-row">
+        <Link className="brand" to="/">
+          <BookOpen size={26} className="brand-icon" />
+          <span>BookVerse</span>
+        </Link>
 
-      <nav className="nav-links">
-        <NavLink to="/" end>
-          Home
-        </NavLink>
-        {user && user.role !== "ADMIN" && (
-          <NavLink to="/books/chat">AI Chat</NavLink>
-        )}
-
-        <div className="nav-controls">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-            className="control-btn"
-          >
-            {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
+        {/* Search Bar */}
+        <form onSubmit={handleSearchSubmit} className="search-form-pill">
+          <input
+            type="text"
+            placeholder="Search books, authors, ISBNs"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="search-pill-input"
+          />
+          <button type="submit" className="search-pill-btn" aria-label="Search">
+            <Search size={18} />
           </button>
+        </form>
 
-          {!isAuthPage && (!user || user.role !== "ADMIN") && (
-            <NavLink
-              className="control-btn cart-btn"
-              to="/cart"
-              aria-label={`Cart${cartItemCount ? `, ${cartItemCount} items` : ""}`}
+        {/* Right side controls / actions */}
+        <div className="navbar-actions">
+          {/* AI Bookstore Link */}
+          {(!user || user.role !== "ADMIN") && (
+            <Link
+              to={user ? "/books/chat" : "/login"}
+              className="header-secondary-link"
             >
-              <ShoppingCart
-                className="cart-icon"
-                size={30}
-                strokeWidth={2.4}
-                aria-hidden="true"
-              />
-              {user && cartItemCount > 0 && (
-                <span className="cart-badge">{cartItemCount}</span>
-              )}
-              <span className="sr-only">Cart</span>
-            </NavLink>
+              Choose a Bookstore
+            </Link>
           )}
-        </div>
 
-        {user ? (
-          <div className="profile-dropdown-container" ref={dropdownRef}>
-            <button
-              type="button"
-              className="profile-trigger"
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-            >
-              <div className="avatar-circle">
-                {user.fullName?.[0]?.toUpperCase() || "U"}
-              </div>
-              <span className="user-name">
-                {user.fullName?.split(" ").pop()}
-              </span>
-              <ChevronDown
-                size={14}
-                className={`chevron-icon ${dropdownOpen ? "rotated" : ""}`}
-              />
-            </button>
-
-            {dropdownOpen && (
-              <div className="dropdown-menu">
-                <div className="dropdown-user-info">
-                  <p className="user-info-name">{user.fullName}</p>
-                  <p className="user-info-email">{user.email}</p>
-                </div>
-                <div className="dropdown-divider"></div>
-                <Link
-                  to="/profile"
-                  onClick={() => setDropdownOpen(false)}
-                  className="dropdown-item"
-                >
-                  <User size={16} />
-                  <span>Profile</span>
-                </Link>
-                {user.role !== "ADMIN" && (
-                  <Link
-                    to="/orders"
-                    onClick={() => setDropdownOpen(false)}
-                    className="dropdown-item"
-                  >
-                    <ShoppingBag size={16} />
-                    <span>My Orders</span>
-                  </Link>
-                )}
-                {user.role === "ADMIN" && (
-                  <Link
-                    to="/admin"
-                    onClick={() => setDropdownOpen(false)}
-                    className="dropdown-item"
-                  >
-                    <Shield size={16} />
-                    <span>Admin Dashboard</span>
-                  </Link>
-                )}
-                <div className="dropdown-divider"></div>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="dropdown-item logout-item"
-                >
-                  <LogOut size={16} />
-                  <span>Log Out</span>
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="auth-buttons">
+          {/* User Sign In / Account Dropdown */}
+          {!user && (
             <Link
               to={`/login?redirect=${encodeURIComponent(location.pathname)}`}
-              className="login-link"
+              className="header-secondary-link"
             >
-              Log In
+              Sign In
             </Link>
-            <Link to="/register" className="register-btn">
-              Register
-            </Link>
+          )}
+
+          {/* Cart Control & Theme controls */}
+          <div className="nav-controls">
+            {!isAuthPage && (!user || user.role !== "ADMIN") && (
+              <Link
+                className="control-btn"
+                to="/cart"
+                aria-label={`Cart${cartItemCount ? `, ${cartItemCount} items` : ""}`}
+              >
+                <ShoppingBag size={20} aria-hidden="true" />
+                {user && cartItemCount > 0 && (
+                  <span className="cart-badge">{cartItemCount}</span>
+                )}
+              </Link>
+            )}
+
+            {user && (
+              <div className="profile-dropdown-container" ref={dropdownRef}>
+                <button
+                  type="button"
+                  className="control-btn profile-trigger-btn"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  aria-label="User profile"
+                >
+                  <User size={20} />
+                </button>
+
+                {dropdownOpen && (
+                  <div className="dropdown-menu">
+                    <div className="dropdown-user-info">
+                      <p className="user-info-name">{user.fullName}</p>
+                      <p className="user-info-email">{user.email}</p>
+                    </div>
+                    <div className="dropdown-divider"></div>
+                    <Link
+                      to="/profile"
+                      onClick={() => setDropdownOpen(false)}
+                      className="dropdown-item"
+                    >
+                      <User size={16} />
+                      <span>Profile</span>
+                    </Link>
+                    {user.role !== "ADMIN" && (
+                      <Link
+                        to="/orders"
+                        onClick={() => setDropdownOpen(false)}
+                        className="dropdown-item"
+                      >
+                        <ShoppingBag size={16} />
+                        <span>My Orders</span>
+                      </Link>
+                    )}
+                    {user.role === "ADMIN" && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setDropdownOpen(false)}
+                        className="dropdown-item"
+                      >
+                        <Shield size={16} />
+                        <span>Admin Dashboard</span>
+                      </Link>
+                    )}
+                    <div className="dropdown-divider"></div>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="dropdown-item logout-item"
+                    >
+                      <LogOut size={16} />
+                      <span>Log Out</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className="control-btn"
+            >
+              {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
+            </button>
           </div>
-        )}
-      </nav>
+        </div>
+      </div>
+
+      {/* Bottom Navigation Row */}
+      <div className="navbar-bottom-row">
+        <nav className="navbar-bottom-links">
+          {bottomLinks.map(({ label, to }) => (
+            <Link key={label} to={to}>
+              {label}
+            </Link>
+          ))}
+        </nav>
+      </div>
+
+      {/* Alert Bar */}
+      <div className="navbar-alert-bar">
+        <span>$18,655,083.19 Raised for Local Bookstores ⓘ</span>
+      </div>
     </header>
   );
 }

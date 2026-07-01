@@ -6,6 +6,22 @@ import BookGrid from '../../components/catalog/BookGrid';
 import Pagination from '../../components/catalog/Pagination';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 
+import banner1 from '../../assets/banner1.png';
+import banner2 from '../../assets/banner2.png';
+
+const BANNERS = [
+  {
+    image: banner1,
+    title: "Explore BookVerse",
+    subtitle: "Discover your next favorite read from our curated digital library, assisted by AI."
+  },
+  {
+    image: banner2,
+    title: "AI-Powered Bookstore",
+    subtitle: "Chat with our AI assistant to find the perfect book customized just for you."
+  }
+];
+
 const PAGE_SIZE = 20;
 const DEFAULT_SORT = 'title_asc';
 const DEFAULT_CATEGORY = 'all';
@@ -24,6 +40,14 @@ export default function CatalogPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [retryCount, setRetryCount] = useState(0);
+  const [activeBanner, setActiveBanner] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveBanner((prev) => (prev + 1) % BANNERS.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, []);
 
   const query = searchParams.get('query') || '';
   const category = searchParams.get('category') || DEFAULT_CATEGORY;
@@ -102,43 +126,62 @@ export default function CatalogPage() {
   };
 
   return (
-    <section className="stack">
-      <div className="hero-banner">
-        <h1>Explore BookVerse</h1>
-        <p>Discover your next favorite read from our curated digital library, assisted by AI.</p>
-      </div>
-      <CatalogFilters
-        query={query}
-        setQuery={(value) => updateCatalogUrl({ query: value }, { resetPage: true })}
-        category={category}
-        setCategory={(value) => updateCatalogUrl({ category: value }, { resetPage: true })}
-        sort={sort}
-        setSort={(value) => updateCatalogUrl({ sort: value }, { resetPage: true })}
-        categories={categories}
-      />
-      {!loading && !error && (
-        <p className="muted">
-          Showing {showingStart}-{showingEnd} of {totalItems} books
-        </p>
-      )}
-      {loading && <LoadingState text="Loading books..." />}
-      {!loading && error && (
-        <ErrorState text={error}>
-          <button className="btn" type="button" onClick={retryLoadBooks}>
-            Retry
-          </button>
-        </ErrorState>
-      )}
-      {!loading && !error && (
-        <>
-          <BookGrid books={books} />
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={(page) => updateCatalogUrl({ page })}
+    <div className="catalog-container">
+      <div className="hero-banner-slider">
+        {BANNERS.map((b, index) => (
+          <div
+            key={index}
+            className={`hero-banner ${index === activeBanner ? 'active' : ''}`}
+            style={{
+              backgroundImage: `url(${b.image})`
+            }}
           />
-        </>
-      )}
-    </section>
+        ))}
+        <div className="banner-dots">
+          {BANNERS.map((_, index) => (
+            <button
+              key={index}
+              className={`banner-dot ${index === activeBanner ? 'active' : ''}`}
+              onClick={() => setActiveBanner(index)}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+      <section className="stack">
+        <CatalogFilters
+          query={query}
+          setQuery={(value) => updateCatalogUrl({ query: value }, { resetPage: true })}
+          category={category}
+          setCategory={(value) => updateCatalogUrl({ category: value }, { resetPage: true })}
+          sort={sort}
+          setSort={(value) => updateCatalogUrl({ sort: value }, { resetPage: true })}
+          categories={categories}
+        />
+        {!loading && !error && (
+          <p className="muted">
+            Showing {showingStart}-{showingEnd} of {totalItems} books
+          </p>
+        )}
+        {loading && <LoadingState text="Loading books..." />}
+        {!loading && error && (
+          <ErrorState text={error}>
+            <button className="btn" type="button" onClick={retryLoadBooks}>
+              Retry
+            </button>
+          </ErrorState>
+        )}
+        {!loading && !error && (
+          <>
+            <BookGrid books={books} />
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => updateCatalogUrl({ page })}
+            />
+          </>
+        )}
+      </section>
+    </div>
   );
 }
