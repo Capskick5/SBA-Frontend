@@ -274,11 +274,6 @@ export default function Header() {
           ))}
         </nav>
       </div>
-
-      {/* Alert Bar */}
-      <div className="navbar-alert-bar">
-        <span>$18,655,083.19 Raised for Local Bookstores ⓘ</span>
-      </div>
     </header>
   );
 }
