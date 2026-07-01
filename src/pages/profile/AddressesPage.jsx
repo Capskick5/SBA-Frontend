@@ -1,7 +1,7 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { CheckCircle2, Plus } from 'lucide-react';
 import AddressForm from '../../components/checkout/AddressForm';
-import Button from '../../components/ui/Button';
 import { AuthFormMessage } from '../../components/auth/AuthFormFooter';
 import { captureFormError } from '../../utils/formErrorUtils';
 import { EmptyState, ErrorState, LoadingState } from '../../components/ui/State';
@@ -22,7 +22,7 @@ function getSafeRedirect(value) {
   return value;
 }
 
-export default function AddressesPage() {
+export default function AddressesPage({ onTitleChange }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectTo = getSafeRedirect(searchParams.get('redirect'));
@@ -35,6 +35,7 @@ export default function AddressesPage() {
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState(null);
   const [formFieldErrors, setFormFieldErrors] = useState({});
+  const [showForm, setShowForm] = useState(false);
 
   const loadAddresses = () => {
     setLoading(true);
@@ -52,6 +53,11 @@ export default function AddressesPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!onTitleChange) return;
+    onTitleChange(showForm ? (editingId ? 'Edit address' : 'Add new address') : 'Address book');
+  }, [editingId, onTitleChange, showForm]);
+
   const clearFormErrors = () => {
     setFormError(null);
     setFormFieldErrors({});
@@ -61,6 +67,15 @@ export default function AddressesPage() {
     setEditingId(null);
     setFormValues(emptyValues);
     setFormKey((k) => k + 1);
+    setShowForm(false);
+    clearFormErrors();
+  };
+
+  const startAdd = () => {
+    setEditingId(null);
+    setFormValues(emptyValues);
+    setFormKey((k) => k + 1);
+    setShowForm(true);
     clearFormErrors();
   };
 
@@ -76,6 +91,7 @@ export default function AddressesPage() {
       isDefault: address.isDefault,
     });
     setFormKey((k) => k + 1);
+    setShowForm(true);
     clearFormErrors();
   };
 
@@ -130,43 +146,78 @@ export default function AddressesPage() {
 
   if (loading) return <LoadingState />;
 
+  if (showForm) {
+    return (
+      <section className="address-book-page address-book-editor-page">
+        {!onTitleChange && <h1>{editingId ? 'Edit address' : 'Add new address'}</h1>}
+
+        {redirectTo && (
+          <Link to={redirectTo} className="btn btn-secondary addresses-back-link">
+            Back to book
+          </Link>
+        )}
+
+        <div className="address-book-side-window">
+          <AuthFormMessage error={formError} />
+          <AddressForm
+            key={formKey}
+            initialValues={formValues}
+            fieldErrors={formFieldErrors}
+            onSubmit={handleSubmit}
+            submitLabel="Save"
+            loading={formLoading}
+            onCancel={resetForm}
+          />
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="stack">
-      <h1>Addresses</h1>
+    <section className="address-book-page">
+      {!onTitleChange && <h1>Address book</h1>}
       {redirectTo && (
         <Link to={redirectTo} className="btn btn-secondary addresses-back-link">
           Back to book
         </Link>
       )}
       {error && <ErrorState text={error} />}
-      {!addresses.length && !error && <EmptyState text="No addresses yet." />}
-      {addresses.map((address) => (
-        <div className="panel" key={address.id}>
-          <strong>{address.recipient}</strong>
-          <p>{address.phone}</p>
-          <p>{address.line}, {address.city}</p>
-          {address.isDefault && <span className="badge">Default</span>}
-          <div className="address-actions">
-            <Button type="button" onClick={() => startEdit(address)}>Edit</Button>
-            <Button type="button" onClick={() => handleDelete(address.id)}>Delete</Button>
-            {!address.isDefault && (
-              <Button type="button" onClick={() => handleSetDefault(address.id)}>Set default</Button>
-            )}
-          </div>
-        </div>
-      ))}
-      <div className="panel">
-        <h3>{editingId ? 'Edit address' : 'Add address'}</h3>
-        <AuthFormMessage error={formError} />
-        <AddressForm
-          key={formKey}
-          initialValues={formValues}
-          fieldErrors={formFieldErrors}
-          onSubmit={handleSubmit}
-          submitLabel="Save"
-          loading={formLoading}
-          onCancel={editingId ? resetForm : undefined}
-        />
+
+      <button type="button" className="address-book-add" onClick={startAdd}>
+        <Plus size={26} />
+        <span>Add new address</span>
+      </button>
+
+      {!addresses.length && !error && !showForm && <EmptyState text="No addresses yet." />}
+
+      <div className="address-book-list">
+        {addresses.map((address) => (
+          <article className="address-book-card" key={address.id}>
+            <div className="address-book-main">
+              <div className="address-book-name-row">
+                <strong>{address.recipient}</strong>
+                {address.isDefault && (
+                  <span className="address-book-default">
+                    <CheckCircle2 size={14} />
+                    Default address
+                  </span>
+                )}
+              </div>
+              <p>Address: {[address.line, address.ward, address.district, address.city].filter(Boolean).join(', ')}</p>
+              <p>Phone: {address.phone}</p>
+            </div>
+
+            <div className="address-book-actions">
+              <button type="button" onClick={() => startEdit(address)}>Edit</button>
+              <button type="button" className="danger" onClick={() => handleDelete(address.id)}>Delete</button>
+              {address.isDefault ? (
+                <span className="address-book-action-spacer" aria-hidden="true" />
+              ) : (
+                <button type="button" onClick={() => handleSetDefault(address.id)}>Set default</button>
+              )}
+            </div>
+          </article>
+        ))}
       </div>
     </section>
   );

@@ -97,7 +97,9 @@ export default function CheckoutPage() {
           .filter((id) => cartIds.includes(id));
         const itemIds = requestedIds.length > 0 ? requestedIds : cartIds;
         const selectedItems = (cart.items || []).filter((item) => itemIds.includes(item.itemId));
-        const defaultAddress = addrList.find((address) => address.isDefault) || addrList[0];
+        const requestedAddressId = Number(searchParams.get('address'));
+        const requestedAddress = addrList.find((address) => address.id === requestedAddressId);
+        const defaultAddress = requestedAddress || addrList.find((address) => address.isDefault) || addrList[0];
 
         setAddresses(addrList);
         setCartItemIds(itemIds);

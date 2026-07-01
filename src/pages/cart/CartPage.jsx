@@ -22,6 +22,8 @@ export default function CartPage() {
   const [couponApplied, setCouponApplied] = useState(false);
   const [defaultAddress, setDefaultAddress] = useState(null);
   const [addressLoading, setAddressLoading] = useState(true);
+  const [addresses, setAddresses] = useState([]);
+  const [addressPickerOpen, setAddressPickerOpen] = useState(false);
 
   const syncCart = (nextCart, options = {}) => {
     setCart(nextCart);
@@ -44,12 +46,13 @@ export default function CartPage() {
 
   useEffect(() => {
     addressService.list()
-      .finally(() => setAddressLoading(false))
       .then((list) => {
+        setAddresses(list);
         const def = selectDefaultAddress(list);
         setDefaultAddress(def);
+        setAddressLoading(false);
       })
-      .catch(() => {}); // silently ignore — address is optional display
+      .catch(() => { setAddressLoading(false); });
   }, []);
 
   if (loading) return <LoadingState text="Loading cart..." />;
@@ -119,11 +122,18 @@ export default function CartPage() {
 
   const goToCheckout = () => {
     if (selectedItemIds.length === 0) return;
-    navigate(`/checkout?items=${selectedItemIds.join(',')}`);
+    const params = new URLSearchParams({ items: selectedItemIds.join(',') });
+    if (defaultAddress?.id) params.set('address', String(defaultAddress.id));
+    navigate(`/checkout?${params.toString()}`);
   };
 
   const handleApplyCoupon = () => {
     if (coupon.trim()) setCouponApplied(true);
+  };
+
+  const handleSelectAddress = (address) => {
+    setDefaultAddress(address);
+    setAddressPickerOpen(false);
   };
 
   return (
@@ -180,10 +190,15 @@ export default function CartPage() {
             <div className="cart-summary-section-title">
               <MapPin size={16} />
               Delivery Address
-              <Link to="/profile/addresses" className="cart-address-change-link">
+              <button
+                type="button"
+                className="cart-address-change-link"
+                onClick={() => setAddressPickerOpen(true)}
+                disabled={addressLoading || addresses.length === 0}
+              >
                 <Pencil size={12} />
                 Change
-              </Link>
+              </button>
             </div>
             {addressLoading ? (
               <div className="cart-address-empty">Loading address...</div>
@@ -305,6 +320,52 @@ export default function CartPage() {
               <button type="button" className="btn btn-secondary" onClick={() => setItemToRemove(null)}>Cancel</button>
               <button type="button" className="btn cart-modal-remove-btn" onClick={confirmRemove}>Remove</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {addressPickerOpen && (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={(e) => e.target === e.currentTarget && setAddressPickerOpen(false)}
+        >
+          <div className="modal cart-address-picker-modal" role="dialog" aria-modal="true" aria-labelledby="cart-address-picker-title">
+            <div className="modal-header">
+              <h2 id="cart-address-picker-title">Select delivery address</h2>
+              <button type="button" className="modal-close" onClick={() => setAddressPickerOpen(false)} aria-label="Close">x</button>
+            </div>
+
+            <div className="cart-address-picker-list">
+              {addresses.map((address) => {
+                const isSelected = defaultAddress?.id === address.id;
+                return (
+                  <button
+                    type="button"
+                    key={address.id}
+                    className={`cart-address-picker-option${isSelected ? ' is-selected' : ''}`}
+                    onClick={() => handleSelectAddress(address)}
+                  >
+                    <span className="cart-address-picker-radio" aria-hidden="true" />
+                    <span className="cart-address-picker-content">
+                      <span className="cart-address-picker-name-row">
+                        <strong>{address.recipient}</strong>
+                        <span>{address.phone}</span>
+                      </span>
+                      <span>
+                        {[address.line, address.ward, address.district, address.city]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <button type="button" className="cart-address-manage-btn" onClick={() => navigate('/profile/addresses')}>
+              Manage addresses
+            </button>
           </div>
         </div>
       )}

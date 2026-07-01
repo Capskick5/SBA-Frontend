@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import { BotMessageSquare } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { aiChatService } from '../../services/aiChatService';
 import { cartService } from '../../services/cartService';
@@ -81,7 +82,7 @@ export default function AiChatbot() {
         books: response.books,
       };
       setMessages((prev) => [...prev, botMsg]);
-    } catch (err) {
+    } catch {
       const errorMsg = {
         id: Date.now() + 1,
         sender: 'bot',
@@ -111,7 +112,10 @@ export default function AiChatbot() {
           type="button"
           className="ai-chatbot-trigger btn"
           onClick={() => setIsOpen(true)}
+          aria-label="Open AI chat"
+          title="AI Chat"
         >
+          <BotMessageSquare size={28} aria-hidden="true" />
           💬 AI Chat
         </button>
       ) : (

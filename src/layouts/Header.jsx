@@ -143,13 +143,15 @@ export default function Header() {
 
         {/* Right side controls / actions */}
         <div className="navbar-actions">
-          {/* AI Bookstore Link */}
+          {/* AI reading assistant link */}
           {(!user || user.role !== "ADMIN") && (
             <Link
               to={user ? "/books/chat" : "/login"}
               className="header-secondary-link"
+              aria-label="Open AI reading assistant for purchased books"
+              title="AI reading assistant for purchased books"
             >
-              Choose a Bookstore
+              AI Reading Assistant
             </Link>
           )}
 
