@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { aiChatService } from '../../services/aiChatService';
 import { orderService } from '../../services/orderService';
@@ -19,10 +19,18 @@ export default function BookChatPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
 
+  const chatHistoryRef = useRef(null);
+
   useEffect(() => {
     loadSessions();
     loadPurchasedBooks();
   }, [chatType]);
+
+  useEffect(() => {
+    if (chatHistoryRef.current) {
+      chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
+    }
+  }, [currentSession?.messages, sending]);
 
   const loadSessions = async () => {
     setLoading(true);
@@ -109,16 +117,20 @@ export default function BookChatPage() {
 
   const handleCreateSession = async (e) => {
     e.preventDefault();
-    const bookIds = purchasedBooks.map((b) => b.bookId);
-    if (bookIds.length === 0) {
-      alert('You have no purchased books to chat about.');
+    if (selectedBookIds.length === 0) {
+      alert('Please select at least one book to chat about.');
       return;
     }
 
-    const title = newChatTitle.trim() || 'Book Q&A Chat';
+    const firstBook = purchasedBooks.find((b) => b.bookId === selectedBookIds[0]);
+    let defaultTitle = 'Book Q&A Chat';
+    if (firstBook) {
+      defaultTitle = firstBook.title.length > 35 ? firstBook.title.substring(0, 35) + '...' : firstBook.title;
+    }
+    const title = newChatTitle.trim() || defaultTitle;
 
     try {
-      const newSession = await aiChatService.createSession('BOOK_CHAT', title, bookIds);
+      const newSession = await aiChatService.createSession('BOOK_CHAT', title, selectedBookIds);
       setIsModalOpen(false);
       setNewChatTitle('');
       setSelectedBookIds([]);
@@ -195,18 +207,15 @@ export default function BookChatPage() {
 
   return (
     <section className="stack">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1>AI Assistant</h1>
-        </div>
-      </div>
-
       {error && <div className="panel" style={{ borderLeft: '4px solid var(--error)', color: 'var(--error)' }}>{error}</div>}
 
       <div className="chat-layout">
         <aside className="chat-sidebar panel">
           <Button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setSelectedBookIds(purchasedBooks.length > 0 ? [purchasedBooks[0].bookId] : []);
+              setIsModalOpen(true);
+            }}
             style={{ width: '100%', marginBottom: '16px' }}
           >
             + Start New Chat
@@ -263,7 +272,7 @@ export default function BookChatPage() {
                 )}
               </div>
 
-              <div className="chat-history-container">
+              <div ref={chatHistoryRef} className="chat-history-container">
                 {currentSession.messages && currentSession.messages.length > 0 ? (
                   currentSession.messages.map((msg) => (
                     <div key={msg.id} className={`chat-message-bubble ${msg.role === 'user' ? 'user' : 'assistant'}`}>
@@ -346,17 +355,89 @@ export default function BookChatPage() {
                 />
               </div>
 
-              {purchasedBooks.length === 0 && (
+              {purchasedBooks.length === 0 ? (
                 <div className="field">
                   <p style={{ color: 'var(--error)', fontSize: '14px' }}>
                     You have no purchased books. Please purchase books first to start a chat.
                   </p>
                 </div>
+              ) : (
+                <div style={{ display: 'grid', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <label style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text)', margin: 0 }}>Select Books to Ask About</label>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedBookIds(purchasedBooks.map((b) => b.bookId))}
+                        style={{ border: 'none', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '12px', padding: 0 }}
+                      >
+                        Select All
+                      </button>
+                      <span style={{ color: 'var(--muted)', fontSize: '12px' }}>|</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedBookIds([])}
+                        style={{ border: 'none', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '12px', padding: 0 }}
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '8px 12px', background: 'var(--surface-alt)' }}>
+                    {purchasedBooks.map((book, index) => (
+                      <label
+                        key={book.bookId}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '8px 0',
+                          borderBottom: index === purchasedBooks.length - 1 ? 'none' : '1px solid var(--border)',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedBookIds.includes(book.bookId)}
+                          onChange={() => toggleBookSelection(book.bookId)}
+                          style={{
+                            width: '18px',
+                            height: '18px',
+                            accentColor: 'var(--accent)',
+                            cursor: 'pointer',
+                            flexShrink: 0
+                          }}
+                        />
+                        {book.coverUrl && (
+                          <img
+                            src={book.coverUrl}
+                            alt={book.title}
+                            style={{
+                              width: '32px',
+                              height: '44px',
+                              objectFit: 'cover',
+                              borderRadius: 'var(--radius-sm)',
+                              boxShadow: 'var(--shadow-sm)'
+                            }}
+                          />
+                        )}
+                        <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text)' }}>
+                          {book.title}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {selectedBookIds.length === 0 && (
+                    <span style={{ color: 'var(--error)', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                      Please select at least one book to ask about.
+                    </span>
+                  )}
+                </div>
               )}
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '24px' }}>
                 <Button type="button" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                <Button type="submit" disabled={purchasedBooks.length === 0}>Create Chat</Button>
+                <Button type="submit" disabled={purchasedBooks.length === 0 || selectedBookIds.length === 0}>Create Chat</Button>
               </div>
             </form>
           </div>

@@ -272,11 +272,13 @@ export default function CheckoutPage() {
   };
 
   return (
-    <section className="checkout-grid">
-      <div className="stack">
-        <h1>Checkout Information</h1>
-        {checkoutError && <p className="form-message form-message-error">{checkoutError}</p>}
-        <div className="panel checkout-delivery-mode">
+    <div className="stack" style={{ gap: '24px' }}>
+      <h1>Checkout Information</h1>
+      {checkoutError && <p className="form-message form-message-error">{checkoutError}</p>}
+
+      <section className="checkout-grid">
+        <div className="stack">
+          <div className="panel checkout-delivery-mode">
           <h3>Delivery type</h3>
           <div className="delivery-mode-options" role="group" aria-label="Delivery type">
             <button
@@ -496,6 +498,7 @@ export default function CheckoutPage() {
           </div>
         </div>
       )}
-    </section>
+      </section>
+    </div>
   );
 }
