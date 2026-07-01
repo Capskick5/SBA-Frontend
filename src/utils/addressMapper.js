@@ -8,7 +8,7 @@ export function mapAddressFromApi(dto) {
     ward: dto.ward || '',
     district: dto.district || '',
     city: dto.city,
-    isDefault: dto.isDefault ?? dto.default ?? false,
+    isDefault: dto.isDefault ?? dto.default ?? dto.defaultAddress ?? dto.is_default ?? false,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
   };

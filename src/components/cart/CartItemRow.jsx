@@ -1,49 +1,80 @@
 import { Link } from 'react-router-dom';
-import Button from '../ui/Button';
+import { Trash2, Minus, Plus } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 
 export default function CartItemRow({ item, selected, error, onSelect, onQuantity, onRemove }) {
+  const hasDiscount = item.originalPrice && item.originalPrice > item.price;
+
   return (
-    <div className="cart-row">
-      <input
-        className="cart-row-check"
-        type="checkbox"
-        checked={selected}
-        onChange={onSelect}
-        aria-label={`Select ${item.title}`}
-      />
-      <Link className="cart-item-cover-link" to={`/books/${item.bookId}`} aria-label={`View ${item.title}`}>
-        <img src={item.coverUrl} alt={item.title} />
+    <div className={`cart-item-row${!item.available ? ' cart-item-unavailable' : ''}`}>
+      <div className="cart-item-check-col">
+        <input
+          type="checkbox"
+          className="cart-checkbox"
+          checked={selected}
+          onChange={onSelect}
+          disabled={!item.available}
+          aria-label={`Select ${item.title}`}
+        />
+      </div>
+
+      <Link className="cart-item-cover" to={`/books/${item.bookId}`} aria-label={`View ${item.title}`}>
+        <img src={item.coverUrl} alt={item.title} loading="lazy" />
       </Link>
-      <div>
-        <strong>
-          <Link className="cart-item-title-link" to={`/books/${item.bookId}`}>
-            {item.title}
-          </Link>
-        </strong>
-        <p>{formatCurrency(item.price)}</p>
+
+      <div className="cart-item-info">
+        <Link className="cart-item-title" to={`/books/${item.bookId}`}>
+          {item.title}
+        </Link>
+        {!item.available && <span className="cart-item-oos">Out of stock</span>}
+        {error && <p className="cart-item-error">{error}</p>}
       </div>
-      <div className="quantity">
-        <Button
-          type="button"
-          className="quantity-btn"
-          onClick={() => onQuantity(item.itemId, item.quantity - 1)}
-          disabled={item.quantity <= 1}
-        >
-          -
-        </Button>
-        <span>{item.quantity}</span>
-        <Button
-          type="button"
-          className="quantity-btn"
-          onClick={() => onQuantity(item.itemId, item.quantity + 1)}
-        >
-          +
-        </Button>
+
+      <div className="cart-item-price-col">
+        <span className="cart-price-current">{formatCurrency(item.price)}</span>
+        {hasDiscount && (
+          <span className="cart-price-original">{formatCurrency(item.originalPrice)}</span>
+        )}
       </div>
-      <strong>{formatCurrency(item.lineTotal)}</strong>
-      <Button type="button" className="cart-remove-btn" onClick={() => onRemove(item.itemId)}>Remove</Button>
-      {error && <p className="cart-row-error">{error}</p>}
+
+      <div className="cart-item-qty-col">
+        <div className="cart-qty-stepper">
+          <button
+            type="button"
+            className="cart-qty-btn"
+            onClick={() => onQuantity(item.itemId, item.quantity - 1)}
+            disabled={item.quantity <= 1 || !item.available}
+            aria-label="Decrease quantity"
+          >
+            <Minus size={12} />
+          </button>
+          <span className="cart-qty-value">{item.quantity}</span>
+          <button
+            type="button"
+            className="cart-qty-btn"
+            onClick={() => onQuantity(item.itemId, item.quantity + 1)}
+            disabled={!item.available}
+            aria-label="Increase quantity"
+          >
+            <Plus size={12} />
+          </button>
+        </div>
+      </div>
+
+      <div className="cart-item-total-col">
+        <span className="cart-line-total">{formatCurrency(item.lineTotal)}</span>
+      </div>
+
+      <div className="cart-item-action-col">
+        <button
+          type="button"
+          className="cart-remove-btn"
+          onClick={() => onRemove(item.itemId)}
+          aria-label={`Remove ${item.title}`}
+        >
+          <Trash2 size={18} />
+        </button>
+      </div>
     </div>
   );
 }
