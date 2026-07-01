@@ -1,3 +1,4 @@
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import AddressForm from '../../components/checkout/AddressForm';
 import Button from '../../components/ui/Button';
@@ -16,7 +17,15 @@ const emptyValues = {
   isDefault: false,
 };
 
+function getSafeRedirect(value) {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) return null;
+  return value;
+}
+
 export default function AddressesPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = getSafeRedirect(searchParams.get('redirect'));
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -81,6 +90,9 @@ export default function AddressesPage() {
       }
       await loadAddresses();
       resetForm();
+      if (redirectTo) {
+        navigate(redirectTo);
+      }
     } catch (err) {
       captureFormError(err, setFormError, setFormFieldErrors);
     } finally {
@@ -106,6 +118,9 @@ export default function AddressesPage() {
     try {
       await addressService.setDefault(id);
       await loadAddresses();
+      if (redirectTo) {
+        navigate(redirectTo);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -118,6 +133,11 @@ export default function AddressesPage() {
   return (
     <section className="stack">
       <h1>Addresses</h1>
+      {redirectTo && (
+        <Link to={redirectTo} className="btn btn-secondary addresses-back-link">
+          Back to book
+        </Link>
+      )}
       {error && <ErrorState text={error} />}
       {!addresses.length && !error && <EmptyState text="No addresses yet." />}
       {addresses.map((address) => (

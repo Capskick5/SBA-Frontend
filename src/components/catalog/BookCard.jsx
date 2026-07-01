@@ -23,7 +23,7 @@ export default function BookCard({ book }) {
         
         {/* Floating tags */}
         <div className="book-card-tags">
-          {isNew && <span className="book-tag is-new">Mới</span>}
+          {isNew && <span className="book-tag is-new">New</span>}
           {isDiscounted && <span className="book-tag is-discount">-{discountRate}%</span>}
         </div>
 
@@ -42,7 +42,7 @@ export default function BookCard({ book }) {
             {book.title}
           </Link>
         </h3>
-        <p className="book-card-author">{book.author || 'Đang cập nhật'}</p>
+        <p className="book-card-author">{book.author || 'TBD'}</p>
 
         {/* Rating and Sold stats */}
         <div className="book-card-meta">
@@ -51,7 +51,7 @@ export default function BookCard({ book }) {
             <span>{book.ratingAvg ? book.ratingAvg.toFixed(1) : '4.5'}</span>
           </div>
           <span className="book-card-divider">•</span>
-          <span className="book-card-sold">Đã bán {soldCount}</span>
+          <span className="book-card-sold">{soldCount} sold</span>
         </div>
 
         {/* Pricing block */}
@@ -70,7 +70,7 @@ export default function BookCard({ book }) {
 
         {book.stock <= 0 && (
           <div className="book-card-out-of-stock">
-            <span className="stock-badge is-empty">Tạm hết hàng</span>
+            <span className="stock-badge is-empty">Out of stock</span>
           </div>
         )}
       </div>
