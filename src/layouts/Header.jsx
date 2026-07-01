@@ -8,6 +8,8 @@ import {
   Shield,
   LogOut,
   Search,
+  HelpCircle,
+  Crown,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -39,7 +41,7 @@ export default function Header() {
   );
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  
+
   const queryParam = new URLSearchParams(location.search).get("query") || "";
   const [searchQuery, setSearchQuery] = useState(queryParam);
 
@@ -191,7 +193,6 @@ export default function Header() {
                   <div className="dropdown-menu">
                     <div className="dropdown-user-info">
                       <p className="user-info-name">{user.fullName}</p>
-                      <p className="user-info-email">{user.email}</p>
                     </div>
                     <div className="dropdown-divider"></div>
                     <Link
@@ -200,7 +201,7 @@ export default function Header() {
                       className="dropdown-item"
                     >
                       <User size={16} />
-                      <span>Profile</span>
+                      <span>Account Information</span>
                     </Link>
                     {user.role !== "ADMIN" && (
                       <Link
@@ -212,6 +213,13 @@ export default function Header() {
                         <span>My Orders</span>
                       </Link>
                     )}
+                    {user.role !== "ADMIN" && (
+                      <div className="dropdown-item dropdown-item-disabled">
+                        <Crown size={16} />
+                        <span>Membership</span>
+                        <span className="dropdown-badge-soon">Soon</span>
+                      </div>
+                    )}
                     {user.role === "ADMIN" && (
                       <Link
                         to="/admin"
@@ -222,6 +230,14 @@ export default function Header() {
                         <span>Admin Dashboard</span>
                       </Link>
                     )}
+                    <Link
+                      to="/support"
+                      onClick={() => setDropdownOpen(false)}
+                      className="dropdown-item"
+                    >
+                      <HelpCircle size={16} />
+                      <span>Support Center</span>
+                    </Link>
                     <div className="dropdown-divider"></div>
                     <button
                       type="button"
