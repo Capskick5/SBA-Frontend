@@ -12,6 +12,7 @@ export default function CheckoutSummary({
 }) {
   const hasShippingFee = typeof preview.shippingFee === 'number';
   const hasGiftWrapFee = giftWrapFee > 0;
+  const hasDiscount = Number(preview.discountAmount || 0) > 0;
   const displayTotal = hasShippingFee ? preview.total + giftWrapFee : null;
 
   return (
@@ -54,6 +55,12 @@ export default function CheckoutSummary({
           <span>Shipping fee</span>
           <strong>{hasShippingFee ? formatCurrency(preview.shippingFee) : 'Calculated after address'}</strong>
         </p>
+        {hasDiscount && (
+          <p className="summary-discount-row">
+            <span>Voucher discount</span>
+            <strong>-{formatCurrency(preview.discountAmount)}</strong>
+          </p>
+        )}
         {hasGiftWrapFee && (
           <p>
             <span>Gift wrap fee</span>

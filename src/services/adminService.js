@@ -1,16 +1,52 @@
 import axios from 'axios';
+import { refreshAccessToken } from './apiClient';
+import { tokenStorage } from './tokenStorage';
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api/v1',
+  baseURL: BASE_URL,
 });
 
+let refreshPromise = null;
+
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('bookverse_access_token');
+  const token = tokenStorage.getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    const canRetry = [401, 403].includes(error.response?.status) && originalRequest && !originalRequest._retry;
+
+    if (!canRetry || !tokenStorage.getRefreshToken()) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      if (!refreshPromise) {
+        refreshPromise = refreshAccessToken().finally(() => {
+          refreshPromise = null;
+        });
+      }
+
+      const newAccessToken = await refreshPromise;
+      originalRequest.headers = originalRequest.headers || {};
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      return api(originalRequest);
+    } catch (refreshError) {
+      tokenStorage.clear();
+      return Promise.reject(refreshError);
+    }
+  }
+);
 
 export const adminService = {
   getStats: () => api.get('/statistics/overview').then(res => res.data?.data || res.data),

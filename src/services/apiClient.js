@@ -52,7 +52,7 @@ async function parseErrorResponse(response) {
   }
 }
 
-async function refreshAccessToken() {
+export async function refreshAccessToken() {
   const refreshToken = tokenStorage.getRefreshToken();
   if (!refreshToken) {
     throw createError({ code: 401, error_type: 'UNAUTHORIZED' });
@@ -96,7 +96,7 @@ async function request(path, { method = 'GET', body, auth = true, retry = true, 
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
-  if (response.status === 401 && auth && retry && tokenStorage.getRefreshToken()) {
+  if ((response.status === 401 || response.status === 403) && auth && retry && tokenStorage.getRefreshToken()) {
     if (!refreshPromise) {
       refreshPromise = refreshAccessToken().finally(() => {
         refreshPromise = null;
