@@ -73,13 +73,6 @@ export default function OrderDetailPage() {
   const address = typeof order.addressSnapshot === 'string'
     ? JSON.parse(order.addressSnapshot)
     : order.addressSnapshot || {};
-
-
-  return (
-    <section className="stack">
-      <h1>Order #{order.id}</h1>
-      <OrderStatusBadge status={order.status} size="large" />
-
   const subtotal = (order.items || []).reduce((sum, item) => sum + (item.lineTotal || 0), 0);
       const shippingFee = order.shippingFee || 0;
       // Calculate discount based on subtotal + shippingFee - order.total
