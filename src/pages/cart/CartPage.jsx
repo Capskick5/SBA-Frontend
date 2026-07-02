@@ -1,15 +1,37 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShoppingCart, Tag, ArrowRight, ChevronRight, MapPin, Pencil } from 'lucide-react';
+import { ShoppingCart, TicketPercent, ArrowRight, ChevronRight, MapPin, Pencil } from 'lucide-react';
 import CartItemRow from '../../components/cart/CartItemRow';
 import { EmptyState, LoadingState } from '../../components/ui/State';
 import { cartService } from '../../services/cartService';
 import { addressService } from '../../services/addressService';
+import { voucherService } from '../../services/voucherService';
 import { notifyCartUpdated } from '../../utils/cartEvents';
 import { formatCurrency } from '../../utils/formatters';
 
 const selectDefaultAddress = (addresses = []) =>
   addresses.find((address) => address.isDefault) || null;
+
+const sortCartItemsByTitle = (items = []) =>
+  [...items].sort((a, b) => {
+    const titleCompare = String(a.title || '').localeCompare(String(b.title || ''), 'en', {
+      sensitivity: 'base',
+    });
+    return titleCompare || Number(a.itemId || 0) - Number(b.itemId || 0);
+  });
+
+const normalizeCartOrder = (cart) => ({
+  ...cart,
+  items: sortCartItemsByTitle(cart?.items || []),
+});
+
+function formatVoucherDiscount(voucher) {
+  if (!voucher) return '';
+  if (voucher.discountType === 'PERCENTAGE') {
+    return `${voucher.discountValue}% off`;
+  }
+  return `${formatCurrency(voucher.discountValue)} off`;
+}
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -18,18 +40,20 @@ export default function CartPage() {
   const [itemErrors, setItemErrors] = useState({});
   const [itemToRemove, setItemToRemove] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [coupon, setCoupon] = useState('');
-  const [couponApplied, setCouponApplied] = useState(false);
   const [defaultAddress, setDefaultAddress] = useState(null);
   const [addressLoading, setAddressLoading] = useState(true);
   const [addresses, setAddresses] = useState([]);
   const [addressPickerOpen, setAddressPickerOpen] = useState(false);
+  const [vouchers, setVouchers] = useState([]);
+  const [voucherLoading, setVoucherLoading] = useState(true);
+  const [selectedVoucherId, setSelectedVoucherId] = useState('');
 
   const syncCart = (nextCart, options = {}) => {
-    setCart(nextCart);
-    notifyCartUpdated(nextCart);
+    const orderedCart = normalizeCartOrder(nextCart);
+    setCart(orderedCart);
+    notifyCartUpdated(orderedCart);
     setSelectedItemIds((currentIds) => {
-      const validIds = (nextCart.items || []).map((item) => item.itemId);
+      const validIds = (orderedCart.items || []).map((item) => item.itemId);
       if (options.selectAll) return validIds;
       return currentIds.filter((id) => validIds.includes(id));
     });
@@ -55,6 +79,16 @@ export default function CartPage() {
       .catch(() => { setAddressLoading(false); });
   }, []);
 
+  useEffect(() => {
+    voucherService.listMine()
+      .then((list) => {
+        setVouchers(list || []);
+        setSelectedVoucherId('');
+      })
+      .catch(() => setVouchers([]))
+      .finally(() => setVoucherLoading(false));
+  }, []);
+
   if (loading) return <LoadingState text="Loading cart..." />;
   if (!cart.items || cart.items.length === 0) {
     return (
@@ -70,8 +104,8 @@ export default function CartPage() {
   const selectedItems = cart.items.filter((item) => selectedItemIds.includes(item.itemId));
   const selectedTotal = selectedItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
   const allSelected = selectedItemIds.length === cart.items.length && cart.items.length > 0;
-  const discount = couponApplied ? Math.floor(selectedTotal * 0.05) : 0;
-  const finalTotal = selectedTotal - discount;
+  const finalTotal = selectedTotal;
+  const selectedVoucher = vouchers.find((voucher) => String(voucher.id) === String(selectedVoucherId));
 
   const toggleItem = (itemId) => {
     setSelectedItemIds((currentIds) =>
@@ -124,11 +158,8 @@ export default function CartPage() {
     if (selectedItemIds.length === 0) return;
     const params = new URLSearchParams({ items: selectedItemIds.join(',') });
     if (defaultAddress?.id) params.set('address', String(defaultAddress.id));
+    if (selectedVoucherId) params.set('voucher', String(selectedVoucherId));
     navigate(`/checkout?${params.toString()}`);
-  };
-
-  const handleApplyCoupon = () => {
-    if (coupon.trim()) setCouponApplied(true);
   };
 
   const handleSelectAddress = (address) => {
@@ -215,44 +246,47 @@ export default function CartPage() {
                 </p>
               </div>
             ) : (
-              <Link to="/profile/addresses" className="cart-address-empty">
+              <Link to="/profile/addresses?redirect=/cart" className="cart-address-empty">
                 + Add a delivery address
               </Link>
             )}
           </div>
           <div className="cart-summary-divider" />
 
-          {/* Coupon */}
+          {/* Voucher */}
           <div className="cart-summary-section">
             <div className="cart-summary-section-title">
-              <Tag size={16} />
-              Discount Code
+              <TicketPercent size={16} />
+              Voucher
             </div>
-            {couponApplied ? (
-              <div className="cart-coupon-applied">
-                <span>5% off applied</span>
-                <button
-                  type="button"
-                  className="cart-coupon-remove"
-                  onClick={() => { setCouponApplied(false); setCoupon(''); }}
+            {voucherLoading ? (
+              <div className="cart-address-empty">Loading vouchers...</div>
+            ) : vouchers.length > 0 ? (
+              <div className="cart-voucher-box">
+                <select
+                  className="cart-voucher-select"
+                  value={selectedVoucherId}
+                  onChange={(event) => setSelectedVoucherId(event.target.value)}
                 >
-                  Remove
-                </button>
+                  <option value="">No voucher selected</option>
+                  {vouchers.map((voucher) => (
+                    <option key={voucher.id} value={voucher.id}>
+                      {voucher.code} - {formatVoucherDiscount(voucher)}
+                    </option>
+                  ))}
+                </select>
+                {selectedVoucher ? (
+                  <p>
+                    {selectedVoucher.code} will be checked again at checkout.
+                  </p>
+                ) : (
+                  <p>Select a voucher now, then confirm the discount at checkout.</p>
+                )}
               </div>
             ) : (
-              <div className="cart-coupon-row">
-                <input
-                  type="text"
-                  className="cart-coupon-input"
-                  placeholder="Enter coupon code"
-                  value={coupon}
-                  onChange={(e) => setCoupon(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
-                />
-                <button type="button" className="cart-coupon-btn" onClick={handleApplyCoupon}>
-                  Apply
-                </button>
-              </div>
+              <Link to="/profile?tab=vouchers" className="cart-address-empty">
+                No voucher available. View voucher wallet
+              </Link>
             )}
           </div>
 
@@ -262,10 +296,10 @@ export default function CartPage() {
               <span>Merchandise Total</span>
               <span>{formatCurrency(selectedTotal)}</span>
             </div>
-            {couponApplied && (
+            {selectedVoucher && (
               <div className="cart-summary-row cart-summary-discount">
-                <span>Discount</span>
-                <span>-{formatCurrency(discount)}</span>
+                <span>Selected voucher</span>
+                <span>{selectedVoucher.code}</span>
               </div>
             )}
             <div className="cart-summary-divider" />
@@ -273,9 +307,9 @@ export default function CartPage() {
               <span>Order Total</span>
               <span className="cart-total-amount">{formatCurrency(finalTotal)}</span>
             </div>
-            {couponApplied && (
+            {selectedVoucher && (
               <p className="cart-summary-savings">
-                You save {formatCurrency(discount)} with this order
+                Final discount will be calculated on the checkout page.
               </p>
             )}
           </div>
@@ -363,7 +397,7 @@ export default function CartPage() {
               })}
             </div>
 
-            <button type="button" className="cart-address-manage-btn" onClick={() => navigate('/profile/addresses')}>
+            <button type="button" className="cart-address-manage-btn" onClick={() => navigate('/profile/addresses?redirect=/cart')}>
               Manage addresses
             </button>
           </div>
