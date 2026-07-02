@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient, refreshAccessToken } from './apiClient';
 import { tokenStorage } from './tokenStorage';
 
 function normalizeEmail(email) {
@@ -11,11 +11,14 @@ export const authService = {
   },
 
   async syncSession() {
-    if (!tokenStorage.getAccessToken()) {
+    if (!tokenStorage.getAccessToken() && !tokenStorage.getRefreshToken()) {
       tokenStorage.clear();
       return null;
     }
     try {
+      if (!tokenStorage.getAccessToken() && tokenStorage.getRefreshToken()) {
+        await refreshAccessToken();
+      }
       const profile = await apiClient.get('/users/me');
       tokenStorage.setUser(profile);
       return profile;
