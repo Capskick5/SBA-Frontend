@@ -26,7 +26,7 @@ export default function OrderDetailPage() {
   return (
     <section className="stack">
       <h1>Order #{order.id}</h1>
-      <OrderStatusBadge status={order.status} />
+      <OrderStatusBadge status={order.status} size="large" />
 
       <div className="panel">
         <h3>Shipping Address</h3>

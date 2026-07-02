@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { LogOut } from 'lucide-react';
 
 const links = [
+  ['/', 'Home'],
   ['/admin', 'Dashboard'],
   ['/admin/books', 'Books'],
   ['/admin/categories', 'Categories'],

@@ -261,7 +261,7 @@ export default function AdminBookDetailPage() {
         </Button>
 
         {showStockModal && (
-          <Modal title="Import / Export Stock Request" onClose={() => setShowStockModal(false)}>
+          <Modal title="Import / Export Stock Request" onClose={() => setShowStockModal(false)} hideClose={true}>
             <form onSubmit={handleStockUpdate} style={{ padding: '16px' }}>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Quantity (+ to Import, - to Export)</label>
