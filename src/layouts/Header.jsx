@@ -10,6 +10,7 @@ import {
   Search,
   HelpCircle,
   Crown,
+  TicketPercent,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -213,6 +214,16 @@ export default function Header() {
                       >
                         <ShoppingBag size={16} />
                         <span>My Orders</span>
+                      </Link>
+                    )}
+                    {user.role !== "ADMIN" && (
+                      <Link
+                        to="/profile?tab=vouchers"
+                        onClick={() => setDropdownOpen(false)}
+                        className="dropdown-item"
+                      >
+                        <TicketPercent size={16} />
+                        <span>My Vouchers</span>
                       </Link>
                     )}
                     {user.role !== "ADMIN" && (

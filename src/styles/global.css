@@ -811,6 +811,40 @@ html[data-theme='dark'] .footer {
   gap: 24px;
 }
 
+.checkout-page-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.checkout-page-header h1 {
+  margin: 0;
+}
+
+.checkout-back-cart-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-alt);
+  color: var(--text) !important;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.checkout-back-cart-link:hover {
+  border-color: var(--accent);
+  box-shadow: 0 8px 20px var(--accent-glow);
+  transform: translateY(-1px);
+}
+
 .narrow {
   max-width: 480px;
   margin: 40px auto;
@@ -1128,6 +1162,313 @@ html[data-theme='dark'] .footer {
   margin-bottom: 0;
 }
 
+.checkout-voucher-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.checkout-voucher-list {
+  display: grid;
+  gap: 12px;
+}
+
+.checkout-voucher-card,
+.checkout-selected-voucher-card,
+.voucher-wallet-card {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--accent);
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--surface), var(--surface-alt));
+  padding: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.checkout-voucher-card.is-selected {
+  border-color: rgba(16, 185, 129, 0.45);
+  border-left-color: var(--success);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.checkout-selected-voucher-card {
+  border-color: rgba(16, 185, 129, 0.35);
+  border-left-color: var(--success);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.voucher-card-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.checkout-voucher-card strong,
+.checkout-selected-voucher-card strong,
+.voucher-wallet-card strong {
+  color: var(--text);
+}
+
+.checkout-voucher-card p,
+.checkout-selected-voucher-card p,
+.voucher-wallet-card p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.checkout-voucher-card dl,
+.checkout-selected-voucher-card dl,
+.voucher-card-details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.checkout-voucher-card dt,
+.checkout-selected-voucher-card dt,
+.voucher-card-details dt {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.checkout-voucher-card dd,
+.checkout-selected-voucher-card dd,
+.voucher-card-details dd {
+  margin: 2px 0 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.voucher-applied-note {
+  margin: 0;
+  border: 1px solid rgba(16, 185, 129, 0.18);
+  border-radius: var(--radius-sm);
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--success);
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.voucher-empty-inline {
+  display: grid;
+  gap: 4px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-alt);
+  padding: 14px;
+}
+
+.voucher-empty-inline strong {
+  color: var(--text);
+}
+
+.voucher-empty-inline p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.checkout-voucher-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.checkout-voucher-actions .btn,
+.voucher-empty-inline .btn {
+  min-height: 34px;
+  padding: 7px 12px;
+  font-size: 13px;
+}
+
+.payment-voucher-reward {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  border: 1px solid rgba(16, 185, 129, 0.22);
+  border-radius: 14px;
+  background: rgba(16, 185, 129, 0.08);
+  padding: 14px;
+  text-align: left;
+}
+
+.payment-voucher-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #fff;
+  color: #10b981;
+}
+
+.payment-voucher-reward span {
+  display: block;
+  color: #047857;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.payment-voucher-reward strong {
+  display: block;
+  color: #065f46;
+  font-size: 15px;
+}
+
+.payment-voucher-reward p {
+  margin: 2px 0 0;
+  color: #374151;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.payment-voucher-reward a {
+  color: #047857;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.voucher-preview-card {
+  display: grid;
+  gap: 5px;
+  border: 1px solid rgba(16, 185, 129, 0.22);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.voucher-preview-card strong {
+  color: var(--success);
+}
+
+.voucher-preview-card span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.voucher-profile-card {
+  max-height: none;
+}
+
+.voucher-wallet {
+  display: grid;
+  gap: 18px;
+}
+
+.voucher-wallet-hero {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-alt);
+  padding: 16px;
+}
+
+.voucher-wallet-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+.voucher-wallet-hero h2,
+.voucher-empty-card h2 {
+  margin: 0 0 6px;
+  color: var(--text);
+}
+
+.voucher-wallet-hero p,
+.voucher-empty-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.voucher-wallet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.voucher-card-main strong {
+  display: block;
+  color: var(--accent);
+  font-size: 22px;
+}
+
+.voucher-card-code {
+  display: grid;
+  gap: 4px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: 10px 12px;
+}
+
+.voucher-card-code span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.voucher-card-code strong {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  letter-spacing: 0.04em;
+}
+
+.voucher-use-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #fff !important;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.voucher-empty-card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-alt);
+  padding: 42px 24px;
+  text-align: center;
+}
+
+.voucher-empty-card svg {
+  color: var(--accent);
+}
+
+.voucher-empty-card a {
+  color: var(--accent);
+  font-weight: 700;
+}
+
 .checkout-summary-card {
   position: sticky;
   top: 104px;
@@ -1219,6 +1560,10 @@ html[data-theme='dark'] .footer {
 
 .summary-total strong {
   color: var(--accent);
+}
+
+.summary-discount-row strong {
+  color: var(--success);
 }
 
 .gift-fee-warning {
@@ -3577,6 +3922,30 @@ html[data-theme='dark'] .footer {
   padding: 0;
 }
 
+.cart-voucher-box {
+  display: grid;
+  gap: 8px;
+}
+
+.cart-voucher-select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+}
+
+.cart-voucher-box p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 /* Delivery address */
 .cart-address-change-link {
   display: inline-flex;
@@ -4744,10 +5113,12 @@ tr:last-child td {
 }
 
 .toast-success {
-  border-left: 4px solid var(--accent);
+  border-color: rgba(16, 185, 129, 0.35);
+  border-left: 4px solid var(--success);
 }
 
 .toast-error {
+  border-color: rgba(239, 68, 68, 0.35);
   border-left: 4px solid var(--error);
 }
 
