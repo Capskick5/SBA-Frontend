@@ -876,11 +876,9 @@ html[data-theme="dark"] .footer {
 }
 
 .filters {
-  grid-template-columns: 2fr 1fr 1fr;
-  background: var(--surface);
-  padding: 20px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  align-items: end;
+  max-width: 920px;
 }
 
 .search-control {
