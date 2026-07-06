@@ -10,21 +10,21 @@ import { notifyCartUpdated } from '../../utils/cartEvents';
 import { formatCurrency } from '../../utils/formatters';
 
 const STATUS_MAP = {
-  'PENDING_PAYMENT': { text: 'Chờ thanh toán', class: 'pending-payment' },
-  'PAID': { text: 'Đang xử lý', class: 'processing' },
-  'PROCESSING': { text: 'Đang xử lý', class: 'processing' },
-  'SHIPPED': { text: 'Đang vận chuyển', class: 'shipping' },
-  'DELIVERED': { text: 'Đã giao', class: 'delivered' },
-  'CANCELLED': { text: 'Đã huỷ', class: 'cancelled' },
+  'PENDING_PAYMENT': { text: 'Pending payment', class: 'pending-payment' },
+  'PAID': { text: 'Processing', class: 'processing' },
+  'PROCESSING': { text: 'Processing', class: 'processing' },
+  'SHIPPED': { text: 'Shipping', class: 'shipping' },
+  'DELIVERED': { text: 'Delivered', class: 'delivered' },
+  'CANCELLED': { text: 'Cancelled', class: 'cancelled' },
 };
 
 const TABS = [
-  { id: 'ALL', label: 'Tất cả đơn' },
-  { id: 'PENDING_PAYMENT', label: 'Chờ thanh toán' },
-  { id: 'PROCESSING', label: 'Đang xử lý' },
-  { id: 'SHIPPED', label: 'Đang vận chuyển' },
-  { id: 'DELIVERED', label: 'Đã giao' },
-  { id: 'CANCELLED', label: 'Đã huỷ' },
+  { id: 'ALL', label: 'All orders' },
+  { id: 'PENDING_PAYMENT', label: 'Pending payment' },
+  { id: 'PROCESSING', label: 'Processing' },
+  { id: 'SHIPPED', label: 'Shipping' },
+  { id: 'DELIVERED', label: 'Delivered' },
+  { id: 'CANCELLED', label: 'Cancelled' },
 ];
 
 export default function OrdersPage() {
@@ -95,7 +95,7 @@ export default function OrdersPage() {
       setOrders(detailedOrders);
     } catch (err) {
       console.error('Failed to load orders:', err);
-      setError('Không thể tải danh sách đơn hàng. Vui lòng thử lại sau.');
+      setError('Could not load your orders. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -121,7 +121,7 @@ export default function OrdersPage() {
       navigate('/cart');
     } catch (err) {
       console.error('Failed to rebuy order items:', err);
-      alert('Không thể mua lại đơn hàng này. Vui lòng thử lại.');
+      alert('Could not buy this order again. Please try again.');
     } finally {
       setRebuyingId(null);
     }
@@ -130,7 +130,7 @@ export default function OrdersPage() {
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
-    return date.toLocaleDateString('vi-VN', {
+    return date.toLocaleDateString('en-GB', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -148,7 +148,7 @@ export default function OrdersPage() {
     // 1. Status Filter
     if (activeTab !== 'ALL') {
       if (activeTab === 'PROCESSING') {
-        // Map PAID and PROCESSING to "Đang xử lý"
+        // Map PAID and PROCESSING to the same customer-facing processing state.
         if (order.status !== 'PAID' && order.status !== 'PROCESSING') return false;
       } else {
         if (order.status !== activeTab) return false;
@@ -162,7 +162,7 @@ export default function OrdersPage() {
       const matchItems = (order.items || []).some((item) =>
         String(item.title || '').toLowerCase().includes(keyword)
       );
-      // Wait, what about "Nhà bán" (Seller)? If there is a seller, we can match it here.
+      // If there is a seller field later, it can be matched here too.
       // Since it's a single storefront bookshop, we'll search by order id and book titles.
       if (!matchId && !matchItems) return false;
     }
@@ -178,7 +178,7 @@ export default function OrdersPage() {
   return (
     <section className="stack">
       <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--text)', margin: '0' }}>
-        Đơn hàng của tôi
+        My Orders
       </h1>
 
       {/* Tabs list */}
@@ -208,33 +208,33 @@ export default function OrdersPage() {
         <input
           type="text"
           className="orders-search-input"
-          placeholder="Tìm đơn hàng theo Mã đơn hàng, Nhà bán hoặc Tên sản phẩm"
+          placeholder="Search by order ID or product name"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         <div className="orders-search-divider" />
         <button type="submit" className="orders-search-btn">
-          Tìm đơn hàng
+          Search orders
         </button>
       </form>
 
       {/* Main Content Area */}
       {loading ? (
-        <LoadingState text="Đang tải danh sách đơn hàng..." />
+        <LoadingState text="Loading orders..." />
       ) : error ? (
         <ErrorState text={error}>
-          <Button onClick={loadOrders}>Thử lại</Button>
+          <Button onClick={loadOrders}>Try again</Button>
         </ErrorState>
       ) : filteredOrders.length === 0 ? (
         <div style={{ padding: '60px', textAlign: 'center', background: 'var(--surface)', borderRadius: 'var(--radius-md)', color: 'var(--muted)', marginTop: '16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
           <ShoppingBag size={48} style={{ color: 'var(--brand-light)', marginBottom: '16px' }} />
           <p style={{ fontSize: '1.1rem', marginBottom: '8px', color: 'var(--text)', fontWeight: 'bold' }}>
-            {appliedSearch ? 'Không tìm thấy đơn hàng phù hợp' : 'Chưa có đơn hàng nào'}
+            {appliedSearch ? 'No matching orders found' : 'No orders yet'}
           </p>
           <p style={{ fontSize: '0.9rem', marginBottom: '20px' }}>
-            {appliedSearch ? 'Vui lòng thử tìm kiếm bằng từ khoá khác.' : 'Bạn chưa thực hiện bất kỳ giao dịch nào.'}
+            {appliedSearch ? 'Try another keyword.' : 'You have not placed any orders yet.'}
           </p>
-          <Link to="/"><Button>Tiếp tục mua sắm</Button></Link>
+          <Link to="/"><Button>Continue shopping</Button></Link>
         </div>
       ) : (
         <div className="order-cards-list">
@@ -247,8 +247,8 @@ export default function OrdersPage() {
                 {/* Header: Order ID, Date & Status */}
                 <div className="order-card-header">
                   <div className="order-card-info">
-                    <span className="order-card-id">Đơn hàng: #{order.id}</span>
-                    <span className="order-card-date">Ngày đặt: {formatDate(order.createdAt)}</span>
+                    <span className="order-card-id">Order #{order.id}</span>
+                    <span className="order-card-date">Placed on {formatDate(order.createdAt)}</span>
                   </div>
                   <span className={`status-badge ${statusConfig.class}`}>
                     {statusConfig.text}
@@ -271,7 +271,7 @@ export default function OrdersPage() {
                       </div>
                       <div className="order-item-details">
                         <h4 className="order-item-title">{item.title}</h4>
-                        <span className="order-item-qty">Số lượng: x{item.quantity}</span>
+                        <span className="order-item-qty">Quantity: x{item.quantity}</span>
                       </div>
                       <div className="order-item-price">
                         {formatCurrency(item.lineTotal || 0)}
@@ -284,19 +284,19 @@ export default function OrdersPage() {
                 <div className="order-card-footer">
                   <div className="order-card-shipping">
                     {order.status === 'SHIPPED' && (
-                      <span>Đang vận chuyển | Đơn vị: GHTK</span>
+                      <span>In transit | Carrier: GHTK</span>
                     )}
                   </div>
                   <div className="order-card-summary">
                     <div className="order-card-total-row">
-                      <span>Thành tiền:</span>
+                      <span>Total:</span>
                       <span className="order-card-total-price">
                         {formatCurrency(order.total || 0)}
                       </span>
                     </div>
                     <div className="order-card-actions">
                       <Link to={`/orders/${order.id}`} className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '8px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', fontSize: '13px', fontWeight: '500', transition: 'all 0.2s' }}>
-                        Xem chi tiết
+                        View details
                       </Link>
                       {/* Only allow Rebuying if status is completed, processing or shipped */}
                       {order.status !== 'PENDING_PAYMENT' && (
@@ -306,7 +306,7 @@ export default function OrdersPage() {
                           onClick={() => handleRebuy(order)}
                           style={{ padding: '8px 16px', borderRadius: 'var(--radius-sm)', fontSize: '13px' }}
                         >
-                          Mua lại
+                          Buy again
                         </Button>
                       )}
                     </div>
@@ -320,4 +320,3 @@ export default function OrdersPage() {
     </section>
   );
 }
-

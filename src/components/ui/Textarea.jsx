@@ -1,8 +1,12 @@
-export default function Textarea({ label, ...props }) {
+import { forwardRef } from 'react';
+
+const Textarea = forwardRef(function Textarea({ label, ...props }, ref) {
   return (
     <label className="field">
       {label && <span>{label}</span>}
-      <textarea {...props} />
+      <textarea ref={ref} {...props} />
     </label>
   );
-}
+});
+
+export default Textarea;

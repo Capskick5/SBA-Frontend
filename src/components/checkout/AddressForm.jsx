@@ -210,13 +210,14 @@ export default function AddressForm({
             required
           />
         ) : (
-          <label className="field">
+          <label className={`field${fieldErrors.city ? ' field-invalid' : ''}`}>
             <span>City / Province</span>
             <select
               name="city"
               value={citySelectValue}
               onChange={handleProvinceChange}
               disabled={loadingProvinces}
+              aria-invalid={fieldErrors.city ? 'true' : undefined}
               required
             >
               <option value="">{loadingProvinces ? 'Loading provinces...' : 'Select city or province'}</option>

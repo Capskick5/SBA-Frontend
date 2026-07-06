@@ -14,23 +14,27 @@ import {
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { bookService } from "../services/bookService";
 import { cartService } from "../services/cartService";
 import { CART_UPDATED_EVENT, getCartItemCount } from "../utils/cartEvents";
 
-const bottomLinks = [
-  { label: "New Books", to: "/?sort=rating_desc" },
-  { label: "Ebooks", to: "/?query=ebook" },
-  { label: "Best Sellers", to: "/?sort=rating_desc" },
-  { label: "Pre-Order Offers", to: "/?query=pre-order" },
-  { label: "Kids", to: "/?query=kids" },
-  { label: "Fiction ▾", to: "/?query=fiction" },
-  { label: "Nonfiction ▾", to: "/?query=nonfiction" },
-  { label: "YA", to: "/?query=ya" },
-  { label: "Games & Puzzles", to: "/?query=games" },
-  { label: "Stationery & Gifts", to: "/?query=stationery" },
-  { label: "Gift Cards", to: "/?query=gift" },
-  { label: "Offers ▾", to: "/?query=offer" },
-];
+const CATEGORY_NAV_LIMIT = 6;
+
+function compactCategoryName(name) {
+  const compactNames = {
+    'Business & Finance': 'Finance',
+    'Technology & Computing': 'Technology',
+    'Psychology & Self-Help': 'Self-Help',
+    'Science & Mathematics': 'Science',
+    "Children's Books": 'Kids',
+    'History, Politics & International Relations': 'History',
+    'Fiction & Literature': 'Fiction',
+    'Religion & Spirituality': 'Spirituality',
+    'Health & Fitness': 'Health',
+  };
+
+  return compactNames[name] || name.replace(/\s*&\s*/g, ' & ').split(':')[0];
+}
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -41,13 +45,27 @@ export default function Header() {
     () => localStorage.getItem("theme") || "light",
   );
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [navCategories, setNavCategories] = useState([]);
   const dropdownRef = useRef(null);
 
-  const queryParam = new URLSearchParams(location.search).get("query") || "";
+  const searchParams = new URLSearchParams(location.search);
+  const queryParam = searchParams.get("query") || "";
+  const activeCategory = searchParams.get("category");
+  const activeSort = searchParams.get("sort");
   const [searchQuery, setSearchQuery] = useState(queryParam);
 
   const isAuthPage =
     location.pathname === "/login" || location.pathname === "/register";
+
+  const bottomLinks = [
+    { label: "All Books", to: "/", isActive: location.pathname === "/" && !activeCategory && !queryParam && !activeSort },
+    { label: "Best Sellers", to: "/?sort=rating_desc", isActive: activeSort === "rating_desc" },
+    ...navCategories.map((category) => ({
+      label: compactCategoryName(category.name),
+      to: `/?category=${category.id}`,
+      isActive: String(activeCategory) === String(category.id),
+    })),
+  ];
 
   const toggleTheme = () => {
     const nextTheme = theme === "light" ? "dark" : "light";
@@ -59,6 +77,28 @@ export default function Header() {
   useEffect(() => {
     setSearchQuery(queryParam);
   }, [queryParam]);
+
+  useEffect(() => {
+    let active = true;
+
+    bookService
+      .getCategories()
+      .then((categories) => {
+        if (!active) return;
+        setNavCategories(
+          (categories || [])
+            .filter((category) => category.active !== false)
+            .slice(0, CATEGORY_NAV_LIMIT),
+        );
+      })
+      .catch(() => {
+        if (active) setNavCategories([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -280,8 +320,8 @@ export default function Header() {
       {/* Bottom Navigation Row */}
       <div className="navbar-bottom-row">
         <nav className="navbar-bottom-links">
-          {bottomLinks.map(({ label, to }) => (
-            <Link key={label} to={to}>
+          {bottomLinks.map(({ label, to, isActive }) => (
+            <Link key={label} to={to} className={isActive ? "active" : undefined}>
               {label}
             </Link>
           ))}

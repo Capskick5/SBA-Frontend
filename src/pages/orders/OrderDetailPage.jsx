@@ -10,12 +10,12 @@ import { formatCurrency } from '../../utils/formatters';
 import Button from '../../components/ui/Button';
 
 const STATUS_MAP = {
-  'PENDING_PAYMENT': { text: 'Chờ thanh toán', class: 'warning' },
-  'PAID': { text: 'Đang xử lý', class: 'info' },
-  'PROCESSING': { text: 'Đang xử lý', class: 'info' },
-  'SHIPPED': { text: 'Đang vận chuyển', class: 'info' },
-  'DELIVERED': { text: 'Giao hàng thành công', class: 'success' },
-  'CANCELLED': { text: 'Đã huỷ', class: 'error' },
+  'PENDING_PAYMENT': { text: 'Pending payment', class: 'warning' },
+  'PAID': { text: 'Processing', class: 'info' },
+  'PROCESSING': { text: 'Processing', class: 'info' },
+  'SHIPPED': { text: 'Shipping', class: 'info' },
+  'DELIVERED': { text: 'Delivered', class: 'success' },
+  'CANCELLED': { text: 'Cancelled', class: 'error' },
 };
 
 export default function OrderDetailPage() {
@@ -54,7 +54,7 @@ export default function OrderDetailPage() {
       })
       .catch(err => {
         console.error('Failed to load order detail:', err);
-        setError('Không thể tải chi tiết đơn hàng. Vui lòng thử lại sau.');
+        setError('Could not load order details. Please try again later.');
       });
   }, [id]);
 
@@ -62,13 +62,13 @@ export default function OrderDetailPage() {
     return (
       <section className="stack">
         <ErrorState text={error}>
-          <Link to="/orders"><Button>Quay lại danh sách</Button></Link>
+          <Link to="/orders"><Button>Back to orders</Button></Link>
         </ErrorState>
       </section>
     );
   }
 
-  if (!order) return <LoadingState text="Đang tải chi tiết đơn hàng..." />;
+  if (!order) return <LoadingState text="Loading order details..." />;
 
   const address = typeof order.addressSnapshot === 'string'
     ? JSON.parse(order.addressSnapshot)
@@ -89,7 +89,7 @@ export default function OrderDetailPage() {
       navigate('/cart');
     } catch (err) {
         console.error('Failed to rebuy item:', err);
-      alert(`Không thể mua lại sách "${title}". Vui lòng thử lại.`);
+      alert(`Could not buy "${title}" again. Please try again.`);
     } finally {
         setRebuyingItemIds(prev => ({ ...prev, [bookId]: false }));
     }
@@ -98,7 +98,7 @@ export default function OrderDetailPage() {
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
       const date = new Date(dateStr);
-      return date.toLocaleDateString('vi-VN', {
+      return date.toLocaleDateString('en-GB', {
         hour: '2-digit',
       minute: '2-digit',
       day: '2-digit',
@@ -111,8 +111,8 @@ export default function OrderDetailPage() {
     if (!dateStr) return '';
       const date = new Date(dateStr);
       date.setDate(date.getDate() + 3);
-      const weekday = date.toLocaleDateString('vi-VN', {weekday: 'long' });
-      const dateNum = date.toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit' });
+      const weekday = date.toLocaleDateString('en-GB', {weekday: 'long' });
+      const dateNum = date.toLocaleDateString('en-GB', {day: '2-digit', month: '2-digit' });
       return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)}, ${dateNum}`;
   };
 
@@ -123,47 +123,47 @@ export default function OrderDetailPage() {
         {/* Title Header */}
         <div className="order-detail-header">
           <h1>
-            Chi tiết đơn hàng #{order.id} - <span className={`highlight ${statusConfig.class}`}>{statusConfig.text}</span>
+            Order #{order.id} - <span className={`highlight ${statusConfig.class}`}>{statusConfig.text}</span>
           </h1>
-          <div className="order-detail-date">Ngày đặt hàng: {formatDate(order.createdAt)}</div>
+          <div className="order-detail-date">Placed on {formatDate(order.createdAt)}</div>
         </div>
 
         {/* Info Grid */}
         <div className="order-detail-info-grid">
-          {/* Col 1: Địa chỉ người nhận */}
+          {/* Col 1: Recipient address */}
           <div className="order-detail-info-card">
-            <h3>Địa chỉ người nhận</h3>
+            <h3>Recipient address</h3>
             <div className="card-content">
               <strong>{address.recipient || 'N/A'}</strong>
-              <p>Địa chỉ: {[address.line, address.ward, address.district, address.city].filter(Boolean).join(', ') || 'N/A'}</p>
-              <p style={{ marginTop: '8px' }}>Điện thoại: {address.phone || 'N/A'}</p>
+              <p>Address: {[address.line, address.ward, address.district, address.city].filter(Boolean).join(', ') || 'N/A'}</p>
+              <p style={{ marginTop: '8px' }}>Phone: {address.phone || 'N/A'}</p>
             </div>
           </div>
 
-          {/* Col 2: Hình thức giao hàng */}
+          {/* Col 2: Delivery method */}
           <div className="order-detail-info-card">
-            <h3>Hình thức giao hàng</h3>
+            <h3>Delivery method</h3>
             <div className="card-content">
-              <strong><span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>FAST</span> Giao hàng Tiêu chuẩn</strong>
-              <p style={{ margin: '6px 0' }}>Dự kiến giao vào {expectedDateText}</p>
+              <strong><span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>FAST</span> Standard Delivery</strong>
+              <p style={{ margin: '6px 0' }}>Estimated delivery on {expectedDateText}</p>
               <p style={{ fontSize: '12px', color: 'var(--muted)' }}>
                 {order.status === 'SHIPPED' || order.status === 'DELIVERED'
-                  ? 'Được giao bởi Giao Hàng Tiết Kiệm (GHTK)'
-                  : 'Được giao bởi BookVerse Logistics'}
+                  ? 'Delivered by GHTK'
+                  : 'Delivered by BookVerse Logistics'}
               </p>
               <p style={{ marginTop: '8px', fontWeight: '500' }}>
-                {shippingFee === 0 ? 'Miễn phí vận chuyển' : `Phí vận chuyển: ${formatCurrency(shippingFee)}`}
+                {shippingFee === 0 ? 'Free shipping' : `Shipping fee: ${formatCurrency(shippingFee)}`}
               </p>
             </div>
           </div>
 
-          {/* Col 3: Hình thức thanh toán */}
+          {/* Col 3: Payment method */}
           <div className="order-detail-info-card">
-            <h3>Hình thức thanh toán</h3>
+            <h3>Payment method</h3>
             <div className="card-content">
-              <p>Thanh toán qua cổng VNPay</p>
+              <p>Payment through VNPay</p>
               <p style={{ marginTop: '10px' }} className={`highlight ${statusConfig.class}`}>
-                {order.status === 'PENDING_PAYMENT' ? 'Chờ thanh toán.' : order.status === 'CANCELLED' ? 'Đơn hàng đã huỷ.' : 'Thanh toán thành công.'}
+                {order.status === 'PENDING_PAYMENT' ? 'Waiting for payment.' : order.status === 'CANCELLED' ? 'This order has been cancelled.' : 'Payment completed.'}
               </p>
             </div>
           </div>
@@ -174,11 +174,11 @@ export default function OrderDetailPage() {
           <table className="order-detail-table">
             <thead>
               <tr>
-                <th style={{ width: '45%' }}>Sản phẩm</th>
-                <th style={{ width: '15%' }}>Giá</th>
-                <th style={{ width: '10%' }}>Số lượng</th>
-                <th style={{ width: '15%' }}>Giảm giá</th>
-                <th style={{ width: '15%', textAlign: 'right' }}>Tạm tính</th>
+                <th style={{ width: '45%' }}>Product</th>
+                <th style={{ width: '15%' }}>Price</th>
+                <th style={{ width: '10%' }}>Quantity</th>
+                <th style={{ width: '15%' }}>Discount</th>
+                <th style={{ width: '15%', textAlign: 'right' }}>Subtotal</th>
               </tr>
             </thead>
             <tbody>
@@ -200,15 +200,15 @@ export default function OrderDetailPage() {
                         <h4 className="order-detail-item-title">{item.title}</h4>
                         <span className="order-detail-item-meta">Sku: 395962609{item.bookId || 'N/A'}</span>
                         <div className="order-detail-item-actions">
-                          <Link to="/books/chat" className="btn-action">Chat với AI</Link>
-                          <Link to={`/books/${item.bookId}`} className="btn-action">Viết nhận xét</Link>
+                          <Link to="/books/chat" className="btn-action">Chat with AI</Link>
+                          <Link to={`/books/${item.bookId}`} className="btn-action">Write a review</Link>
                           <button
                             type="button"
                             className="btn-action"
                             disabled={rebuyingItemIds[item.bookId]}
                             onClick={() => handleRebuyItem(item.bookId, item.title)}
                           >
-                            {rebuyingItemIds[item.bookId] ? 'Đang thêm...' : 'Mua lại'}
+                            {rebuyingItemIds[item.bookId] ? 'Adding...' : 'Buy again'}
                           </button>
                         </div>
                       </div>
@@ -227,30 +227,30 @@ export default function OrderDetailPage() {
           <div className="order-detail-summary-section">
             <div className="order-detail-summary-box">
               <div className="order-detail-summary-row">
-                <span>Tạm tính</span>
+                <span>Subtotal</span>
                 <strong>{formatCurrency(subtotal)}</strong>
               </div>
               <div className="order-detail-summary-row">
-                <span>Phí vận chuyển</span>
+                <span>Shipping fee</span>
                 <strong>{formatCurrency(shippingFee)}</strong>
               </div>
               {shippingFee > 0 && (
                 <div className="order-detail-summary-row">
-                  <span>Giảm giá vận chuyển</span>
+                  <span>Shipping discount</span>
                   <strong style={{ color: 'var(--success)' }}>0 VND</strong>
                 </div>
               )}
               {discount > 0 && (
                 <div className="order-detail-summary-row">
-                  <span>Giảm giá</span>
+                  <span>Discount</span>
                   <strong style={{ color: 'var(--success)' }}>-{formatCurrency(discount)}</strong>
                 </div>
               )}
               <div className="order-detail-summary-row total">
-                <strong>Tổng cộng</strong>
+                <strong>Total</strong>
                 <span className="order-detail-total-price">{formatCurrency(order.total || 0)}</span>
               </div>
-              <a href="#" onClick={(e) => { e.preventDefault(); window.print(); }} className="order-detail-invoice-link">Xem hóa đơn</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); window.print(); }} className="order-detail-invoice-link">View invoice</a>
             </div>
           </div>
         </div>
@@ -258,21 +258,21 @@ export default function OrderDetailPage() {
         {/* Footer controls */}
         <div className="order-detail-footer-actions">
           <Link to="/orders" className="order-detail-back-link">
-            &lt;&lt; Quay lại đơn hàng của tôi
+            &lt;&lt; Back to my orders
           </Link>
           <button
             type="button"
             onClick={() => setShowTimeline(!showTimeline)}
             style={{ padding: '10px 20px', borderRadius: 'var(--radius-sm)', fontSize: '14px', background: '#ffd814', color: '#111', border: '1px solid #fcd200', fontWeight: '500', cursor: 'pointer' }}
           >
-            {showTimeline ? 'Ẩn lịch trình' : 'Theo dõi đơn hàng'}
+            {showTimeline ? 'Hide timeline' : 'Track order'}
           </button>
         </div>
 
         {/* Order Timeline (Track Order history) */}
         {showTimeline && (
           <div className="order-detail-timeline-panel">
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold' }}>Lịch trình đơn hàng</h3>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold' }}>Order timeline</h3>
             <OrderTimeline history={order.statusHistory || []} />
           </div>
         )}

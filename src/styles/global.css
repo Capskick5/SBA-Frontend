@@ -394,8 +394,9 @@ html[data-theme="dark"] .control-btn:hover {
   max-width: 1300px;
   margin: 0 auto;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 40px;
+  justify-content: center;
+  gap: 22px;
+  padding: 10px 40px 12px;
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none;
@@ -407,13 +408,13 @@ html[data-theme="dark"] .control-btn:hover {
 
 .navbar-bottom-links a {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
   color: #4a4a4a;
-  padding: 6px 0;
+  padding: 7px 2px;
   text-decoration: none;
   transition: all 0.2s ease;
   white-space: nowrap;
-  letter-spacing: 0.2px;
+  letter-spacing: 0;
 }
 
 html[data-theme="dark"] .navbar-bottom-links a {
@@ -2856,10 +2857,23 @@ html[data-theme="dark"] .footer {
   color: var(--text);
 }
 
+.field-invalid input,
+.field-invalid select,
+.field-invalid textarea {
+  border-color: var(--error);
+  background: rgba(239, 68, 68, 0.04);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+}
+
 .field-error {
   color: var(--error);
   font-size: 13px;
   margin-top: 4px;
+  font-weight: 600;
+}
+
+.field-error::before {
+  content: "* ";
 }
 
 .form-message {
@@ -4346,6 +4360,53 @@ tr:last-child td {
   grid-template-columns: 260px 1fr;
 }
 
+.admin-login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(135deg, rgba(93, 42, 66, 0.94), rgba(251, 99, 118, 0.82)),
+    var(--bg);
+  padding: 32px;
+}
+
+.admin-login-card {
+  width: min(440px, 100%);
+  display: grid;
+  gap: 22px;
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 80px rgba(28, 12, 20, 0.28);
+  padding: 36px;
+}
+
+.admin-login-heading {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-login-heading span {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.admin-login-heading h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.admin-login-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
 .admin-sidebar {
   background: var(--surface);
   border-right: 1px solid var(--border);
@@ -4380,6 +4441,189 @@ tr:last-child td {
 
 .admin-content {
   padding: 40px;
+}
+
+.admin-book-detail-page {
+  display: grid;
+  gap: 24px;
+  width: 100%;
+}
+
+.admin-book-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+}
+
+.admin-book-detail-kicker {
+  display: inline-flex;
+  margin-bottom: 8px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-book-detail-header h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.admin-book-detail-header p {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.admin-book-detail-header-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.admin-book-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+
+.admin-book-detail-sidebar,
+.admin-book-detail-main {
+  display: grid;
+  gap: 20px;
+}
+
+.admin-book-detail-sidebar {
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding-right: 2px;
+}
+
+.admin-book-panel {
+  display: grid;
+  gap: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 22px;
+}
+
+.admin-book-panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 14px;
+}
+
+.admin-book-panel-heading h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.admin-book-panel-heading span {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: right;
+}
+
+.admin-book-cover-preview {
+  display: grid;
+  place-items: center;
+  min-height: 260px;
+  background: var(--surface-alt);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.admin-book-cover-preview img {
+  width: 100%;
+  height: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  padding: 12px;
+}
+
+.admin-book-upload-control {
+  display: grid;
+  gap: 8px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.admin-book-upload-control input {
+  width: 100%;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.admin-book-file-key {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.admin-book-file-key span {
+  word-break: break-all;
+  color: var(--text);
+}
+
+.admin-book-stock-value {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-alt);
+  padding: 14px 16px;
+}
+
+.admin-book-stock-value span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.admin-book-stock-value strong {
+  color: var(--text);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.admin-book-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.admin-book-field-wide {
+  grid-column: 1 / -1;
+}
+
+.admin-book-description-textarea {
+  min-height: 220px;
+  overflow: hidden;
+  resize: vertical;
 }
 
 .stats-grid {
@@ -4449,9 +4693,24 @@ tr:last-child td {
   .book-detail-layout,
   .checkout-grid,
   .admin-shell,
+  .admin-book-detail-layout,
+  .admin-book-field-grid,
   .cart-row,
   .address-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .admin-book-detail-header {
+    flex-direction: column;
+  }
+
+  .admin-book-detail-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .admin-book-detail-sidebar {
+    position: static;
   }
 
   .field-span-2 {
@@ -5525,7 +5784,7 @@ html[data-theme="dark"] .navbar-alert-bar {
   gap: 10px;
 }
 
-/* Custom Vietnamese Status Badges */
+/* Order status badges */
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -5905,4 +6164,3 @@ html[data-theme="dark"] .status-badge.cancelled {
     display: none; /* Hide discount column on smaller screens */
   }
 }
-

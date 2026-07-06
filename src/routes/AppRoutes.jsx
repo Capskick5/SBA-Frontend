@@ -1,10 +1,11 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import AdminLayout from '../layouts/AdminLayout';
-import { AdminRoute, CustomerRoute, ProtectedRoute } from './RouteGuards';
+import { AdminRoute, CustomerRoute, ProtectedRoute, StorefrontRoute } from './RouteGuards';
 import CatalogPage from '../pages/catalog/CatalogPage';
 import BookDetailPage from '../pages/catalog/BookDetailPage';
 import LoginPage from '../pages/auth/LoginPage';
+import AdminLoginPage from '../pages/auth/AdminLoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import VerifyEmailPage from '../pages/auth/VerifyEmailPage';
 import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
@@ -29,7 +30,11 @@ import AdminAddBookPage from '../pages/admin/AdminAddBookPage';
 import AdminRagPage from '../pages/admin/AdminRagPage';
 import AdminInventoryPage from '../pages/admin/AdminInventoryPage';
 
-const main = (page) => <MainLayout>{page}</MainLayout>;
+const main = (page) => (
+  <StorefrontRoute>
+    <MainLayout>{page}</MainLayout>
+  </StorefrontRoute>
+);
 const protectedPage = (page) => main(<ProtectedRoute>{page}</ProtectedRoute>);
 const customerPage = (page) => main(<CustomerRoute>{page}</CustomerRoute>);
 const admin = (page) => (
@@ -43,6 +48,7 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/" element={main(<CatalogPage />)} />
       <Route path="/books/:id" element={main(<BookDetailPage />)} />
+      <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/login" element={main(<LoginPage />)} />
       <Route path="/register" element={main(<RegisterPage />)} />
       <Route path="/verify-email" element={main(<VerifyEmailPage />)} />
