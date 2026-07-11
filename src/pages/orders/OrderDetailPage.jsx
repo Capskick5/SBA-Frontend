@@ -7,7 +7,10 @@ import OrderTimeline from '../../components/orders/OrderTimeline';
 import { LoadingState, ErrorState } from '../../components/ui/State';
 import { orderService } from '../../services/orderService';
 import { formatCurrency } from '../../utils/formatters';
+import { formatPaymentTimeLeft } from '../../utils/paymentExpiry';
+import { showToast } from '../../utils/toast';
 import Button from '../../components/ui/Button';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 
 const STATUS_MAP = {
   'PENDING_PAYMENT': { text: 'Pending payment', class: 'warning' },
@@ -25,6 +28,10 @@ export default function OrderDetailPage() {
   const [error, setError] = useState(null);
   const [showTimeline, setShowTimeline] = useState(false);
   const [rebuyingItemIds, setRebuyingItemIds] = useState({});
+  const [now, setNow] = useState(() => Date.now());
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [resuming, setResuming] = useState(false);
 
   useEffect(() => {
     orderService.getOrderById(id)
@@ -57,6 +64,11 @@ export default function OrderDetailPage() {
         setError('Could not load order details. Please try again later.');
       });
   }, [id]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   if (error) {
     return (
@@ -92,6 +104,35 @@ export default function OrderDetailPage() {
       alert(`Could not buy "${title}" again. Please try again.`);
     } finally {
         setRebuyingItemIds(prev => ({ ...prev, [bookId]: false }));
+    }
+  };
+
+  const handleCancelPendingOrder = async () => {
+    if (cancelling) return;
+
+    setCancelling(true);
+    try {
+      const cancelledOrder = await orderService.cancelPendingOrder(order.id);
+      setOrder((current) => ({ ...current, ...cancelledOrder }));
+      setShowCancelConfirm(false);
+      showToast(`Order #${cancelledOrder.id} was cancelled.`, 'success');
+    } catch (err) {
+      showToast(err?.message || 'Could not cancel this order. Please try again.', 'error');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleContinuePayment = async () => {
+    if (resuming) return;
+
+    setResuming(true);
+    try {
+      const paymentLink = await orderService.getPendingPaymentLink(order.id);
+      window.location.assign(paymentLink.checkoutUrl);
+    } catch (err) {
+      showToast(err?.message || 'Could not continue this payment. Please try again.', 'error');
+      setResuming(false);
     }
   };
 
@@ -165,6 +206,27 @@ export default function OrderDetailPage() {
               <p style={{ marginTop: '10px' }} className={`highlight ${statusConfig.class}`}>
                 {order.status === 'PENDING_PAYMENT' ? 'Waiting for payment.' : order.status === 'CANCELLED' ? 'This order has been cancelled.' : 'Payment completed.'}
               </p>
+              {order.status === 'PENDING_PAYMENT' && (
+                <div className="order-detail-pending-payment">
+                  <strong>{formatPaymentTimeLeft(order.expiresAt, now)}</strong>
+                  <Button
+                    type="button"
+                    loading={resuming}
+                    disabled={cancelling}
+                    onClick={handleContinuePayment}
+                  >
+                    Continue payment
+                  </Button>
+                  <Button
+                    type="button"
+                    className="pending-payment-cancel"
+                    disabled={resuming || cancelling}
+                    onClick={() => setShowCancelConfirm(true)}
+                  >
+                    Cancel order
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -275,6 +337,18 @@ export default function OrderDetailPage() {
             <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold' }}>Order timeline</h3>
             <OrderTimeline history={order.statusHistory || []} />
           </div>
+        )}
+
+        {showCancelConfirm && (
+          <ConfirmDialog
+            title="Cancel pending order?"
+            onCancel={() => {
+              if (!cancelling) setShowCancelConfirm(false);
+            }}
+            onConfirm={handleCancelPendingOrder}
+          >
+            Order #{order.id} will be cancelled and its reserved stock will be released. This action cannot be undone.
+          </ConfirmDialog>
         )}
       </section>
       );

@@ -9,4 +9,12 @@ export const orderService = {
   getOrderById(id) {
     return apiClient.get(`/orders/${id}`);
   },
+
+  cancelPendingOrder(id) {
+    return apiClient.post(`/orders/${id}/cancel`);
+  },
+
+  getPendingPaymentLink(id) {
+    return apiClient.get(`/orders/${id}/payment-link`);
+  },
 };

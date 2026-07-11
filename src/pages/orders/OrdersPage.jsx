@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag } from 'lucide-react';
 import Button from '../../components/ui/Button';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { orderService } from '../../services/orderService';
 import { bookService } from '../../services/bookService';
 import { cartService } from '../../services/cartService';
 import { notifyCartUpdated } from '../../utils/cartEvents';
 import { formatCurrency } from '../../utils/formatters';
+import { formatPaymentTimeLeft } from '../../utils/paymentExpiry';
+import { showToast } from '../../utils/toast';
 
 const STATUS_MAP = {
   'PENDING_PAYMENT': { text: 'Pending payment', class: 'pending-payment' },
@@ -36,6 +39,10 @@ export default function OrdersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
   const [rebuyingId, setRebuyingId] = useState(null);
+  const [now, setNow] = useState(() => Date.now());
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancellingId, setCancellingId] = useState(null);
+  const [resumingId, setResumingId] = useState(null);
 
   const loadOrders = async () => {
     setLoading(true);
@@ -103,6 +110,11 @@ export default function OrdersPage() {
 
   useEffect(() => {
     loadOrders();
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
   }, []);
 
   const handleRebuy = async (order) => {
@@ -173,6 +185,38 @@ export default function OrdersPage() {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setAppliedSearch(searchQuery);
+  };
+
+  const handleCancelPendingOrder = async () => {
+    if (!cancelTarget || cancellingId) return;
+
+    setCancellingId(cancelTarget.id);
+    try {
+      const cancelledOrder = await orderService.cancelPendingOrder(cancelTarget.id);
+      setOrders((current) => current.map((order) => (
+        order.id === cancelledOrder.id ? { ...order, ...cancelledOrder } : order
+      )));
+      setCancelTarget(null);
+      showToast(`Order #${cancelledOrder.id} was cancelled.`, 'success');
+    } catch (err) {
+      showToast(err?.message || 'Could not cancel this order. Please try again.', 'error');
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
+  const handleContinuePayment = async (order) => {
+    if (resumingId) return;
+
+    setResumingId(order.id);
+    try {
+      const paymentLink = await orderService.getPendingPaymentLink(order.id);
+      window.location.assign(paymentLink.checkoutUrl);
+    } catch (err) {
+      showToast(err?.message || 'Could not continue this payment. Please try again.', 'error');
+      await loadOrders();
+      setResumingId(null);
+    }
   };
 
   return (
@@ -295,6 +339,29 @@ export default function OrdersPage() {
                       </span>
                     </div>
                     <div className="order-card-actions">
+                      {order.status === 'PENDING_PAYMENT' && (
+                        <div className="pending-payment-actions">
+                          <span className="pending-payment-countdown">
+                            {formatPaymentTimeLeft(order.expiresAt, now)}
+                          </span>
+                          <Button
+                            type="button"
+                            loading={resumingId === order.id}
+                            disabled={Boolean(cancellingId) || Boolean(resumingId)}
+                            onClick={() => handleContinuePayment(order)}
+                          >
+                            Continue payment
+                          </Button>
+                          <Button
+                            type="button"
+                            className="pending-payment-cancel"
+                            disabled={Boolean(cancellingId) || Boolean(resumingId)}
+                            onClick={() => setCancelTarget(order)}
+                          >
+                            Cancel order
+                          </Button>
+                        </div>
+                      )}
                       <Link to={`/orders/${order.id}`} className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '8px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', fontSize: '13px', fontWeight: '500', transition: 'all 0.2s' }}>
                         View details
                       </Link>
@@ -316,6 +383,18 @@ export default function OrdersPage() {
             );
           })}
         </div>
+      )}
+
+      {cancelTarget && (
+        <ConfirmDialog
+          title="Cancel pending order?"
+          onCancel={() => {
+            if (!cancellingId) setCancelTarget(null);
+          }}
+          onConfirm={handleCancelPendingOrder}
+        >
+          Order #{cancelTarget.id} will be cancelled and its reserved stock will be released. This action cannot be undone.
+        </ConfirmDialog>
       )}
     </section>
   );

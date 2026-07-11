@@ -5781,7 +5781,47 @@ html[data-theme="dark"] .navbar-alert-bar {
 
 .order-card-actions {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
+}
+
+.pending-payment-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pending-payment-countdown {
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.btn.pending-payment-cancel {
+  background: transparent;
+  border-color: #dc2626;
+  color: #dc2626;
+  font-size: 13px;
+  padding: 8px 14px;
+}
+
+.btn.pending-payment-cancel:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.order-detail-pending-payment {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.order-detail-pending-payment strong {
+  color: #b45309;
+  font-size: 12px;
 }
 
 /* Order status badges */
