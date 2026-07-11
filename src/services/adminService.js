@@ -77,6 +77,10 @@ export const adminService = {
   getReviews: (params) => api.get('/admin/reviews', { params }).then(res => res.data?.data?.items || res.data?.data || []),
   deleteReview: (id) => api.delete(`/reviews/${id}`).then(res => res.data),
 
+  getVoucherRules: (params) => api.get('/vouchers', { params }).then(res => res.data?.data || res.data),
+  createVoucherRule: (body) => api.post('/vouchers', body).then(res => res.data?.data || res.data),
+  disableVoucherRule: (id) => api.delete(`/vouchers/${id}`),
+
   toggleBookActive: (id, isActive) => {
     return api.put(`/books/${id}/active`, { active: isActive });
   },

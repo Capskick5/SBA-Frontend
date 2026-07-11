@@ -84,7 +84,7 @@ export default function AdminOrdersPage() {
               {
                 key: 'createdAt',
                 label: 'Order Date',
-                render: (row) => (row.createdAt ? new Date(row.createdAt).toLocaleDateString('en-US') : 'N/A'),
+                render: (row) => (row.createdAt ? new Date(row.createdAt).toLocaleDateString('en-GB') : 'N/A'),
               },
               { key: 'status', label: 'Status', render: (row) => <OrderStatusBadge status={row.status} /> },
               { key: 'total', label: 'Total', render: (row) => <strong style={{ color: '#e53e3e' }}>{formatCurrency(row.total)}</strong> },

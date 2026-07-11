@@ -29,6 +29,7 @@ import AdminReviewsPage from '../pages/admin/AdminReviewsPage';
 import AdminAddBookPage from '../pages/admin/AdminAddBookPage';
 import AdminRagPage from '../pages/admin/AdminRagPage';
 import AdminInventoryPage from '../pages/admin/AdminInventoryPage';
+import AdminVouchersPage from '../pages/admin/AdminVouchersPage';
 
 const main = (page) => (
   <StorefrontRoute>
@@ -71,6 +72,7 @@ export default function AppRoutes() {
       <Route path="/admin/books/new" element={admin(<AdminAddBookPage />)} />
       <Route path="/admin/orders" element={admin(<AdminOrdersPage />)} />
       <Route path="/admin/orders/:id" element={admin(<AdminOrderDetailPage />)} />
+      <Route path="/admin/vouchers" element={admin(<AdminVouchersPage />)} />
       <Route path="/admin/users" element={admin(<AdminUsersPage />)} />
       <Route path="/admin/reviews" element={admin(<AdminReviewsPage />)} />
       <Route path="/admin/inventory" element={admin(<AdminInventoryPage />)} />
