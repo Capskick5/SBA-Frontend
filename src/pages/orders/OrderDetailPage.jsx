@@ -21,7 +21,7 @@ const STATUS_MAP = {
   'CANCELLED': { text: 'Cancelled', class: 'error' },
 };
 
-export default function OrderDetailPage() {
+export default function OrderDetailPage({ adminView = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
@@ -206,7 +206,7 @@ export default function OrderDetailPage() {
               <p style={{ marginTop: '10px' }} className={`highlight ${statusConfig.class}`}>
                 {order.status === 'PENDING_PAYMENT' ? 'Waiting for payment.' : order.status === 'CANCELLED' ? 'This order has been cancelled.' : 'Payment completed.'}
               </p>
-              {order.status === 'PENDING_PAYMENT' && (
+              {!adminView && order.status === 'PENDING_PAYMENT' && (
                 <div className="order-detail-pending-payment">
                   <strong>{formatPaymentTimeLeft(order.expiresAt, now)}</strong>
                   <Button
@@ -261,18 +261,20 @@ export default function OrderDetailPage() {
                       <div className="order-detail-item-info">
                         <h4 className="order-detail-item-title">{item.title}</h4>
                         <span className="order-detail-item-meta">Sku: 395962609{item.bookId || 'N/A'}</span>
-                        <div className="order-detail-item-actions">
-                          <Link to="/books/chat" className="btn-action">Chat with AI</Link>
-                          <Link to={`/books/${item.bookId}`} className="btn-action">Write a review</Link>
-                          <button
-                            type="button"
-                            className="btn-action"
-                            disabled={rebuyingItemIds[item.bookId]}
-                            onClick={() => handleRebuyItem(item.bookId, item.title)}
-                          >
-                            {rebuyingItemIds[item.bookId] ? 'Adding...' : 'Buy again'}
-                          </button>
-                        </div>
+                        {!adminView && (
+                          <div className="order-detail-item-actions">
+                            <Link to="/books/chat" className="btn-action">Chat with AI</Link>
+                            <Link to={`/books/${item.bookId}`} className="btn-action">Write a review</Link>
+                            <button
+                              type="button"
+                              className="btn-action"
+                              disabled={rebuyingItemIds[item.bookId]}
+                              onClick={() => handleRebuyItem(item.bookId, item.title)}
+                            >
+                              {rebuyingItemIds[item.bookId] ? 'Adding...' : 'Buy again'}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -319,8 +321,8 @@ export default function OrderDetailPage() {
 
         {/* Footer controls */}
         <div className="order-detail-footer-actions">
-          <Link to="/orders" className="order-detail-back-link">
-            &lt;&lt; Back to my orders
+          <Link to={adminView ? '/admin/orders' : '/orders'} className="order-detail-back-link">
+            &lt;&lt; {adminView ? 'Back to orders' : 'Back to my orders'}
           </Link>
           <button
             type="button"
@@ -339,7 +341,7 @@ export default function OrderDetailPage() {
           </div>
         )}
 
-        {showCancelConfirm && (
+        {!adminView && showCancelConfirm && (
           <ConfirmDialog
             title="Cancel pending order?"
             onCancel={() => {

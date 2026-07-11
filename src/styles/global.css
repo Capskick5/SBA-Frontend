@@ -5843,6 +5843,12 @@ html[data-theme="dark"] .navbar-alert-bar {
   border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
+.status-badge.paid {
+  background: rgba(16, 185, 129, 0.08);
+  color: #047857;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
 .status-badge.processing {
   background: rgba(59, 130, 246, 0.08);
   color: #2563eb;
@@ -5865,6 +5871,120 @@ html[data-theme="dark"] .navbar-alert-bar {
   background: rgba(239, 68, 68, 0.08);
   color: #dc2626;
   border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.status-badge.unknown {
+  background: var(--surface-alt);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.status-badge-large {
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+.admin-actions {
+  margin-bottom: 20px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-actions-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.admin-actions-heading h3,
+.admin-actions-heading p {
+  margin: 0;
+}
+
+.admin-actions-heading p {
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+.admin-order-next-action {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 18px;
+}
+
+.admin-order-no-action {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.admin-action-error {
+  margin: 12px 0 0;
+  color: var(--error);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.inventory-delta,
+.inventory-reason {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 3px 9px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.inventory-delta {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+}
+
+.inventory-delta-positive {
+  color: #047857;
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.inventory-delta-negative {
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.inventory-reason {
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+}
+
+.inventory-reason-order_cancel_release,
+.inventory-reason-order_expired_release {
+  color: #047857;
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.inventory-reason-admin_adjustment {
+  color: #6d28d9;
+  background: rgba(139, 92, 246, 0.08);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+.inventory-order-link {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.inventory-order-link:hover {
+  text-decoration: underline;
 }
 
 html[data-theme="dark"] .status-badge.pending-payment {

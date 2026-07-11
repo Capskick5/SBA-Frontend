@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import OrderDetailPage from '../orders/OrderDetailPage';
+import OrderStatusBadge from '../../components/orders/OrderStatusBadge';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
@@ -12,9 +13,10 @@ export default function AdminOrderDetailPage() {
   const { id } = useParams();
   const [showShipModal, setShowShipModal] = useState(false);
   const [shippingProvider, setShippingProvider] = useState('GHTK');
-  const [trackingCode, setTrackingCode] = useState('TRK' + Date.now());
+  const [trackingCode, setTrackingCode] = useState('');
   const [updating, setUpdating] = useState(false);
   const [order, setOrder] = useState(null);
+  const [updateError, setUpdateError] = useState('');
 
   useEffect(() => {
     orderService.getOrderById(id)
@@ -24,7 +26,7 @@ export default function AdminOrderDetailPage() {
 
   const handleUpdateStatus = async (newStatus) => {
     if (newStatus === 'SHIPPED') {
-      setTrackingCode('TRK' + Date.now());
+      setTrackingCode(`TRK-${id}`);
       setShowShipModal(true);
       return;
     }
@@ -34,11 +36,12 @@ export default function AdminOrderDetailPage() {
 
   const submitStatus = async (status, provider, tracking) => {
     setUpdating(true);
+    setUpdateError('');
     try {
       await adminService.updateOrderStatus(id, status, provider, tracking);
       window.location.reload();
     } catch (err) {
-      alert('Failed to update order: ' + (err.response?.data?.message || err.message));
+      setUpdateError(err.response?.data?.message || err.message || 'Could not update the order.');
     } finally {
       setUpdating(false);
     }
@@ -53,21 +56,28 @@ export default function AdminOrderDetailPage() {
   return (
     <>
       <div className="admin-actions">
-        <h3>Status Management</h3>
-        <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-          {['PENDING', 'PENDING_PAYMENT', 'PAID'].includes(order?.status) && (
-            <Button onClick={() => handleUpdateStatus('PROCESSING')} disabled={updating}>Process</Button>
+        <div className="admin-actions-heading">
+          <div>
+            <h3>Status Management</h3>
+            <p>Complete the next step in this order's fulfilment.</p>
+          </div>
+          {order?.status && <OrderStatusBadge status={order.status} />}
+        </div>
+        <div className="admin-order-next-action">
+          {order?.status === 'PAID' && (
+            <Button onClick={() => handleUpdateStatus('PROCESSING')} loading={updating}>Start processing</Button>
           )}
           {order?.status === 'PROCESSING' && (
-            <Button onClick={() => handleUpdateStatus('SHIPPED')} disabled={updating}>Ship</Button>
+            <Button onClick={() => handleUpdateStatus('SHIPPED')} loading={updating}>Mark as shipped</Button>
           )}
           {order?.status === 'SHIPPED' && (
-            <Button onClick={() => handleUpdateStatus('DELIVERED')} disabled={updating}>Deliver</Button>
+            <Button onClick={() => handleUpdateStatus('DELIVERED')} loading={updating}>Mark as delivered</Button>
           )}
-          {order && !['DELIVERED', 'CANCELLED'].includes(order.status) && (
-            <Button onClick={() => handleUpdateStatus('CANCELLED')} disabled={updating}>Cancel Order</Button>
+          {order && !['PAID', 'PROCESSING', 'SHIPPED'].includes(order.status) && (
+            <span className="admin-order-no-action">No fulfilment action is available for this status.</span>
           )}
         </div>
+        {updateError && <p className="admin-action-error" role="alert">{updateError}</p>}
       </div>
 
       {showShipModal && (
@@ -86,14 +96,14 @@ export default function AdminOrderDetailPage() {
               required
             />
             <div style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: 'flex-end' }}>
-              <Button type="button" onClick={() => setShowShipModal(false)}>Cancel</Button>
+              <Button type="button" className="btn-secondary" onClick={() => setShowShipModal(false)}>Cancel</Button>
               <Button type="submit" variant="primary" loading={updating}>Confirm Ship</Button>
             </div>
           </form>
         </Modal>
       )}
 
-      <OrderDetailPage />
+      <OrderDetailPage adminView />
     </>
   );
 }
