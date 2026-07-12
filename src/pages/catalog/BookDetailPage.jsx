@@ -139,6 +139,7 @@ export default function BookDetailPage() {
   const [reviewPage, setReviewPage] = useState(0);
   const [reviewTotalPages, setReviewTotalPages] = useState(0);
   const [myReview, setMyReview] = useState(null);
+  const [reviewSummary, setReviewSummary] = useState(null);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [reviewsError, setReviewsError] = useState('');
   const relatedScrollRef = useRef(null);
@@ -264,6 +265,20 @@ export default function BookDetailPage() {
   }, [id, reviewPage]);
 
   useEffect(() => {
+    let active = true;
+    reviewService.getReviewSummary(id)
+      .then((summary) => {
+        if (active) setReviewSummary(summary);
+      })
+      .catch(() => {
+        if (active) setReviewSummary(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  useEffect(() => {
     if (user?.role !== 'CUSTOMER') {
       Promise.resolve().then(() => setMyReview(null));
       return undefined;
@@ -295,13 +310,13 @@ export default function BookDetailPage() {
   const maxQuantity = book ? Math.max(1, book.stock) : 1;
   const description = book?.description || 'No description available for this book.';
   const isLongDescription = description.length > 480 || description.split('\n').length > 4;
-  const reviewCount = Math.max(reviewTotal, book?.reviewCount || 0);
-  const ratingValue = book?.ratingAvg ? Number(book.ratingAvg) : 0;
+  const reviewCount = reviewSummary?.totalReviews ?? Math.max(reviewTotal, book?.reviewCount || 0);
+  const ratingValue = Number(reviewSummary?.averageRating ?? book?.ratingAvg ?? 0);
   const currentUserReview = myReview;
   const ratingBreakdown = [5, 4, 3, 2, 1].map((stars) => ({
     stars,
-    percent: reviews.length
-      ? Math.round((reviews.filter((review) => review.rating === stars).length / reviews.length) * 100)
+    percent: reviewCount > 0
+      ? Math.round((Number(reviewSummary?.ratingCounts?.[stars] || 0) / reviewCount) * 100)
       : 0,
   }));
 
@@ -390,6 +405,18 @@ export default function BookDetailPage() {
     setReviewPage(0);
     setReviews((current) => [review, ...current]);
     setReviewTotal((current) => current + 1);
+    setReviewSummary((current) => {
+      const previousTotal = Number(current?.totalReviews ?? book?.reviewCount ?? 0);
+      const previousAverage = Number(current?.averageRating ?? book?.ratingAvg ?? 0);
+      return {
+        averageRating: ((previousAverage * previousTotal) + Number(review.rating)) / (previousTotal + 1),
+        totalReviews: previousTotal + 1,
+        ratingCounts: {
+          ...(current?.ratingCounts || {}),
+          [review.rating]: Number(current?.ratingCounts?.[review.rating] || 0) + 1,
+        },
+      };
+    });
     setBook((current) => {
       if (!current) return current;
       const previousCount = Number(current.reviewCount || 0);

@@ -16,6 +16,10 @@ export const reviewService = {
     return apiClient.get(`/books/${bookId}/reviews/me`);
   },
 
+  async getReviewSummary(bookId) {
+    return apiClient.get(`/books/${bookId}/reviews/summary`);
+  },
+
   async createReview({ bookId, rating, comment }) {
     return apiClient.post('/reviews', {
       bookId: Number(bookId),
