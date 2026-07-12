@@ -16,6 +16,7 @@ import Button from '../../components/ui/Button';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import ReviewForm from '../../components/reviews/ReviewForm';
 import ReviewList from '../../components/reviews/ReviewList';
+import Pagination from '../../components/catalog/Pagination';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
 import { addressService } from '../../services/addressService';
@@ -135,6 +136,9 @@ export default function BookDetailPage() {
   const [deliveryAddressReady, setDeliveryAddressReady] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [reviewTotal, setReviewTotal] = useState(0);
+  const [reviewPage, setReviewPage] = useState(0);
+  const [reviewTotalPages, setReviewTotalPages] = useState(0);
+  const [myReview, setMyReview] = useState(null);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [reviewsError, setReviewsError] = useState('');
   const relatedScrollRef = useRef(null);
@@ -237,11 +241,12 @@ export default function BookDetailPage() {
     });
 
     reviewService
-      .getReviewsByBookId(id)
+      .getReviewsByBookId(id, { page: reviewPage, size: 5 })
       .then((result) => {
         if (!active) return;
         setReviews(result.items);
         setReviewTotal(result.totalItems);
+        setReviewTotalPages(result.totalPages);
       })
       .catch((err) => {
         if (!active) return;
@@ -256,7 +261,25 @@ export default function BookDetailPage() {
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, reviewPage]);
+
+  useEffect(() => {
+    if (user?.role !== 'CUSTOMER') {
+      Promise.resolve().then(() => setMyReview(null));
+      return undefined;
+    }
+    let active = true;
+    reviewService.getMyReviewForBook(id)
+      .then((review) => {
+        if (active) setMyReview(review || null);
+      })
+      .catch(() => {
+        if (active) setMyReview(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [id, user?.role]);
 
   useEffect(() => {
     if (book && window.location.hash === '#reviews') {
@@ -273,10 +296,8 @@ export default function BookDetailPage() {
   const description = book?.description || 'No description available for this book.';
   const isLongDescription = description.length > 480 || description.split('\n').length > 4;
   const reviewCount = Math.max(reviewTotal, book?.reviewCount || 0);
-  const ratingValue = reviews.length
-    ? reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length
-    : (book?.ratingAvg ? Number(book.ratingAvg) : 0);
-  const currentUserReview = reviews.find((review) => String(review.userId) === String(user?.id));
+  const ratingValue = book?.ratingAvg ? Number(book.ratingAvg) : 0;
+  const currentUserReview = myReview;
   const ratingBreakdown = [5, 4, 3, 2, 1].map((stars) => ({
     stars,
     percent: reviews.length
@@ -365,6 +386,8 @@ export default function BookDetailPage() {
   };
 
   const handleReviewSubmitted = (review) => {
+    setMyReview(review);
+    setReviewPage(0);
     setReviews((current) => [review, ...current]);
     setReviewTotal((current) => current + 1);
     setBook((current) => {
@@ -638,9 +661,11 @@ export default function BookDetailPage() {
               <p className="book-detail-review-note">Customer accounts can submit verified-purchase reviews.</p>
             ) : currentUserReview ? (
               <div className="book-detail-review-complete">
-                <strong>Your review is published</strong>
+                <strong>{currentUserReview.status === 'HIDDEN' ? 'Your review is under moderation' : 'Your review is published'}</strong>
                 <span>{currentUserReview.rating}/5 stars</span>
-                <p>You can find it in the customer reviews below.</p>
+                <p>{currentUserReview.status === 'HIDDEN'
+                  ? 'This review is currently hidden from the public list.'
+                  : 'You can find it in the customer reviews below.'}</p>
               </div>
             ) : (
               <ReviewForm bookId={book.id} onSubmitted={handleReviewSubmitted} />
@@ -658,7 +683,14 @@ export default function BookDetailPage() {
           ) : reviewsError ? (
             <ErrorState text={reviewsError} />
           ) : (
-            <ReviewList reviews={reviews} />
+            <>
+              <ReviewList reviews={reviews} />
+              <Pagination
+                currentPage={reviewPage + 1}
+                totalPages={reviewTotalPages}
+                onPageChange={(page) => setReviewPage(page - 1)}
+              />
+            </>
           )}
         </div>
       </div>
