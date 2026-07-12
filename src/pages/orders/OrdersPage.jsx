@@ -59,7 +59,12 @@ export default function OrdersPage() {
         : activeTab === 'PROCESSING'
           ? { statuses: ['PAID', 'PROCESSING'] }
           : { status: activeTab };
-      const result = await orderService.getOrdersPage({ page, size: PAGE_SIZE, ...filter });
+      const result = await orderService.getOrdersPage({
+        page,
+        size: PAGE_SIZE,
+        search: appliedSearch,
+        ...filter,
+      });
       const rawOrders = result.items;
       setTotalPages(result.totalPages);
       setTotalItems(result.totalItems);
@@ -119,7 +124,7 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, page]);
+  }, [activeTab, appliedSearch, page]);
 
   useEffect(() => {
     Promise.resolve().then(loadOrders);
@@ -156,36 +161,10 @@ export default function OrdersPage() {
     return item.coverUrl || item.bookCoverUrl || `https://placehold.co/120x170?text=${encodeURIComponent(item.title || 'Book')}`;
   };
 
-  // Filter orders based on active tab and applied search keyword
-  const filteredOrders = orders.filter((order) => {
-    // 1. Status Filter
-    if (activeTab !== 'ALL') {
-      if (activeTab === 'PROCESSING') {
-        // Map PAID and PROCESSING to the same customer-facing processing state.
-        if (order.status !== 'PAID' && order.status !== 'PROCESSING') return false;
-      } else {
-        if (order.status !== activeTab) return false;
-      }
-    }
-
-    // 2. Search Keyword Filter
-    if (appliedSearch.trim() !== '') {
-      const keyword = appliedSearch.toLowerCase().trim();
-      const matchId = String(order.id).toLowerCase().includes(keyword);
-      const matchItems = (order.items || []).some((item) =>
-        String(item.title || '').toLowerCase().includes(keyword)
-      );
-      // If there is a seller field later, it can be matched here too.
-      // Since it's a single storefront bookshop, we'll search by order id and book titles.
-      if (!matchId && !matchItems) return false;
-    }
-
-    return true;
-  });
-
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    setAppliedSearch(searchQuery);
+    setPage(0);
+    setAppliedSearch(searchQuery.trim());
   };
 
   const handleCancelPendingOrder = async () => {
@@ -256,7 +235,7 @@ export default function OrdersPage() {
         <input
           type="text"
           className="orders-search-input"
-          placeholder="Search this page by order ID or product name"
+          placeholder="Search all orders by order ID or product name"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -273,7 +252,7 @@ export default function OrdersPage() {
         <ErrorState text={error}>
           <Button onClick={loadOrders}>Try again</Button>
         </ErrorState>
-      ) : filteredOrders.length === 0 ? (
+      ) : orders.length === 0 ? (
         <div style={{ padding: '60px', textAlign: 'center', background: 'var(--surface)', borderRadius: 'var(--radius-md)', color: 'var(--muted)', marginTop: '16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
           <ShoppingBag size={48} style={{ color: 'var(--brand-light)', marginBottom: '16px' }} />
           <p style={{ fontSize: '1.1rem', marginBottom: '8px', color: 'var(--text)', fontWeight: 'bold' }}>
@@ -288,7 +267,7 @@ export default function OrdersPage() {
         <>
           <div className="orders-page-count">Showing {orders.length} of {totalItems} orders</div>
           <div className="order-cards-list">
-            {filteredOrders.map((order) => {
+            {orders.map((order) => {
             const statusConfig = STATUS_MAP[order.status] || { text: order.status, class: 'unknown' };
             const isRebuying = rebuyingId === order.id;
 

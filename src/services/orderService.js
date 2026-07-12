@@ -1,7 +1,7 @@
 import { apiClient } from './apiClient';
 
 export const orderService = {
-  async getOrdersPage({ page = 0, size = 10, status, statuses } = {}) {
+  async getOrdersPage({ page = 0, size = 10, status, statuses, search } = {}) {
     const params = new URLSearchParams({
       page: String(page),
       size: String(size),
@@ -9,6 +9,7 @@ export const orderService = {
     });
     if (status) params.set('status', status);
     if (statuses?.length) params.set('statuses', statuses.join(','));
+    if (search?.trim()) params.set('search', search.trim());
     const result = await apiClient.get(`/orders?${params}`);
     return {
       items: result?.items || result?.content || [],
