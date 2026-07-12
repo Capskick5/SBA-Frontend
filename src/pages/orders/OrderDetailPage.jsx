@@ -85,10 +85,11 @@ export default function OrderDetailPage({ adminView = false }) {
   const address = typeof order.addressSnapshot === 'string'
     ? JSON.parse(order.addressSnapshot)
     : order.addressSnapshot || {};
-  const subtotal = (order.items || []).reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+  const calculatedSubtotal = (order.items || []).reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+      const subtotal = order.subtotal ?? calculatedSubtotal;
       const shippingFee = order.shippingFee || 0;
-      // Calculate discount based on subtotal + shippingFee - order.total
-      const discount = Math.max(0, subtotal + shippingFee - order.total);
+      const giftWrapFee = order.giftWrapFee || 0;
+      const discount = order.discountAmount ?? Math.max(0, subtotal + shippingFee + giftWrapFee - order.total);
 
 
       const statusConfig = STATUS_MAP[order.status] || {text: order.status, class: 'info' };
@@ -182,6 +183,9 @@ export default function OrderDetailPage({ adminView = false }) {
               <p style={{ marginTop: '8px', fontWeight: '500' }}>
                 {shippingFee === 0 ? 'Free shipping' : `Shipping fee: ${formatCurrency(shippingFee)}`}
               </p>
+              {order.deliveryType === 'GIFT' && (
+                <p style={{ marginTop: '8px' }}>Gift delivery with wrapping</p>
+              )}
             </div>
           </div>
 
@@ -289,6 +293,12 @@ export default function OrderDetailPage({ adminView = false }) {
                 <span>Shipping fee</span>
                 <strong>{formatCurrency(shippingFee)}</strong>
               </div>
+              {giftWrapFee > 0 && (
+                <div className="order-detail-summary-row">
+                  <span>Gift wrap fee</span>
+                  <strong>{formatCurrency(giftWrapFee)}</strong>
+                </div>
+              )}
               {shippingFee > 0 && (
                 <div className="order-detail-summary-row">
                   <span>Shipping discount</span>

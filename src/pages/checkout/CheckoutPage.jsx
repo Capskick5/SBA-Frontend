@@ -12,8 +12,6 @@ import { checkoutService } from '../../services/checkoutService';
 import { voucherService } from '../../services/voucherService';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
 
-const GIFT_WRAP_FEE = 10000;
-
 function formatVoucherDiscount(voucher) {
   if (!voucher) return '';
   if (voucher.discountType === 'PERCENTAGE') {
@@ -55,7 +53,7 @@ export default function CheckoutPage() {
 
   const selectedAddress = addresses.find((address) => address.id === Number(selectedAddressId));
   const editingAddress = addresses.find((address) => address.id === editingAddressId);
-  const giftWrapFee = deliveryMode === 'gift' ? GIFT_WRAP_FEE : 0;
+  const deliveryType = deliveryMode === 'gift' ? 'GIFT' : 'SELF';
 
   const buildCartPreview = (items, shippingFee = null) => {
     const summaryItems = items.map((item) => ({
@@ -72,6 +70,8 @@ export default function CheckoutPage() {
       items: summaryItems,
       subtotal,
       shippingFee,
+      deliveryType: 'SELF',
+      giftWrapFee: 0,
       discountAmount: 0,
       total: subtotal + (hasShipping ? shippingFee : 0),
     };
@@ -94,12 +94,19 @@ export default function CheckoutPage() {
     itemIds,
     fallbackItems = selectedCartItems,
     voucherId = selectedVoucherId,
+    mode = deliveryMode,
   ) => {
     if (!addressId || itemIds.length === 0) {
       setPreview(buildCartPreview(fallbackItems));
       return;
     }
-    const previewData = await checkoutService.preview(addressId, itemIds, voucherId || undefined);
+    const requestedDeliveryType = mode === 'gift' ? 'GIFT' : 'SELF';
+    const previewData = await checkoutService.preview(
+      addressId,
+      itemIds,
+      voucherId || undefined,
+      requestedDeliveryType,
+    );
     setPreview({
       ...previewData,
       items: mergePreviewItems(previewData.items, fallbackItems),
@@ -200,6 +207,19 @@ export default function CheckoutPage() {
     setShowVoucherList(false);
   };
 
+  const handleDeliveryModeChange = async (mode) => {
+    setDeliveryMode(mode);
+    setCheckoutError('');
+    if (!selectedAddressId || cartItemIds.length === 0) return;
+
+    try {
+      await refreshPreview(selectedAddressId, cartItemIds, selectedCartItems, selectedVoucherId, mode);
+    } catch (err) {
+      console.error('Failed to update delivery type:', err);
+      setCheckoutError(err.response?.data?.message || 'Could not update the delivery type.');
+    }
+  };
+
   const pay = async () => {
     if (!selectedAddressId || cartItemIds.length === 0) return;
     setCheckoutError('');
@@ -211,6 +231,7 @@ export default function CheckoutPage() {
         cartItemIds,
         key,
         selectedVoucherId || undefined,
+        deliveryType,
       );
 
       if (result.checkoutUrl) {
@@ -345,7 +366,7 @@ export default function CheckoutPage() {
             <button
               type="button"
               className={deliveryMode === 'self' ? 'is-active' : ''}
-              onClick={() => setDeliveryMode('self')}
+              onClick={() => handleDeliveryModeChange('self')}
             >
               <strong>For myself</strong>
               <span>Ship this order to me.</span>
@@ -353,7 +374,7 @@ export default function CheckoutPage() {
             <button
               type="button"
               className={deliveryMode === 'gift' ? 'is-active' : ''}
-              onClick={() => setDeliveryMode('gift')}
+              onClick={() => handleDeliveryModeChange('gift')}
             >
               <strong>Gift to someone</strong>
               <span>Ship to another receiver with gift wrapping.</span>
@@ -595,8 +616,6 @@ export default function CheckoutPage() {
       </div>
       <CheckoutSummary
         preview={preview}
-        giftWrapFee={giftWrapFee}
-        giftFeeSupported={false}
         loading={loading}
         canPay={Boolean(selectedAddressId) && cartItemIds.length > 0}
         disabledReason={!selectedAddressId ? 'Add a delivery address to continue to payment.' : ''}
