@@ -299,6 +299,9 @@ export default function OrdersPage() {
                   <div className="order-card-info">
                     <span className="order-card-id">Order #{order.id}</span>
                     <span className="order-card-date">Placed on {formatDateTime(order.createdAt)}</span>
+                    {order.deliveryType === 'GIFT' && (
+                      <span className="order-card-gift-badge">Gift order · Wrapped</span>
+                    )}
                   </div>
                   <span className={`status-badge ${statusConfig.class}`}>
                     {statusConfig.text}

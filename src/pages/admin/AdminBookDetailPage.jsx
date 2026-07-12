@@ -6,6 +6,7 @@ import Textarea from '../../components/ui/Textarea';
 import PricingFields from '../../components/admin/PricingFields';
 import { EmptyState, LoadingState } from '../../components/ui/State';
 import Modal from '../../components/ui/Modal';
+import Pagination from '../../components/catalog/Pagination';
 import { adminService } from '../../services/adminService';
 import { bookService } from '../../services/bookService';
 import { deriveDiscountPercent } from '../../utils/pricing';
@@ -47,6 +48,8 @@ export default function AdminBookDetailPage() {
   const [showStockModal, setShowStockModal] = useState(false);
   const [changeLogs, setChangeLogs] = useState([]);
   const [changeLogsLoading, setChangeLogsLoading] = useState(true);
+  const [changeLogPage, setChangeLogPage] = useState(0);
+  const [changeLogTotalPages, setChangeLogTotalPages] = useState(0);
 
   const [coverUrl, setCoverUrl] = useState('');
   const [coverKey, setCoverKey] = useState('');
@@ -75,18 +78,9 @@ export default function AdminBookDetailPage() {
     const loadBook = async () => {
       setLoading(true);
       try {
-        const [categoryList, changeLogPage] = await Promise.all([
-          bookService.getCategories(),
-          adminService.getBookChangeLogs(id, { page: 0, size: 20, sort: 'createdAt,desc' })
-            .catch((err) => {
-              console.error('Failed to load book change history:', err);
-              return { items: [] };
-            }),
-        ]);
+        const categoryList = await bookService.getCategories();
         if (!active) return;
         setCategories(categoryList || []);
-        setChangeLogs(changeLogPage?.items || changeLogPage?.content || []);
-        setChangeLogsLoading(false);
 
         if (location.state?.book) {
           applyBook(location.state.book);
@@ -105,7 +99,6 @@ export default function AdminBookDetailPage() {
       } finally {
         if (active) {
           setLoading(false);
-          setChangeLogsLoading(false);
         }
       }
     };
@@ -116,6 +109,30 @@ export default function AdminBookDetailPage() {
       active = false;
     };
   }, [id, location.state?.book]);
+
+  useEffect(() => {
+    let active = true;
+    Promise.resolve().then(() => setChangeLogsLoading(true));
+    adminService.getBookChangeLogs(id, { page: changeLogPage, size: 10, sort: 'createdAt,desc' })
+      .then((result) => {
+        if (!active) return;
+        setChangeLogs(result?.items || result?.content || []);
+        setChangeLogTotalPages(result?.totalPages || 0);
+      })
+      .catch((err) => {
+        console.error('Failed to load book change history:', err);
+        if (active) {
+          setChangeLogs([]);
+          setChangeLogTotalPages(0);
+        }
+      })
+      .finally(() => {
+        if (active) setChangeLogsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [id, changeLogPage]);
 
   useEffect(() => {
     resizeDescription();
@@ -411,6 +428,11 @@ export default function AdminBookDetailPage() {
                 </div>
               </article>
             ))}
+            <Pagination
+              currentPage={changeLogPage + 1}
+              totalPages={changeLogTotalPages}
+              onPageChange={(page) => setChangeLogPage(page - 1)}
+            />
           </div>
         )}
       </section>
