@@ -3,23 +3,32 @@ import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { adminService } from '../../services/adminService';
+import { ErrorState, LoadingState } from '../../components/ui/State';
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState([]);
   const [newCatName, setNewCatName] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const fetchCategories = () => {
+    setLoading(true);
+    setError('');
     adminService.getCategories()
       .then((res) => {
         const list = res.data?.items || res.items || (Array.isArray(res) ? res : []);
         setCategories(list);
       })
-      .catch((err) => console.error('Failed to load categories:', err));
+      .catch((err) => {
+        console.error('Failed to load categories:', err);
+        setError('Could not load categories.');
+      })
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    fetchCategories();
+    Promise.resolve().then(fetchCategories);
   }, []);
 
   const handleAddCategory = async (e) => {
@@ -72,7 +81,9 @@ export default function AdminCategoriesPage() {
         </Button>
       </form>
 
-      <Table
+      {loading ? <LoadingState text="Loading categories..." /> : error ? (
+        <ErrorState text={error}><Button onClick={fetchCategories}>Try again</Button></ErrorState>
+      ) : <Table
         emptyText="No categories found."
         columns={[
           { key: 'id', label: 'ID' },
@@ -80,7 +91,7 @@ export default function AdminCategoriesPage() {
           { key: 'slug', label: 'Slug' },
         ]}
         rows={categories}
-      />
+      />}
     </section>
   );
 }

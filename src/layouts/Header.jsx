@@ -75,7 +75,7 @@ export default function Header() {
   };
 
   useEffect(() => {
-    setSearchQuery(queryParam);
+    Promise.resolve().then(() => setSearchQuery(queryParam));
   }, [queryParam]);
 
   useEffect(() => {

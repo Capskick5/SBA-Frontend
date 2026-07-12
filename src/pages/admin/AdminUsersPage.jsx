@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Button from '../../components/ui/Button';
 import Table from '../../components/ui/Table';
+import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 
 function formatRole(role) {
@@ -11,18 +12,26 @@ function formatRole(role) {
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const fetchUsers = () => {
+    setLoading(true);
+    setError('');
     adminService.getUsers()
       .then((res) => {
         const list = res.data?.items || res.items || (Array.isArray(res) ? res : []);
         setUsers(list);
       })
-      .catch((err) => console.error('Failed to load users:', err));
+      .catch((err) => {
+        console.error('Failed to load users:', err);
+        setError('Could not load user accounts.');
+      })
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    fetchUsers();
+    Promise.resolve().then(fetchUsers);
   }, []);
 
   const handleToggle = async (user) => {
@@ -37,7 +46,9 @@ export default function AdminUsersPage() {
   return (
     <section className="stack">
       <h1>User Management</h1>
-      <Table
+      {loading ? <LoadingState text="Loading users..." /> : error ? (
+        <ErrorState text={error}><Button onClick={fetchUsers}>Try again</Button></ErrorState>
+      ) : <Table
         emptyText="No users found."
         columns={[
           { key: 'email', label: 'Email' },
@@ -64,7 +75,7 @@ export default function AdminUsersPage() {
           },
         ]}
         rows={users}
-      />
+      />}
     </section>
   );
 }

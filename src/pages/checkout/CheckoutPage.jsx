@@ -109,14 +109,15 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setCheckoutError('');
-
-    Promise.all([
+    Promise.resolve().then(() => {
+      setLoading(true);
+      setCheckoutError('');
+      return Promise.all([
       addressService.list(),
       cartService.getCart(),
       voucherService.listMine().catch(() => []),
-    ])
+      ]);
+    })
       .then(([addrList, cart, voucherList]) => {
         if (!active) return;
         const cartIds = (cart.items || []).map((item) => item.itemId);
@@ -161,21 +162,9 @@ export default function CheckoutPage() {
     return () => {
       active = false;
     };
+  // Checkout initialization intentionally reruns only when URL selections change.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
-
-  const handleAddressChange = async (event) => {
-    const addressId = Number(event.target.value);
-    if (!addressId) return;
-    setSelectedAddressId(addressId);
-    try {
-      await refreshPreview(addressId, cartItemIds, selectedCartItems);
-      setCheckoutError('');
-      setVoucherError('');
-    } catch (err) {
-      console.error('Failed to load checkout preview:', err);
-      setCheckoutError(err.response?.data?.message || 'Could not calculate shipping fee for this address.');
-    }
-  };
 
   const handleSelectAddress = async (addressId) => {
     setSelectedAddressId(addressId);
@@ -187,11 +176,6 @@ export default function CheckoutPage() {
       console.error('Failed to load checkout preview:', err);
       setCheckoutError(err.response?.data?.message || 'Could not calculate shipping fee for this address.');
     }
-  };
-
-  const handleVoucherChange = async (event) => {
-    const voucherId = event.target.value;
-    await applyVoucher(voucherId);
   };
 
   const applyVoucher = async (voucherId) => {

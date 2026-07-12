@@ -21,31 +21,34 @@ export default function VouchersPage() {
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setLoadError('');
+    Promise.resolve().then(() => {
+      setLoading(true);
+      setLoadError('');
 
-    voucherService
-      .listMine()
-      .then((items) => {
-        if (active) setVouchers(items || []);
-      })
-      .catch((err) => {
-        if (active) setLoadError(err.message || 'Could not load vouchers.');
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+      return voucherService
+        .listMine()
+        .then((items) => {
+          if (active) setVouchers(items || []);
+        })
+        .catch((err) => {
+          if (active) setLoadError(err.message || 'Could not load vouchers.');
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
       });
 
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloadKey]);
 
   if (loading) return <LoadingState text="Loading your vouchers..." />;
-  if (loadError) return <ErrorState text={loadError} />;
+  if (loadError) return <ErrorState text={loadError}><button className="btn" onClick={() => setReloadKey((value) => value + 1)}>Try again</button></ErrorState>;
 
   return (
     <section className="voucher-wallet">

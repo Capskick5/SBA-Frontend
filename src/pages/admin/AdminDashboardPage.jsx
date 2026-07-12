@@ -2,16 +2,28 @@ import { useEffect, useState } from 'react';
 import { adminService } from '../../services/adminService';
 import { formatCurrency } from '../../utils/formatters';
 
-import { LoadingState } from '../../components/ui/State';
+import Button from '../../components/ui/Button';
+import { ErrorState, LoadingState } from '../../components/ui/State';
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    adminService.getStats().then(setStats);
-  }, []);
+    Promise.resolve().then(() => {
+      setLoading(true);
+      setError('');
+      return adminService.getStats()
+        .then(setStats)
+        .catch(() => setError('Could not load dashboard statistics.'))
+        .finally(() => setLoading(false));
+    });
+  }, [reloadKey]);
 
-  if (!stats) return <LoadingState text="Loading dashboard..." />;
+  if (loading) return <LoadingState text="Loading dashboard..." />;
+  if (error) return <ErrorState text={error}><Button onClick={() => setReloadKey((value) => value + 1)}>Try again</Button></ErrorState>;
 
   return (
     <section className="stack">

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 import Button from '../../components/ui/Button';
-import { ErrorState, LoadingState } from '../../components/ui/State';
+import { EmptyState, ErrorState, LoadingState } from '../../components/ui/State';
 
 export default function AdminInventoryPage() {
   const getQuantity = (mov) => {
@@ -114,7 +114,7 @@ export default function AdminInventoryPage() {
       </div>
 
       {movements.length === 0 ? (
-        <p>No stock movement logs found.</p>
+        <EmptyState title="No inventory activity" text="Stock changes will appear here after orders or manual adjustments." />
       ) : (
         <table className="table">
           <thead>

@@ -43,13 +43,8 @@ export default function ProfilePage() {
   const [pwdSuccess, setPwdSuccess] = useState(null);
   const [pwdFieldErrors, setPwdFieldErrors] = useState({});
   const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'account');
+  const activeTab = searchParams.get('tab') || 'account';
   const [addressTitle, setAddressTitle] = useState('Address book');
-
-  useEffect(() => {
-    const tab = searchParams.get('tab') || 'account';
-    setActiveTab(tab);
-  }, [searchParams]);
 
   useEffect(() => {
     profileService.getProfile()

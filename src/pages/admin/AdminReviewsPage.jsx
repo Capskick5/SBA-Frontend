@@ -25,7 +25,7 @@ export default function AdminReviewsPage() {
   };
 
   useEffect(() => {
-    loadReviews();
+    Promise.resolve().then(loadReviews);
   }, []);
 
   const handleDelete = async (id) => {

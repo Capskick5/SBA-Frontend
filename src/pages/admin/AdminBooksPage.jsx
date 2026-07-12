@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
-import { LoadingState } from '../../components/ui/State';
+import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -14,9 +14,11 @@ export default function AdminBooksPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [sortBy, setSortBy] = useState('id,desc');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [error, setError] = useState('');
 
   const loadBooks = useCallback((pageIndex, currentSort, currentStatus) => {
     setLoading(true);
+    setError('');
     const params = { page: pageIndex, size: 10, sort: currentSort };
     if (currentStatus === 'active') {
       params.active = true;
@@ -40,6 +42,7 @@ export default function AdminBooksPage() {
       })
       .catch((err) => {
         console.error('Failed to load books:', err);
+        setError('Could not load the book inventory.');
         setBooks([]);
         setTotalPages(1);
       })
@@ -112,6 +115,10 @@ export default function AdminBooksPage() {
 
       {loading ? (
         <LoadingState text="Loading books..." />
+      ) : error ? (
+        <ErrorState text={error}>
+          <Button onClick={() => loadBooks(currentPage, sortBy, statusFilter)}>Try again</Button>
+        </ErrorState>
       ) : (
         <>
           <Table

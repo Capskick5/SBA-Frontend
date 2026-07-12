@@ -7,7 +7,7 @@ import Button from '../../components/ui/Button';
 import { LoadingState } from '../../components/ui/State';
 
 export default function BookChatPage() {
-  const [chatType, setChatType] = useState('BOOK_CHAT');
+  const chatType = 'BOOK_CHAT';
   const [sessions, setSessions] = useState([]);
   const [currentSession, setCurrentSession] = useState(null);
   const [purchasedBooks, setPurchasedBooks] = useState([]);
@@ -22,17 +22,12 @@ export default function BookChatPage() {
   const chatHistoryRef = useRef(null);
 
   useEffect(() => {
-    loadSessions();
-    loadPurchasedBooks();
-  }, [chatType]);
-
-  useEffect(() => {
     if (chatHistoryRef.current) {
       chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
     }
   }, [currentSession?.messages, sending]);
 
-  const loadSessions = async () => {
+  async function loadSessions() {
     setLoading(true);
     setError('');
     try {
@@ -49,9 +44,9 @@ export default function BookChatPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const loadPurchasedBooks = async () => {
+  async function loadPurchasedBooks() {
     try {
       const orders = await orderService.getOrders();
       const validOrders = orders.filter(
@@ -103,9 +98,9 @@ export default function BookChatPage() {
     } catch (err) {
       console.error('Failed to load purchased books:', err);
     }
-  };
+  }
 
-  const loadSessionDetails = async (id) => {
+  async function loadSessionDetails(id) {
     try {
       const details = await aiChatService.getSessionById(id);
       setCurrentSession(details);
@@ -113,7 +108,16 @@ export default function BookChatPage() {
       console.error(err);
       setError('Failed to load chat conversation details.');
     }
-  };
+  }
+
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      loadSessions();
+      loadPurchasedBooks();
+    });
+    // The chat type is fixed for this page; reload functions intentionally run once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCreateSession = async (e) => {
     e.preventDefault();

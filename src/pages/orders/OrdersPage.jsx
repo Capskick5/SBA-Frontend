@@ -109,7 +109,7 @@ export default function OrdersPage() {
   };
 
   useEffect(() => {
-    loadOrders();
+    Promise.resolve().then(loadOrders);
   }, []);
 
   useEffect(() => {

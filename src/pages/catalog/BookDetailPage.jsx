@@ -144,13 +144,15 @@ export default function BookDetailPage() {
 
   useEffect(() => {
     if (!authService.getCurrentUser()) {
-      setDeliveryAddress(null);
-      setDeliveryAddressReady(true);
+      Promise.resolve().then(() => {
+        setDeliveryAddress(null);
+        setDeliveryAddressReady(true);
+      });
       return undefined;
     }
 
     let active = true;
-    setDeliveryAddressReady(false);
+    Promise.resolve().then(() => setDeliveryAddressReady(false));
 
     addressService
       .list()
@@ -197,7 +199,7 @@ export default function BookDetailPage() {
 
   useEffect(() => {
     if (!book?.categoryId) {
-      setRelatedBooks([]);
+      Promise.resolve().then(() => setRelatedBooks([]));
       return undefined;
     }
 

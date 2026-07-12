@@ -4336,6 +4336,11 @@ tr:last-child td {
 }
 
 .state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   border: 1px solid var(--border);
   padding: 48px;
   text-align: center;
@@ -4346,7 +4351,25 @@ tr:last-child td {
 
 .state p {
   color: var(--muted);
-  margin: 0 0 20px 0;
+  margin: 0;
+  max-width: 520px;
+}
+
+.state > strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
+.state > .btn {
+  margin-top: 8px;
+}
+
+.state-empty > svg {
+  color: var(--muted);
+}
+
+.state-error > svg {
+  color: var(--error);
 }
 
 .state-error {

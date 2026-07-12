@@ -10,6 +10,7 @@ export default function AdminRagPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [appliedQuery, setAppliedQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   
   const [ragStatuses, setRagStatuses] = useState({});
@@ -34,6 +35,49 @@ export default function AdminRagPage() {
       })
       .finally(() => setHealthLoading(false));
   };
+
+  function fetchRagStatuses(bookList) {
+    bookList.forEach(async (book) => {
+      setRagStatuses(prev => ({
+        ...prev,
+        [book.id]: { loading: true, catalogLoading: true }
+      }));
+
+      if (book.fileKey) {
+        adminService.getBookIndexStatus(book.id)
+          .then((res) => {
+            const data = res.data || res;
+            setRagStatuses(prev => ({
+              ...prev,
+              [book.id]: {
+                ...prev[book.id], loading: false, status: data.status || 'NOT_INDEXED',
+                chunkCount: data.chunk_count || data.chunkCount || 0,
+                updatedAt: data.updated_at || data.updatedAt, error: data.error
+              }
+            }));
+          })
+          .catch(() => setRagStatuses(prev => ({
+            ...prev, [book.id]: { ...prev[book.id], loading: false, status: 'NOT_INDEXED', chunkCount: 0 }
+          })));
+      } else {
+        setRagStatuses(prev => ({
+          ...prev, [book.id]: { ...prev[book.id], loading: false, status: 'NO_FILE', chunkCount: 0 }
+        }));
+      }
+
+      adminService.getBookCatalogStatus(book.id)
+        .then((res) => {
+          const data = res.data || res;
+          setRagStatuses(prev => ({
+            ...prev,
+            [book.id]: { ...prev[book.id], catalogLoading: false, catalogStatus: data.status || 'not_found' }
+          }));
+        })
+        .catch(() => setRagStatuses(prev => ({
+          ...prev, [book.id]: { ...prev[book.id], catalogLoading: false, catalogStatus: 'not_found' }
+        })));
+    });
+  }
 
   const loadBooks = useCallback((pageIndex, query) => {
     setLoading(true);
@@ -66,86 +110,17 @@ export default function AdminRagPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const fetchRagStatuses = (bookList) => {
-    bookList.forEach(async (book) => {
-      setRagStatuses(prev => ({
-        ...prev,
-        [book.id]: { loading: true, catalogLoading: true }
-      }));
-      
-      if (book.fileKey) {
-        adminService.getBookIndexStatus(book.id)
-          .then((res) => {
-            const data = res.data || res;
-            setRagStatuses(prev => ({
-              ...prev,
-              [book.id]: {
-                ...prev[book.id],
-                loading: false,
-                status: data.status || 'NOT_INDEXED',
-                chunkCount: data.chunk_count || data.chunkCount || 0,
-                updatedAt: data.updated_at || data.updatedAt,
-                error: data.error
-              }
-            }));
-          })
-          .catch(() => {
-            setRagStatuses(prev => ({
-              ...prev,
-              [book.id]: {
-                ...prev[book.id],
-                loading: false,
-                status: 'NOT_INDEXED',
-                chunkCount: 0
-              }
-            }));
-          });
-      } else {
-        setRagStatuses(prev => ({
-          ...prev,
-          [book.id]: {
-            ...prev[book.id],
-            loading: false,
-            status: 'NO_FILE',
-            chunkCount: 0
-          }
-        }));
-      }
-
-      adminService.getBookCatalogStatus(book.id)
-        .then((res) => {
-          const data = res.data || res;
-          setRagStatuses(prev => ({
-            ...prev,
-            [book.id]: {
-              ...prev[book.id],
-              catalogLoading: false,
-              catalogStatus: data.status || 'not_found'
-            }
-          }));
-        })
-        .catch(() => {
-          setRagStatuses(prev => ({
-            ...prev,
-            [book.id]: {
-              ...prev[book.id],
-              catalogLoading: false,
-              catalogStatus: 'not_found'
-            }
-          }));
-        });
-    });
-  };
-
   useEffect(() => {
-    loadHealth();
-    loadBooks(currentPage, searchQuery);
-  }, [currentPage, loadBooks]);
+    Promise.resolve().then(() => {
+      loadHealth();
+      loadBooks(currentPage, appliedQuery);
+    });
+  }, [currentPage, appliedQuery, loadBooks]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setCurrentPage(0);
-    loadBooks(0, searchQuery);
+    setAppliedQuery(searchQuery);
   };
 
   const toggleSelect = (id) => {
@@ -346,8 +321,6 @@ export default function AdminRagPage() {
       </div>
     );
   };
-
-  const isIngestable = books.filter(b => b.fileKey).length > 0;
 
   return (
     <section className="stack">

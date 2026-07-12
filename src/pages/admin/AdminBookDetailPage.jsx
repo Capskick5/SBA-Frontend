@@ -4,7 +4,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Textarea from '../../components/ui/Textarea';
 import PricingFields from '../../components/admin/PricingFields';
-import { LoadingState } from '../../components/ui/State';
+import { EmptyState, LoadingState } from '../../components/ui/State';
 import Modal from '../../components/ui/Modal';
 import { adminService } from '../../services/adminService';
 import { bookService } from '../../services/bookService';
@@ -201,7 +201,13 @@ export default function AdminBookDetailPage() {
   };
 
   if (loading) return <LoadingState text="Loading book..." />;
-  if (!book) return <p>Book not found.</p>;
+  if (!book) {
+    return (
+      <EmptyState title="Book not found" text="This book may have been removed or is no longer available.">
+        <Button type="button" onClick={() => navigate('/admin/books')}>Back to books</Button>
+      </EmptyState>
+    );
+  }
 
   const discountPercent = deriveDiscountPercent(book.originalPrice || book.price, book.price);
 

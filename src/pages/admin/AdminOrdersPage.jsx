@@ -42,7 +42,7 @@ export default function AdminOrdersPage() {
   };
 
   useEffect(() => {
-    loadOrders(currentPage, sortBy);
+    Promise.resolve().then(() => loadOrders(currentPage, sortBy));
   }, [currentPage, sortBy]);
 
   return (
