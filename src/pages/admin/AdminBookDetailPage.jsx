@@ -9,6 +9,25 @@ import Modal from '../../components/ui/Modal';
 import { adminService } from '../../services/adminService';
 import { bookService } from '../../services/bookService';
 import { deriveDiscountPercent } from '../../utils/pricing';
+import { formatDateTime } from '../../utils/formatters';
+
+const FIELD_LABELS = {
+  title: 'Title',
+  author: 'Author',
+  isbn: 'ISBN',
+  publisher: 'Publisher',
+  publicationYear: 'Publication year',
+  language: 'Language',
+  pages: 'Pages',
+  category: 'Category',
+  price: 'Sale price',
+  originalPrice: 'Original price',
+  description: 'Description',
+  coverUrl: 'Cover URL',
+  fileKey: 'Digital file',
+  coverKey: 'Cover file',
+  active: 'Visibility',
+};
 
 function unwrapBook(response) {
   return response?.data || response;
@@ -26,6 +45,8 @@ export default function AdminBookDetailPage() {
   const [stockNote, setStockNote] = useState('');
   const [updatingStock, setUpdatingStock] = useState(false);
   const [showStockModal, setShowStockModal] = useState(false);
+  const [changeLogs, setChangeLogs] = useState([]);
+  const [changeLogsLoading, setChangeLogsLoading] = useState(true);
 
   const [coverUrl, setCoverUrl] = useState('');
   const [coverKey, setCoverKey] = useState('');
@@ -54,9 +75,18 @@ export default function AdminBookDetailPage() {
     const loadBook = async () => {
       setLoading(true);
       try {
-        const categoryList = await bookService.getCategories();
+        const [categoryList, changeLogPage] = await Promise.all([
+          bookService.getCategories(),
+          adminService.getBookChangeLogs(id, { page: 0, size: 20, sort: 'createdAt,desc' })
+            .catch((err) => {
+              console.error('Failed to load book change history:', err);
+              return { items: [] };
+            }),
+        ]);
         if (!active) return;
         setCategories(categoryList || []);
+        setChangeLogs(changeLogPage?.items || changeLogPage?.content || []);
+        setChangeLogsLoading(false);
 
         if (location.state?.book) {
           applyBook(location.state.book);
@@ -73,7 +103,10 @@ export default function AdminBookDetailPage() {
           setBook(null);
         }
       } finally {
-        if (active) setLoading(false);
+        if (active) {
+          setLoading(false);
+          setChangeLogsLoading(false);
+        }
       }
     };
 
@@ -348,6 +381,39 @@ export default function AdminBookDetailPage() {
           </section>
         </main>
       </form>
+
+      <section className="admin-book-panel admin-book-change-history">
+        <div className="admin-book-panel-heading">
+          <h2>Recent changes</h2>
+          <span>Latest field-level updates</span>
+        </div>
+        {changeLogsLoading ? (
+          <p className="form-hint">Loading change history...</p>
+        ) : changeLogs.length === 0 ? (
+          <p className="form-hint">No book information changes have been recorded yet.</p>
+        ) : (
+          <div className="admin-book-change-list">
+            {changeLogs.map((log) => (
+              <article className="admin-book-change-item" key={log.id}>
+                <div className="admin-book-change-meta">
+                  <strong>{FIELD_LABELS[log.fieldName] || log.fieldName}</strong>
+                  <span>{log.changedByName || `Admin #${log.changedBy}`} · {formatDateTime(log.createdAt)}</span>
+                </div>
+                <div className="admin-book-change-values">
+                  <div>
+                    <span>Before</span>
+                    <p>{log.oldValue || 'Not set'}</p>
+                  </div>
+                  <div>
+                    <span>After</span>
+                    <p>{log.newValue || 'Not set'}</p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
 
       {showStockModal && (
         <Modal title="Import / Export Stock Request" onClose={() => setShowStockModal(false)} hideClose={true}>

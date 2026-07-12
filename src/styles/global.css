@@ -4862,6 +4862,55 @@ tr:last-child td {
   resize: vertical;
 }
 
+.admin-book-change-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-book-change-item {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.35fr) minmax(0, 1fr);
+  gap: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-alt);
+  padding: 16px;
+}
+
+.admin-book-change-meta,
+.admin-book-change-values > div {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+
+.admin-book-change-meta span,
+.admin-book-change-values span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.admin-book-change-values {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-book-change-values > div {
+  min-width: 0;
+  border-left: 2px solid var(--border);
+  padding-left: 12px;
+}
+
+.admin-book-change-values p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -4947,6 +4996,11 @@ tr:last-child td {
 
   .admin-book-detail-sidebar {
     position: static;
+  }
+
+  .admin-book-change-item,
+  .admin-book-change-values {
+    grid-template-columns: 1fr;
   }
 
   .field-span-2 {

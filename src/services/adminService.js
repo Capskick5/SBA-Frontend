@@ -61,6 +61,7 @@ export const adminService = {
 
   getStockMovements: (params) => api.get('/stock-movements', { params }).then(res => res.data),
   getBookStockMovements: (id, params) => api.get(`/books/${id}/stock-movements`, { params }).then(res => res.data),
+  getBookChangeLogs: (id, params) => api.get(`/books/${id}/change-logs`, { params }).then(res => res.data?.data || res.data),
   addBook: (bookData) => { return api.post('/books', bookData); },
   updateBook: (id, bookData) => api.put(`/books/${id}`, bookData).then(res => res.data),
 
