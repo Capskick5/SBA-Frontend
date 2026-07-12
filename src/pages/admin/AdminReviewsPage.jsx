@@ -22,6 +22,12 @@ export default function AdminReviewsPage() {
   const [moderationTarget, setModerationTarget] = useState(null);
   const [moderationReason, setModerationReason] = useState('');
   const [moderating, setModerating] = useState(false);
+  const [historyTarget, setHistoryTarget] = useState(null);
+  const [historyEntries, setHistoryEntries] = useState([]);
+  const [historyPage, setHistoryPage] = useState(0);
+  const [historyTotalPages, setHistoryTotalPages] = useState(0);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState('');
 
   const loadReviews = useCallback(() => {
     setLoading(true);
@@ -80,6 +86,44 @@ export default function AdminReviewsPage() {
       setModerating(false);
     }
   };
+
+  const openHistory = (review) => {
+    setHistoryTarget(review);
+    setHistoryEntries([]);
+    setHistoryPage(0);
+  };
+
+  useEffect(() => {
+    if (!historyTarget) return undefined;
+    let active = true;
+    Promise.resolve()
+      .then(() => {
+        if (active) {
+          setHistoryLoading(true);
+          setHistoryError('');
+        }
+        return adminService.getReviewModerationHistory(historyTarget.id, {
+          page: historyPage,
+          size: PAGE_SIZE,
+          sort: 'createdAt,desc',
+        });
+      })
+      .then((result) => {
+        if (!active) return;
+        setHistoryEntries(result?.items || result?.content || []);
+        setHistoryTotalPages(result?.totalPages ?? 0);
+      })
+      .catch((err) => {
+        console.error('Failed to load moderation history:', err);
+        if (active) setHistoryError('Failed to load moderation history.');
+      })
+      .finally(() => {
+        if (active) setHistoryLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [historyPage, historyTarget]);
 
   return (
     <section className="stack">
@@ -158,9 +202,14 @@ export default function AdminReviewsPage() {
                 key: 'action',
                 label: 'Actions',
                 render: (row) => (
-                  <Button className="btn-secondary" onClick={() => openModeration(row)}>
-                    {row.status === 'HIDDEN' ? 'Restore' : 'Hide'}
-                  </Button>
+                  <div className="admin-review-actions">
+                    <Button className="btn-secondary" onClick={() => openHistory(row)}>
+                      History
+                    </Button>
+                    <Button className="btn-secondary" onClick={() => openModeration(row)}>
+                      {row.status === 'HIDDEN' ? 'Restore' : 'Hide'}
+                    </Button>
+                  </div>
                 ),
               },
             ]}
@@ -208,6 +257,38 @@ export default function AdminReviewsPage() {
               </Button>
             </div>
           </div>
+        </Modal>
+      )}
+
+      {historyTarget && (
+        <Modal title={`Moderation history · Review #${historyTarget.id}`} onClose={() => setHistoryTarget(null)}>
+          {historyLoading ? (
+            <LoadingState text="Loading moderation history..." />
+          ) : historyError ? (
+            <ErrorState text={historyError} />
+          ) : historyEntries.length === 0 ? (
+            <p className="muted">This review has not been moderated yet.</p>
+          ) : (
+            <>
+              <ol className="admin-review-history">
+                {historyEntries.map((entry) => (
+                  <li key={entry.id}>
+                    <div className="admin-review-history-heading">
+                      <strong>{entry.fromStatus} → {entry.toStatus}</strong>
+                      <time>{formatDateTime(entry.createdAt)}</time>
+                    </div>
+                    <p>By {entry.moderatorName || `Admin #${entry.moderatedBy}`}</p>
+                    {entry.reason && <p className="admin-review-history-reason">{entry.reason}</p>}
+                  </li>
+                ))}
+              </ol>
+              <Pagination
+                currentPage={historyPage + 1}
+                totalPages={historyTotalPages}
+                onPageChange={(nextPage) => setHistoryPage(nextPage - 1)}
+              />
+            </>
+          )}
         </Modal>
       )}
     </section>

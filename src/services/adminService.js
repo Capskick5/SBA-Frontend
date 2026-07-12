@@ -77,6 +77,7 @@ export const adminService = {
 
   getReviews: (params) => api.get('/admin/reviews', { params }).then(res => res.data?.data || res.data),
   moderateReview: (id, body) => api.put(`/admin/reviews/${id}/moderation`, body).then(res => res.data?.data || res.data),
+  getReviewModerationHistory: (id, params) => api.get(`/admin/reviews/${id}/moderation-history`, { params }).then(res => res.data?.data || res.data),
   deleteReview: (id) => api.delete(`/reviews/${id}`).then(res => res.data),
 
   getVoucherRules: (params) => api.get('/vouchers', { params }).then(res => res.data?.data || res.data),

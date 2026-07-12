@@ -3081,6 +3081,46 @@ html[data-theme="dark"] .footer {
   resize: vertical;
 }
 
+.admin-review-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-review-history {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-review-history li {
+  border-left: 3px solid var(--brand);
+  padding: 4px 0 4px 16px;
+}
+
+.admin-review-history-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: baseline;
+}
+
+.admin-review-history-heading time,
+.admin-review-history p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.admin-review-history p {
+  margin: 6px 0 0;
+}
+
+.admin-review-history .admin-review-history-reason {
+  color: var(--text);
+}
+
 .order-detail-item-actions .btn-action-review {
   border-color: var(--accent);
   color: var(--accent);
