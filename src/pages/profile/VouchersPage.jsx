@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { TicketPercent } from 'lucide-react';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { voucherService } from '../../services/voucherService';
-import { formatCurrency } from '../../utils/formatters';
+import { formatCurrency, formatDateTime } from '../../utils/formatters';
 
 function formatVoucherDiscount(voucher) {
   if (voucher.discountType === 'PERCENTAGE') {
@@ -13,8 +13,7 @@ function formatVoucherDiscount(voucher) {
 }
 
 function formatVoucherDate(value) {
-  if (!value) return 'No expiry date';
-  return new Date(value).toLocaleString('en-GB');
+  return formatDateTime(value, 'No expiry date');
 }
 
 export default function VouchersPage() {

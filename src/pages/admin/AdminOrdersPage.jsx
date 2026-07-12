@@ -5,7 +5,7 @@ import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
-import { formatCurrency } from '../../utils/formatters';
+import { formatCurrency, formatDate } from '../../utils/formatters';
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -84,7 +84,7 @@ export default function AdminOrdersPage() {
               {
                 key: 'createdAt',
                 label: 'Order Date',
-                render: (row) => (row.createdAt ? new Date(row.createdAt).toLocaleDateString('en-GB') : 'N/A'),
+                render: (row) => formatDate(row.createdAt),
               },
               { key: 'status', label: 'Status', render: (row) => <OrderStatusBadge status={row.status} /> },
               { key: 'total', label: 'Total', render: (row) => <strong style={{ color: '#e53e3e' }}>{formatCurrency(row.total)}</strong> },

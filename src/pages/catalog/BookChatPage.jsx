@@ -5,6 +5,7 @@ import { orderService } from '../../services/orderService';
 import { bookService } from '../../services/bookService';
 import Button from '../../components/ui/Button';
 import { LoadingState } from '../../components/ui/State';
+import { formatDate } from '../../utils/formatters';
 
 export default function BookChatPage() {
   const chatType = 'BOOK_CHAT';
@@ -240,7 +241,7 @@ export default function BookChatPage() {
                   <div className="session-item-info">
                     <span className="session-title">{session.title}</span>
                     <span className="session-date">
-                      {new Date(session.updatedAt || session.createdAt).toLocaleDateString()}
+                      {formatDate(session.updatedAt || session.createdAt)}
                     </span>
                   </div>
                   <button

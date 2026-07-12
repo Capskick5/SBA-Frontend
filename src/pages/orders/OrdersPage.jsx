@@ -8,7 +8,7 @@ import { orderService } from '../../services/orderService';
 import { bookService } from '../../services/bookService';
 import { cartService } from '../../services/cartService';
 import { notifyCartUpdated } from '../../utils/cartEvents';
-import { formatCurrency } from '../../utils/formatters';
+import { formatCurrency, formatDateTime } from '../../utils/formatters';
 import { formatPaymentTimeLeft } from '../../utils/paymentExpiry';
 import { showToast } from '../../utils/toast';
 
@@ -137,18 +137,6 @@ export default function OrdersPage() {
     } finally {
       setRebuyingId(null);
     }
-  };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-GB', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   const getBookCover = (item) => {
@@ -292,7 +280,7 @@ export default function OrdersPage() {
                 <div className="order-card-header">
                   <div className="order-card-info">
                     <span className="order-card-id">Order #{order.id}</span>
-                    <span className="order-card-date">Placed on {formatDate(order.createdAt)}</span>
+                    <span className="order-card-date">Placed on {formatDateTime(order.createdAt)}</span>
                   </div>
                   <span className={`status-badge ${statusConfig.class}`}>
                     {statusConfig.text}

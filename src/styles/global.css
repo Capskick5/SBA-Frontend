@@ -2647,6 +2647,129 @@ html[data-theme="dark"] .footer {
   font-weight: 600;
 }
 
+.book-detail-review-action {
+  min-width: 0;
+  border-left: 1px solid var(--border);
+  padding-left: 28px;
+}
+
+.review-form {
+  display: grid;
+  gap: 14px;
+}
+
+.review-form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.review-rating-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.review-rating-input button {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #f5a623;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.review-rating-input button:hover,
+.review-rating-input button:focus-visible {
+  transform: scale(1.12);
+}
+
+.review-rating-input strong {
+  margin-left: 8px;
+  font-size: 14px;
+}
+
+.review-form textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.review-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.review-form-footer > span,
+.review-form-policy {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.review-form-policy,
+.review-form-error {
+  margin: 0;
+}
+
+.review-form-error {
+  border-left: 3px solid var(--error);
+  padding: 9px 12px;
+  background: rgba(220, 38, 38, 0.06);
+  color: var(--error);
+  font-size: 13px;
+}
+
+.book-detail-review-complete {
+  display: grid;
+  gap: 6px;
+}
+
+.book-detail-review-complete strong {
+  color: var(--success);
+}
+
+.book-detail-review-complete span {
+  color: #b7791f;
+  font-weight: 700;
+}
+
+.book-detail-review-complete p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.book-detail-review-list-section {
+  margin-top: 28px;
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+
+.book-detail-review-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.book-detail-review-list-heading h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.book-detail-review-list-heading span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .book-detail-related-section {
   overflow: hidden;
 }
@@ -2797,16 +2920,106 @@ html[data-theme="dark"] .footer {
 .review-card {
   display: grid;
   gap: 10px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: 20px;
+  border-bottom: 1px solid var(--border);
+  padding: 0 0 20px;
+}
+
+.review-card:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.review-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.review-card-header > div {
+  display: grid;
+  gap: 3px;
+}
+
+.review-card-header span {
+  color: var(--success);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.review-card-header time {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .review-stars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   color: #fbbf24;
   letter-spacing: 2px;
   font-size: 14px;
+}
+
+.review-stars strong {
+  margin-left: 8px;
+  color: var(--text);
+  letter-spacing: 0;
+  font-size: 12px;
+}
+
+.review-card > p {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.65;
+}
+
+.admin-review-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.admin-review-heading h1,
+.admin-review-heading p {
+  margin: 0;
+}
+
+.admin-review-heading p {
+  margin-top: 6px;
+}
+
+.admin-review-count {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-review-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #f5a623;
+  white-space: nowrap;
+}
+
+.admin-review-rating strong {
+  margin-left: 6px;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.admin-review-delete {
+  border-color: rgba(220, 38, 38, 0.35);
+  background: transparent;
+  color: var(--error);
+}
+
+.order-detail-item-actions .btn-action-review {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .form {

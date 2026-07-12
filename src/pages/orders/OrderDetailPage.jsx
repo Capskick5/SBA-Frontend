@@ -6,7 +6,7 @@ import { notifyCartUpdated } from '../../utils/cartEvents';
 import OrderTimeline from '../../components/orders/OrderTimeline';
 import { LoadingState, ErrorState } from '../../components/ui/State';
 import { orderService } from '../../services/orderService';
-import { formatCurrency } from '../../utils/formatters';
+import { formatCurrency, formatDate, formatDateTime } from '../../utils/formatters';
 import { formatPaymentTimeLeft } from '../../utils/paymentExpiry';
 import { showToast } from '../../utils/toast';
 import Button from '../../components/ui/Button';
@@ -136,25 +136,12 @@ export default function OrderDetailPage({ adminView = false }) {
     }
   };
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-GB', {
-        hour: '2-digit',
-      minute: '2-digit',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  };
-
   const getExpectedDeliveryDate = (dateStr) => {
     if (!dateStr) return '';
-      const date = new Date(dateStr);
-      date.setDate(date.getDate() + 3);
-      const weekday = date.toLocaleDateString('en-GB', {weekday: 'long' });
-      const dateNum = date.toLocaleDateString('en-GB', {day: '2-digit', month: '2-digit' });
-      return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)}, ${dateNum}`;
+    const date = new Date(dateStr);
+    date.setDate(date.getDate() + 3);
+    const weekday = date.toLocaleDateString('en-GB', { weekday: 'long' });
+    return `${weekday}, ${formatDate(date)}`;
   };
 
       const expectedDateText = getExpectedDeliveryDate(order.createdAt);
@@ -166,7 +153,7 @@ export default function OrderDetailPage({ adminView = false }) {
           <h1>
             Order #{order.id} - <span className={`highlight ${statusConfig.class}`}>{statusConfig.text}</span>
           </h1>
-          <div className="order-detail-date">Placed on {formatDate(order.createdAt)}</div>
+          <div className="order-detail-date">Placed on {formatDateTime(order.createdAt)}</div>
         </div>
 
         {/* Info Grid */}
@@ -264,7 +251,11 @@ export default function OrderDetailPage({ adminView = false }) {
                         {!adminView && (
                           <div className="order-detail-item-actions">
                             <Link to="/books/chat" className="btn-action">Chat with AI</Link>
-                            <Link to={`/books/${item.bookId}`} className="btn-action">Write a review</Link>
+                            {order.status === 'DELIVERED' && (
+                              <Link to={`/books/${item.bookId}?review=1#reviews`} className="btn-action btn-action-review">
+                                Write a review
+                              </Link>
+                            )}
                             <button
                               type="button"
                               className="btn-action"

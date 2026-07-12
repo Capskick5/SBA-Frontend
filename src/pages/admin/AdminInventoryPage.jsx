@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 import Button from '../../components/ui/Button';
 import { EmptyState, ErrorState, LoadingState } from '../../components/ui/State';
+import { formatDateTime } from '../../utils/formatters';
 
 export default function AdminInventoryPage() {
   const getQuantity = (mov) => {
@@ -155,7 +156,7 @@ export default function AdminInventoryPage() {
                   </td>
                   <td>{mov.note}</td>
                   <td>{mov.createdByName || usersMap[mov.createdBy] || mov.createdBy || 'System'}</td>
-                  <td>{new Date(mov.createdAt).toLocaleString('en-GB')}</td>
+                  <td>{formatDateTime(mov.createdAt)}</td>
                 </tr>
               ))
             )}

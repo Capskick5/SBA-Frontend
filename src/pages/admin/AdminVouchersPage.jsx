@@ -6,7 +6,7 @@ import Modal from '../../components/ui/Modal';
 import Table from '../../components/ui/Table';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
-import { formatCurrency } from '../../utils/formatters';
+import { formatCurrency, formatDateTime } from '../../utils/formatters';
 import { showToast } from '../../utils/toast';
 import styles from './AdminVouchersPage.module.css';
 
@@ -24,11 +24,6 @@ const EMPTY_FORM = {
 function formatReward(rule) {
   if (rule.discountType === 'PERCENTAGE') return `${rule.discountValue}% off`;
   return `${formatCurrency(rule.discountValue)} off`;
-}
-
-function formatDate(value) {
-  if (!value) return 'N/A';
-  return new Date(value).toLocaleString('en-GB');
 }
 
 function getErrorMessage(error, fallback) {
@@ -191,7 +186,7 @@ export default function AdminVouchersPage() {
         </span>
       ),
     },
-    { key: 'updatedAt', label: 'Last Updated', render: (rule) => formatDate(rule.updatedAt) },
+    { key: 'updatedAt', label: 'Last Updated', render: (rule) => formatDateTime(rule.updatedAt) },
     {
       key: 'actions',
       label: 'Actions',
