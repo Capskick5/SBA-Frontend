@@ -1427,6 +1427,15 @@ html[data-theme="dark"] .footer {
   line-height: 1.55;
 }
 
+.voucher-wallet-count,
+.orders-page-count {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .voucher-wallet-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));

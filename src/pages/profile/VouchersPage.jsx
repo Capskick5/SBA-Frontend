@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { TicketPercent } from 'lucide-react';
+import Pagination from '../../components/catalog/Pagination';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { voucherService } from '../../services/voucherService';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
@@ -18,6 +19,9 @@ function formatVoucherDate(value) {
 
 export default function VouchersPage() {
   const [vouchers, setVouchers] = useState([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
@@ -29,9 +33,12 @@ export default function VouchersPage() {
       setLoadError('');
 
       return voucherService
-        .listMine()
-        .then((items) => {
-          if (active) setVouchers(items || []);
+        .getMinePage({ page, size: 6 })
+        .then((result) => {
+          if (!active) return;
+          setVouchers(result.items || []);
+          setTotalPages(result.totalPages || 0);
+          setTotalItems(result.totalItems || 0);
         })
         .catch((err) => {
           if (active) setLoadError(err.message || 'Could not load vouchers.');
@@ -44,7 +51,7 @@ export default function VouchersPage() {
     return () => {
       active = false;
     };
-  }, [reloadKey]);
+  }, [page, reloadKey]);
 
   if (loading) return <LoadingState text="Loading your vouchers..." />;
   if (loadError) return <ErrorState text={loadError}><button className="btn" onClick={() => setReloadKey((value) => value + 1)}>Try again</button></ErrorState>;
@@ -61,12 +68,14 @@ export default function VouchersPage() {
             Vouchers are awarded after eligible paid orders. Use them on your next checkout
             before proceeding to payment.
           </p>
+          <span className="voucher-wallet-count">{totalItems} available</span>
         </div>
       </div>
 
       {vouchers.length > 0 ? (
-        <div className="voucher-wallet-grid">
-          {vouchers.map((voucher) => (
+        <>
+          <div className="voucher-wallet-grid">
+            {vouchers.map((voucher) => (
             <article className="voucher-wallet-card" key={voucher.id}>
               <div className="voucher-card-main">
                 <span className="voucher-card-label">Available voucher</span>
@@ -91,8 +100,14 @@ export default function VouchersPage() {
                 Use at checkout
               </Link>
             </article>
-          ))}
-        </div>
+            ))}
+          </div>
+          <Pagination
+            currentPage={page + 1}
+            totalPages={totalPages}
+            onPageChange={(nextPage) => setPage(nextPage - 1)}
+          />
+        </>
       ) : (
         <div className="voucher-empty-card">
           <TicketPercent size={34} />

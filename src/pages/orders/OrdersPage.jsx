@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import Pagination from '../../components/catalog/Pagination';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { orderService } from '../../services/orderService';
 import { bookService } from '../../services/bookService';
@@ -30,9 +31,14 @@ const TABS = [
   { id: 'CANCELLED', label: 'Cancelled' },
 ];
 
+const PAGE_SIZE = 10;
+
 export default function OrdersPage() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('ALL');
@@ -44,12 +50,19 @@ export default function OrdersPage() {
   const [cancellingId, setCancellingId] = useState(null);
   const [resumingId, setResumingId] = useState(null);
 
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await orderService.getOrders();
-      const rawOrders = Array.isArray(res) ? res : (res?.items || []);
+      const filter = activeTab === 'ALL'
+        ? {}
+        : activeTab === 'PROCESSING'
+          ? { statuses: ['PAID', 'PROCESSING'] }
+          : { status: activeTab };
+      const result = await orderService.getOrdersPage({ page, size: PAGE_SIZE, ...filter });
+      const rawOrders = result.items;
+      setTotalPages(result.totalPages);
+      setTotalItems(result.totalItems);
       
       const bookCache = {};
       const fetchBookCover = async (bookId) => {
@@ -106,11 +119,11 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, page]);
 
   useEffect(() => {
     Promise.resolve().then(loadOrders);
-  }, []);
+  }, [loadOrders]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -181,11 +194,13 @@ export default function OrdersPage() {
     setCancellingId(cancelTarget.id);
     try {
       const cancelledOrder = await orderService.cancelPendingOrder(cancelTarget.id);
-      setOrders((current) => current.map((order) => (
-        order.id === cancelledOrder.id ? { ...order, ...cancelledOrder } : order
-      )));
       setCancelTarget(null);
       showToast(`Order #${cancelledOrder.id} was cancelled.`, 'success');
+      if (orders.length === 1 && page > 0) {
+        setPage((current) => current - 1);
+      } else {
+        await loadOrders();
+      }
     } catch (err) {
       showToast(err?.message || 'Could not cancel this order. Please try again.', 'error');
     } finally {
@@ -225,6 +240,7 @@ export default function OrdersPage() {
                   setActiveTab(tab.id);
                   setAppliedSearch('');
                   setSearchQuery('');
+                  setPage(0);
                 }}
               >
                 {tab.label}
@@ -240,7 +256,7 @@ export default function OrdersPage() {
         <input
           type="text"
           className="orders-search-input"
-          placeholder="Search by order ID or product name"
+          placeholder="Search this page by order ID or product name"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -269,8 +285,10 @@ export default function OrdersPage() {
           <Link to="/"><Button>Continue shopping</Button></Link>
         </div>
       ) : (
-        <div className="order-cards-list">
-          {filteredOrders.map((order) => {
+        <>
+          <div className="orders-page-count">Showing {orders.length} of {totalItems} orders</div>
+          <div className="order-cards-list">
+            {filteredOrders.map((order) => {
             const statusConfig = STATUS_MAP[order.status] || { text: order.status, class: 'unknown' };
             const isRebuying = rebuyingId === order.id;
 
@@ -369,8 +387,16 @@ export default function OrdersPage() {
                 </div>
               </div>
             );
-          })}
-        </div>
+            })}
+          </div>
+          {!appliedSearch && (
+            <Pagination
+              currentPage={page + 1}
+              totalPages={totalPages}
+              onPageChange={(nextPage) => setPage(nextPage - 1)}
+            />
+          )}
+        </>
       )}
 
       {cancelTarget && (
