@@ -26,6 +26,11 @@ export default function AddressesPage({ onTitleChange }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectTo = getSafeRedirect(searchParams.get('redirect'));
+  const redirectLabel = redirectTo?.startsWith('/cart')
+    ? 'Back to cart'
+    : redirectTo?.startsWith('/checkout')
+      ? 'Back to checkout'
+      : 'Back';
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -153,7 +158,7 @@ export default function AddressesPage({ onTitleChange }) {
 
         {redirectTo && (
           <Link to={redirectTo} className="btn btn-secondary addresses-back-link">
-            Back to book
+            {redirectLabel}
           </Link>
         )}
 
@@ -178,7 +183,7 @@ export default function AddressesPage({ onTitleChange }) {
       {!onTitleChange && <h1>Address book</h1>}
       {redirectTo && (
         <Link to={redirectTo} className="btn btn-secondary addresses-back-link">
-          Back to book
+          {redirectLabel}
         </Link>
       )}
       {error && <ErrorState text={error} />}

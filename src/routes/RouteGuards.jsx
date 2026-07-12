@@ -9,6 +9,20 @@ export function ProtectedRoute({ children }) {
   if (!user) {
     return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
   }
+  if (user.role === 'ADMIN') {
+    return <Navigate to="/admin" replace />;
+  }
+  return children;
+}
+
+export function StorefrontRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) return <LoadingState />;
+  if (user?.role === 'ADMIN') {
+    return <Navigate to="/admin" replace />;
+  }
+
   return children;
 }
 
@@ -32,7 +46,7 @@ export function AdminRoute({ children }) {
   const { user, loading } = useAuth();
 
   if (loading) return <LoadingState />;
-  if (!user) return <Navigate to="/login?redirect=/admin" replace />;
+  if (!user) return <Navigate to="/admin/login" replace />;
 
   if (user.role !== 'ADMIN') {
     return <Navigate to="/" replace />;
@@ -40,5 +54,3 @@ export function AdminRoute({ children }) {
 
   return children;
 }
-
-

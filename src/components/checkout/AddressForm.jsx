@@ -31,6 +31,8 @@ export default function AddressForm({
   const [loadingProvinces, setLoadingProvinces] = useState(true);
   const [loadingDistricts, setLoadingDistricts] = useState(false);
   const [loadingWards, setLoadingWards] = useState(false);
+  const initialCity = initialValues.city;
+  const initialDistrict = initialValues.district;
 
   const setField = (name, value) => {
     setValues((prev) => ({ ...prev, [name]: value }));
@@ -38,13 +40,14 @@ export default function AddressForm({
 
   useEffect(() => {
     let active = true;
-    setLoadingProvinces(true);
-
-    vietnamAddressService.listProvinces()
+    Promise.resolve().then(() => {
+      setLoadingProvinces(true);
+      return vietnamAddressService.listProvinces();
+    })
       .then((items) => {
         if (!active) return;
         setProvinces(items);
-        const matchedProvince = items.find((province) => province.name === values.city);
+        const matchedProvince = items.find((province) => province.name === initialCity);
         if (matchedProvince) setProvinceCode(String(matchedProvince.code));
       })
       .catch(() => {
@@ -57,23 +60,26 @@ export default function AddressForm({
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialCity]);
 
   useEffect(() => {
     if (!provinceCode) {
-      setDistricts([]);
-      setDistrictCode('');
+      Promise.resolve().then(() => {
+        setDistricts([]);
+        setDistrictCode('');
+      });
       return;
     }
 
     let active = true;
-    setLoadingDistricts(true);
-
-    vietnamAddressService.listDistricts(provinceCode)
+    Promise.resolve().then(() => {
+      setLoadingDistricts(true);
+      return vietnamAddressService.listDistricts(provinceCode);
+    })
       .then((items) => {
         if (!active) return;
         setDistricts(items);
-        const matchedDistrict = items.find((district) => district.name === values.district);
+        const matchedDistrict = items.find((district) => district.name === initialDistrict);
         setDistrictCode(matchedDistrict ? String(matchedDistrict.code) : '');
       })
       .catch(() => {
@@ -86,18 +92,19 @@ export default function AddressForm({
     return () => {
       active = false;
     };
-  }, [provinceCode]);
+  }, [provinceCode, initialDistrict]);
 
   useEffect(() => {
     if (!districtCode) {
-      setWards([]);
+      Promise.resolve().then(() => setWards([]));
       return;
     }
 
     let active = true;
-    setLoadingWards(true);
-
-    vietnamAddressService.listWards(districtCode)
+    Promise.resolve().then(() => {
+      setLoadingWards(true);
+      return vietnamAddressService.listWards(districtCode);
+    })
       .then((items) => {
         if (active) setWards(items);
       })
@@ -210,13 +217,14 @@ export default function AddressForm({
             required
           />
         ) : (
-          <label className="field">
+          <label className={`field${fieldErrors.city ? ' field-invalid' : ''}`}>
             <span>City / Province</span>
             <select
               name="city"
               value={citySelectValue}
               onChange={handleProvinceChange}
               disabled={loadingProvinces}
+              aria-invalid={fieldErrors.city ? 'true' : undefined}
               required
             >
               <option value="">{loadingProvinces ? 'Loading provinces...' : 'Select city or province'}</option>

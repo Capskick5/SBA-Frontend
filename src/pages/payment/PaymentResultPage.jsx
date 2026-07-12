@@ -2,18 +2,34 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import { paymentService } from '../../services/paymentService';
-import { CheckCircle, XCircle, Loader2, Home, ShoppingBag } from 'lucide-react';
+import { voucherService } from '../../services/voucherService';
+import { formatCurrency } from '../../utils/formatters';
+import { CheckCircle, XCircle, Loader2, Home, ShoppingBag, TicketPercent } from 'lucide-react';
+
+function formatVoucherDiscount(voucher) {
+  if (!voucher) return '';
+  if (voucher.discountType === 'PERCENTAGE') {
+    return `${voucher.discountValue}% off`;
+  }
+  return `${formatCurrency(voucher.discountValue)} off`;
+}
 
 export default function PaymentResultPage() {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState('loading');
+  const [availableVoucher, setAvailableVoucher] = useState(null);
 
   useEffect(() => {
     const verify = async () => {
       try {
         const params = Object.fromEntries([...searchParams]);
         const result = await paymentService.verifyPayment(params);
-        setStatus(result.status === 'PAID' ? 'success' : 'failed');
+        const isPaid = result.status === 'PAID';
+        setStatus(isPaid ? 'success' : 'failed');
+        if (isPaid) {
+          const vouchers = await voucherService.listMine().catch(() => []);
+          setAvailableVoucher(vouchers[0] || null);
+        }
       } catch {
         setStatus('failed');
       }
@@ -60,6 +76,30 @@ export default function PaymentResultPage() {
               <h2 style={{ fontSize: '1.8rem', color: '#10b981', margin: '0 0 8px 0' }}>Payment Successful!</h2>
               <p style={{ color: '#374151', margin: '0 0 4px 0', fontSize: '1.1rem' }}>Thank you for shopping at BookVerse.</p>
               <p style={{ color: '#6b7280', margin: 0, fontSize: '0.95rem' }}>Your order has been processed and is now being prepared.</p>
+            </div>
+            <div className="payment-voucher-reward">
+              <div className="payment-voucher-icon">
+                <TicketPercent size={22} />
+              </div>
+              <div>
+                <span>Next order reward</span>
+                {availableVoucher ? (
+                  <>
+                    <strong>{availableVoucher.code}</strong>
+                    <p>
+                      {formatVoucherDiscount(availableVoucher)} for your next eligible checkout.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <strong>Check your voucher wallet</strong>
+                    <p>
+                      If this order is eligible, your next-order voucher will appear in My Vouchers.
+                    </p>
+                  </>
+                )}
+              </div>
+              <Link to="/profile?tab=vouchers">View vouchers</Link>
             </div>
             <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', width: '100%', marginTop: '12px' }}>
               <Link to="/" style={{ flex: 1, textDecoration: 'none' }}>

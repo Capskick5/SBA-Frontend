@@ -6,13 +6,15 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Textarea from '../../components/ui/Textarea';
 import PricingFields from '../../components/admin/PricingFields';
-import { LoadingState } from '../../components/ui/State';
+import { ErrorState, LoadingState } from '../../components/ui/State';
 
 export default function AdminAddBookPage() {
     const navigate = useNavigate();
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [loadError, setLoadError] = useState('');
+    const [reloadKey, setReloadKey] = useState(0);
 
     const [coverKey, setCoverKey] = useState('');
     const [fileKey, setFileKey] = useState('');
@@ -22,9 +24,12 @@ export default function AdminAddBookPage() {
     useEffect(() => {
         bookService.getCategories()
             .then(setCategories)
-            .catch((err) => console.error('Failed to load categories:', err))
+            .catch((err) => {
+                console.error('Failed to load categories:', err);
+                setLoadError('Could not load categories for the book form.');
+            })
             .finally(() => setLoading(false));
-    }, []);
+    }, [reloadKey]);
 
     const handleCoverChange = async (e) => {
         const file = e.target.files[0];
@@ -119,6 +124,17 @@ export default function AdminAddBookPage() {
     };
 
     if (loading) return <LoadingState text="Loading data..." />;
+    if (loadError) {
+        return (
+            <ErrorState text={loadError}>
+                <Button onClick={() => {
+                    setLoadError('');
+                    setLoading(true);
+                    setReloadKey((value) => value + 1);
+                }}>Try again</Button>
+            </ErrorState>
+        );
+    }
 
     return (
         <section className="narrow">

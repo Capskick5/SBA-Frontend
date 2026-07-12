@@ -5,11 +5,12 @@ import Input from '../../components/ui/Input';
 import { AuthFormFooter, AuthFormMessage } from '../../components/auth/AuthFormFooter';
 import { captureFormError } from '../../utils/formErrorUtils';
 import { useAuth } from '../../context/AuthContext';
+import { authService } from '../../services/authService';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { refreshUser } = useAuth();
   const [params] = useSearchParams();
   const redirect = params.get('redirect') || '/';
   const registered = params.get('registered');
@@ -29,10 +30,17 @@ export default function LoginPage() {
     const form = new FormData(event.currentTarget);
     const email = form.get('email');
     try {
-      await login({
+      const loggedIn = await authService.login({
         email,
         password: form.get('password'),
       });
+      if (loggedIn.role === 'ADMIN') {
+        await authService.logout();
+        setError({ message: 'Invalid email or password.' });
+        return;
+      }
+
+      await refreshUser();
       navigate(redirect);
     } catch (err) {
       if (err.error_type === 'EMAIL_NOT_VERIFIED') {

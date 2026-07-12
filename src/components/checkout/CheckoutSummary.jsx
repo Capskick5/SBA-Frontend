@@ -7,12 +7,11 @@ export default function CheckoutSummary({
   canPay = false,
   disabledReason = '',
   loading = false,
-  giftWrapFee = 0,
-  giftFeeSupported = false,
 }) {
   const hasShippingFee = typeof preview.shippingFee === 'number';
+  const giftWrapFee = Number(preview.giftWrapFee || 0);
   const hasGiftWrapFee = giftWrapFee > 0;
-  const displayTotal = hasShippingFee ? preview.total + giftWrapFee : null;
+  const hasDiscount = Number(preview.discountAmount || 0) > 0;
 
   return (
     <aside className="summary checkout-summary-card">
@@ -54,6 +53,12 @@ export default function CheckoutSummary({
           <span>Shipping fee</span>
           <strong>{hasShippingFee ? formatCurrency(preview.shippingFee) : 'Calculated after address'}</strong>
         </p>
+        {hasDiscount && (
+          <p className="summary-discount-row">
+            <span>Voucher discount</span>
+            <strong>-{formatCurrency(preview.discountAmount)}</strong>
+          </p>
+        )}
         {hasGiftWrapFee && (
           <p>
             <span>Gift wrap fee</span>
@@ -62,15 +67,9 @@ export default function CheckoutSummary({
         )}
         <p className="summary-total">
           <span>Total</span>
-          <strong>{hasShippingFee ? formatCurrency(displayTotal) : 'Pending address'}</strong>
+          <strong>{hasShippingFee ? formatCurrency(preview.total) : 'Pending address'}</strong>
         </p>
       </div>
-
-      {hasGiftWrapFee && !giftFeeSupported && (
-        <p className="gift-fee-warning">
-          Gift wrap fee is pending final confirmation at payment.
-        </p>
-      )}
 
       <div className="payment-method-card">
         <span>Payment method</span>

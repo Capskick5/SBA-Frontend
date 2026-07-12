@@ -14,10 +14,15 @@ import {
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import { ErrorState, LoadingState } from '../../components/ui/State';
+import ReviewForm from '../../components/reviews/ReviewForm';
+import ReviewList from '../../components/reviews/ReviewList';
+import Pagination from '../../components/catalog/Pagination';
+import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
 import { addressService } from '../../services/addressService';
 import { bookService } from '../../services/bookService';
 import { cartService } from '../../services/cartService';
+import { reviewService } from '../../services/reviewService';
 import { formatProductPrice } from '../../utils/formatters';
 import { deriveDiscountPercent, hasSalePrice } from '../../utils/pricing';
 import { notifyCartUpdated } from '../../utils/cartEvents';
@@ -118,6 +123,7 @@ function categoryCatalogUrl(categoryId) {
 export default function BookDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [book, setBook] = useState(null);
   const [error, setError] = useState('');
   const [retryCount, setRetryCount] = useState(0);
@@ -128,6 +134,14 @@ export default function BookDetailPage() {
   const [relatedBooks, setRelatedBooks] = useState([]);
   const [deliveryAddress, setDeliveryAddress] = useState(null);
   const [deliveryAddressReady, setDeliveryAddressReady] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [reviewTotal, setReviewTotal] = useState(0);
+  const [reviewPage, setReviewPage] = useState(0);
+  const [reviewTotalPages, setReviewTotalPages] = useState(0);
+  const [myReview, setMyReview] = useState(null);
+  const [reviewSummary, setReviewSummary] = useState(null);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewsError, setReviewsError] = useState('');
   const relatedScrollRef = useRef(null);
 
   useEffect(() => {
@@ -144,13 +158,15 @@ export default function BookDetailPage() {
 
   useEffect(() => {
     if (!authService.getCurrentUser()) {
-      setDeliveryAddress(null);
-      setDeliveryAddressReady(true);
+      Promise.resolve().then(() => {
+        setDeliveryAddress(null);
+        setDeliveryAddressReady(true);
+      });
       return undefined;
     }
 
     let active = true;
-    setDeliveryAddressReady(false);
+    Promise.resolve().then(() => setDeliveryAddressReady(false));
 
     addressService
       .list()
@@ -197,7 +213,7 @@ export default function BookDetailPage() {
 
   useEffect(() => {
     if (!book?.categoryId) {
-      setRelatedBooks([]);
+      Promise.resolve().then(() => setRelatedBooks([]));
       return undefined;
     }
 
@@ -218,14 +234,91 @@ export default function BookDetailPage() {
     };
   }, [book?.id, book?.categoryId]);
 
+  useEffect(() => {
+    let active = true;
+    Promise.resolve().then(() => {
+      setReviewsLoading(true);
+      setReviewsError('');
+    });
+
+    reviewService
+      .getReviewsByBookId(id, { page: reviewPage, size: 5 })
+      .then((result) => {
+        if (!active) return;
+        setReviews(result.items);
+        setReviewTotal(result.totalItems);
+        setReviewTotalPages(result.totalPages);
+      })
+      .catch((err) => {
+        if (!active) return;
+        setReviews([]);
+        setReviewTotal(0);
+        setReviewsError(err?.message || 'Could not load customer reviews.');
+      })
+      .finally(() => {
+        if (active) setReviewsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id, reviewPage]);
+
+  useEffect(() => {
+    let active = true;
+    reviewService.getReviewSummary(id)
+      .then((summary) => {
+        if (active) setReviewSummary(summary);
+      })
+      .catch(() => {
+        if (active) setReviewSummary(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (user?.role !== 'CUSTOMER') {
+      Promise.resolve().then(() => setMyReview(null));
+      return undefined;
+    }
+    let active = true;
+    reviewService.getMyReviewForBook(id)
+      .then((review) => {
+        if (active) setMyReview(review || null);
+      })
+      .catch(() => {
+        if (active) setMyReview(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [id, user?.role]);
+
+  useEffect(() => {
+    if (book && window.location.hash === '#reviews') {
+      window.requestAnimationFrame(() => {
+        document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  }, [book]);
+
   const onSale = book ? hasSalePrice(book) : false;
   const discountRate = onSale ? deriveDiscountPercent(book.originalPrice, book.price) : 0;
   const isOutOfStock = !book || book.stock <= 0;
   const maxQuantity = book ? Math.max(1, book.stock) : 1;
   const description = book?.description || 'No description available for this book.';
   const isLongDescription = description.length > 480 || description.split('\n').length > 4;
-  const reviewCount = book?.reviewCount || 0;
-  const ratingValue = book?.ratingAvg ? Number(book.ratingAvg) : 0;
+  const reviewCount = reviewSummary?.totalReviews ?? Math.max(reviewTotal, book?.reviewCount || 0);
+  const ratingValue = Number(reviewSummary?.averageRating ?? book?.ratingAvg ?? 0);
+  const currentUserReview = myReview;
+  const ratingBreakdown = [5, 4, 3, 2, 1].map((stars) => ({
+    stars,
+    percent: reviewCount > 0
+      ? Math.round((Number(reviewSummary?.ratingCounts?.[stars] || 0) / reviewCount) * 100)
+      : 0,
+  }));
 
   const specs = useMemo(() => {
     if (!book) return [];
@@ -305,6 +398,35 @@ export default function BookDetailPage() {
     if (!track) return;
     const cardWidth = track.querySelector('.book-detail-related-card')?.offsetWidth || 240;
     track.scrollBy({ left: direction * (cardWidth + 16), behavior: 'smooth' });
+  };
+
+  const handleReviewSubmitted = (review) => {
+    setMyReview(review);
+    setReviewPage(0);
+    setReviews((current) => [review, ...current]);
+    setReviewTotal((current) => current + 1);
+    setReviewSummary((current) => {
+      const previousTotal = Number(current?.totalReviews ?? book?.reviewCount ?? 0);
+      const previousAverage = Number(current?.averageRating ?? book?.ratingAvg ?? 0);
+      return {
+        averageRating: ((previousAverage * previousTotal) + Number(review.rating)) / (previousTotal + 1),
+        totalReviews: previousTotal + 1,
+        ratingCounts: {
+          ...(current?.ratingCounts || {}),
+          [review.rating]: Number(current?.ratingCounts?.[review.rating] || 0) + 1,
+        },
+      };
+    });
+    setBook((current) => {
+      if (!current) return current;
+      const previousCount = Number(current.reviewCount || 0);
+      const previousAverage = Number(current.ratingAvg || 0);
+      return {
+        ...current,
+        reviewCount: previousCount + 1,
+        ratingAvg: ((previousAverage * previousCount) + Number(review.rating)) / (previousCount + 1),
+      };
+    });
   };
 
   if (!error && String(book?.id || '') !== String(id)) return <LoadingState text="Loading book..." />;
@@ -531,7 +653,7 @@ export default function BookDetailPage() {
         </div>
       </div>
 
-      <div className="book-detail-card book-detail-reviews-card">
+      <div className="book-detail-card book-detail-reviews-card" id="reviews">
         <h2 className="book-detail-section-title">Customer reviews</h2>
         <div className="book-detail-reviews">
           <div className="book-detail-review-score">
@@ -550,16 +672,53 @@ export default function BookDetailPage() {
           </div>
 
           <div className="book-detail-review-bars">
-            {[5, 4, 3, 2, 1].map((stars) => (
-              <StarBreakdownRow key={stars} stars={stars} percent={0} />
+            {ratingBreakdown.map(({ stars, percent }) => (
+              <StarBreakdownRow key={stars} stars={stars} percent={percent} />
             ))}
           </div>
 
-          <p className="book-detail-review-note">
-            Only members can write reviews. Please{' '}
-            <Link to={`/login?redirect=${encodeURIComponent(`/books/${book.id}`)}`}>log in</Link>{' '}
-            or <Link to="/register">register</Link>.
-          </p>
+          <div className="book-detail-review-action">
+            {!user ? (
+              <p className="book-detail-review-note">
+                Purchased this book? Please{' '}
+                <Link to={`/login?redirect=${encodeURIComponent(`/books/${book.id}#reviews`)}`}>log in</Link>{' '}
+                to share your review after delivery.
+              </p>
+            ) : user.role !== 'CUSTOMER' ? (
+              <p className="book-detail-review-note">Customer accounts can submit verified-purchase reviews.</p>
+            ) : currentUserReview ? (
+              <div className="book-detail-review-complete">
+                <strong>{currentUserReview.status === 'HIDDEN' ? 'Your review is under moderation' : 'Your review is published'}</strong>
+                <span>{currentUserReview.rating}/5 stars</span>
+                <p>{currentUserReview.status === 'HIDDEN'
+                  ? 'This review is currently hidden from the public list.'
+                  : 'You can find it in the customer reviews below.'}</p>
+              </div>
+            ) : (
+              <ReviewForm bookId={book.id} onSubmitted={handleReviewSubmitted} />
+            )}
+          </div>
+        </div>
+
+        <div className="book-detail-review-list-section">
+          <div className="book-detail-review-list-heading">
+            <h3>Reviews from verified customers</h3>
+            <span>{reviewCount} total</span>
+          </div>
+          {reviewsLoading ? (
+            <LoadingState text="Loading reviews..." />
+          ) : reviewsError ? (
+            <ErrorState text={reviewsError} />
+          ) : (
+            <>
+              <ReviewList reviews={reviews} />
+              <Pagination
+                currentPage={reviewPage + 1}
+                totalPages={reviewTotalPages}
+                onPageChange={(page) => setReviewPage(page - 1)}
+              />
+            </>
+          )}
         </div>
       </div>
 

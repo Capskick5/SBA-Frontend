@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Bell,
   CreditCard,
@@ -11,6 +11,7 @@ import {
   Package,
   Pencil,
   Star,
+  TicketPercent,
   User,
 } from 'lucide-react';
 import Input from '../../components/ui/Input';
@@ -22,9 +23,11 @@ import { profileService } from '../../services/profileService';
 import { useAuth } from '../../context/AuthContext';
 import AddressesPage from './AddressesPage';
 import OrdersPage from '../orders/OrdersPage';
+import VouchersPage from './VouchersPage';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { refreshUser, logout } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,7 +43,7 @@ export default function ProfilePage() {
   const [pwdSuccess, setPwdSuccess] = useState(null);
   const [pwdFieldErrors, setPwdFieldErrors] = useState({});
   const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [activeTab, setActiveTab] = useState('account');
+  const activeTab = searchParams.get('tab') || 'account';
   const [addressTitle, setAddressTitle] = useState('Address book');
 
   useEffect(() => {
@@ -116,6 +119,7 @@ export default function ProfilePage() {
     { id: 'account', label: 'Account information', icon: User },
     { id: 'notifications', label: 'My notifications', icon: Bell },
     { id: 'orders', label: 'Order management', icon: Package },
+    { id: 'vouchers', label: 'My vouchers', icon: TicketPercent },
     { id: 'addresses', label: 'Address book', icon: MapPin },
     { id: 'payments', label: 'Payment information', icon: CreditCard },
     { id: 'reviews', label: 'Product reviews', icon: Star },
@@ -147,6 +151,17 @@ export default function ProfilePage() {
   };
 
   const renderProfilePanel = () => {
+    if (activeTab === 'vouchers') {
+      return (
+        <div className="profile-content">
+          <h1>My vouchers</h1>
+          <div className="profile-card profile-embedded-card voucher-profile-card">
+            <VouchersPage />
+          </div>
+        </div>
+      );
+    }
+
     if (activeTab === 'orders') {
       return (
         <div className="profile-content">
@@ -325,7 +340,7 @@ export default function ProfilePage() {
                 key={label}
                 type="button"
                 className={`profile-menu-item${activeTab === id ? ' active' : ''}`}
-                onClick={() => setActiveTab(id)}
+                onClick={() => setSearchParams(id === 'account' ? {} : { tab: id })}
               >
                 <Icon size={18} />
                 <span>{label}</span>

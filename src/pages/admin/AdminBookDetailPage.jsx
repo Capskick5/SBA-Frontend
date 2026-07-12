@@ -1,14 +1,34 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Textarea from '../../components/ui/Textarea';
 import PricingFields from '../../components/admin/PricingFields';
-import { LoadingState } from '../../components/ui/State';
+import { EmptyState, LoadingState } from '../../components/ui/State';
 import Modal from '../../components/ui/Modal';
+import Pagination from '../../components/catalog/Pagination';
 import { adminService } from '../../services/adminService';
 import { bookService } from '../../services/bookService';
 import { deriveDiscountPercent } from '../../utils/pricing';
+import { formatDateTime } from '../../utils/formatters';
+
+const FIELD_LABELS = {
+  title: 'Title',
+  author: 'Author',
+  isbn: 'ISBN',
+  publisher: 'Publisher',
+  publicationYear: 'Publication year',
+  language: 'Language',
+  pages: 'Pages',
+  category: 'Category',
+  price: 'Sale price',
+  originalPrice: 'Original price',
+  description: 'Description',
+  coverUrl: 'Cover URL',
+  fileKey: 'Digital file',
+  coverKey: 'Cover file',
+  active: 'Visibility',
+};
 
 function unwrapBook(response) {
   return response?.data || response;
@@ -26,12 +46,24 @@ export default function AdminBookDetailPage() {
   const [stockNote, setStockNote] = useState('');
   const [updatingStock, setUpdatingStock] = useState(false);
   const [showStockModal, setShowStockModal] = useState(false);
+  const [changeLogs, setChangeLogs] = useState([]);
+  const [changeLogsLoading, setChangeLogsLoading] = useState(true);
+  const [changeLogPage, setChangeLogPage] = useState(0);
+  const [changeLogTotalPages, setChangeLogTotalPages] = useState(0);
 
   const [coverUrl, setCoverUrl] = useState('');
   const [coverKey, setCoverKey] = useState('');
   const [fileKey, setFileKey] = useState('');
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const descriptionRef = useRef(null);
+
+  const resizeDescription = () => {
+    const textarea = descriptionRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  };
 
   const applyBook = (actualBook) => {
     setBook(actualBook);
@@ -65,7 +97,9 @@ export default function AdminBookDetailPage() {
           setBook(null);
         }
       } finally {
-        if (active) setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     };
 
@@ -75,6 +109,34 @@ export default function AdminBookDetailPage() {
       active = false;
     };
   }, [id, location.state?.book]);
+
+  useEffect(() => {
+    let active = true;
+    Promise.resolve().then(() => setChangeLogsLoading(true));
+    adminService.getBookChangeLogs(id, { page: changeLogPage, size: 10, sort: 'createdAt,desc' })
+      .then((result) => {
+        if (!active) return;
+        setChangeLogs(result?.items || result?.content || []);
+        setChangeLogTotalPages(result?.totalPages || 0);
+      })
+      .catch((err) => {
+        console.error('Failed to load book change history:', err);
+        if (active) {
+          setChangeLogs([]);
+          setChangeLogTotalPages(0);
+        }
+      })
+      .finally(() => {
+        if (active) setChangeLogsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [id, changeLogPage]);
+
+  useEffect(() => {
+    resizeDescription();
+  }, [book?.description]);
 
   const handleCoverChange = async (e) => {
     const file = e.target.files[0];
@@ -189,110 +251,224 @@ export default function AdminBookDetailPage() {
   };
 
   if (loading) return <LoadingState text="Loading book..." />;
-  if (!book) return <p>Book not found.</p>;
+  if (!book) {
+    return (
+      <EmptyState title="Book not found" text="This book may have been removed or is no longer available.">
+        <Button type="button" onClick={() => navigate('/admin/books')}>Back to books</Button>
+      </EmptyState>
+    );
+  }
 
   const discountPercent = deriveDiscountPercent(book.originalPrice || book.price, book.price);
 
   return (
-    <section className="narrow">
-      <h1>Edit Book: #{id}</h1>
-      <form className="form" onSubmit={handleSave}>
-        <Input name="title" label="Title" defaultValue={book.title} required placeholder="Enter book title" />
-        <Input name="author" label="Author" defaultValue={book.author} required placeholder="Enter author name" />
-        <Input name="isbn" label="ISBN" defaultValue={book.isbn || ''} placeholder="Enter ISBN" />
-        <Input name="publisher" label="Publisher" defaultValue={book.publisher || ''} />
-        <Input name="publicationYear" label="Publication Year" type="number" defaultValue={book.publicationYear || ''} />
-        <Input name="language" label="Language" defaultValue={book.language || 'vi'} />
-        <Input name="pages" label="Pages" type="number" defaultValue={book.pages || ''} />
-
-        <div className="input-group" style={{ marginBottom: '16px' }}>
-          <label htmlFor="categoryId">Category</label>
-          <select
-            id="categoryId"
-            name="categoryId"
-            required
-            defaultValue={book.categoryId || book.category?.id || ''}
-            style={{ width: '100%', padding: '10px' }}
-          >
-            <option value="" disabled>-- Select category --</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>{category.name}</option>
-            ))}
-          </select>
+    <section className="admin-book-detail-page">
+      <div className="admin-book-detail-header">
+        <div>
+          <span className="admin-book-detail-kicker">Book inventory</span>
+          <h1>Edit Book #{id}</h1>
+          <p>Update product content, pricing, media, and stock from one workspace.</p>
         </div>
-
-        <div className="input-group" style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Current Cover</label>
-          {coverUrl && <img src={coverUrl} alt="Cover Preview" style={{ maxHeight: '120px', marginBottom: '8px', display: 'block' }} />}
-          <input type="file" accept="image/*" onChange={handleCoverChange} />
-          {uploadingCover && <p style={{ color: 'blue', fontSize: '14px' }}>Uploading cover...</p>}
-        </div>
-
-        <div className="input-group" style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Current Book File (PDF/EPUB)</label>
-          {fileKey && <p style={{ fontSize: '13px', color: '#666' }}>Path: <span style={{ wordBreak: 'break-all' }}>{fileKey}</span></p>}
-          <input type="file" accept=".pdf,.epub" onChange={handleBookFileChange} />
-          {uploadingFile && <p style={{ color: 'blue', fontSize: '14px' }}>Uploading book file...</p>}
-        </div>
-
-        <PricingFields
-          key={`${book.id}-${book.price}-${book.originalPrice}`}
-          initialOriginalPrice={book.originalPrice || book.price}
-          initialDiscountPercent={discountPercent}
-        />
-        <Textarea name="description" label="Description" defaultValue={book.description} rows={5} />
-
-        <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+        <div className="admin-book-detail-header-actions">
           <Button type="button" onClick={() => navigate('/admin/books')}>Cancel</Button>
-          <Button type="submit" variant="primary" loading={saving} disabled={uploadingCover || uploadingFile}>
-            Save
+          <Button
+            type="submit"
+            form="admin-book-detail-form"
+            variant="primary"
+            loading={saving}
+            disabled={uploadingCover || uploadingFile}
+          >
+            Save changes
           </Button>
         </div>
+      </div>
+
+      <form id="admin-book-detail-form" className="admin-book-detail-layout" onSubmit={handleSave}>
+        <aside className="admin-book-detail-sidebar">
+          <section className="admin-book-panel">
+            <div className="admin-book-panel-heading">
+              <h2>Cover</h2>
+              <span>Storefront image</span>
+            </div>
+            <div className="admin-book-cover-preview">
+              {coverUrl ? (
+                <img src={coverUrl} alt="Cover preview" />
+              ) : (
+                <span>No cover</span>
+              )}
+            </div>
+            <label className="admin-book-upload-control">
+              <span>Replace cover</span>
+              <input type="file" accept="image/*" onChange={handleCoverChange} />
+            </label>
+            {uploadingCover && <p className="form-hint">Uploading cover...</p>}
+          </section>
+
+          <section className="admin-book-panel">
+            <div className="admin-book-panel-heading">
+              <h2>Digital file</h2>
+              <span>PDF or EPUB source</span>
+            </div>
+            {fileKey ? (
+              <p className="admin-book-file-key">Path: <span>{fileKey}</span></p>
+            ) : (
+              <p className="form-hint">No digital file has been linked.</p>
+            )}
+            <label className="admin-book-upload-control">
+              <span>Replace file</span>
+              <input type="file" accept=".pdf,.epub" onChange={handleBookFileChange} />
+            </label>
+            {uploadingFile && <p className="form-hint">Uploading book file...</p>}
+          </section>
+
+          <section className="admin-book-panel">
+            <div className="admin-book-panel-heading">
+              <h2>Stock</h2>
+              <span>Inventory adjustment</span>
+            </div>
+            <div className="admin-book-stock-value">
+              <span>Current stock</span>
+              <strong>{book.stock ?? 0}</strong>
+            </div>
+            <Button type="button" onClick={() => setShowStockModal(true)} variant="primary">
+              Adjust stock
+            </Button>
+          </section>
+        </aside>
+
+        <main className="admin-book-detail-main">
+          <section className="admin-book-panel">
+            <div className="admin-book-panel-heading">
+              <h2>Basic information</h2>
+              <span>Title, author, category, and metadata</span>
+            </div>
+            <div className="admin-book-field-grid">
+              <div className="admin-book-field-wide">
+                <Input name="title" label="Title" defaultValue={book.title} required placeholder="Enter book title" />
+              </div>
+              <Input name="author" label="Author" defaultValue={book.author} required placeholder="Enter author name" />
+              <Input name="isbn" label="ISBN" defaultValue={book.isbn || ''} placeholder="Enter ISBN" />
+              <Input name="publisher" label="Publisher" defaultValue={book.publisher || ''} />
+              <Input name="publicationYear" label="Publication Year" type="number" defaultValue={book.publicationYear || ''} />
+              <Input name="language" label="Language" defaultValue={book.language || 'vi'} />
+              <Input name="pages" label="Pages" type="number" defaultValue={book.pages || ''} />
+              <label className="field">
+                <span>Category</span>
+                <select
+                  id="categoryId"
+                  name="categoryId"
+                  required
+                  defaultValue={book.categoryId || book.category?.id || ''}
+                >
+                  <option value="" disabled>-- Select category --</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>{category.name}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section className="admin-book-panel">
+            <div className="admin-book-panel-heading">
+              <h2>Pricing</h2>
+              <span>Current sale price and discount</span>
+            </div>
+            <PricingFields
+              key={`${book.id}-${book.price}-${book.originalPrice}`}
+              initialOriginalPrice={book.originalPrice || book.price}
+              initialDiscountPercent={discountPercent}
+            />
+          </section>
+
+          <section className="admin-book-panel">
+            <div className="admin-book-panel-heading">
+              <h2>Description</h2>
+              <span>Product copy shown on the storefront</span>
+            </div>
+            <Textarea
+              ref={descriptionRef}
+              name="description"
+              label="Description"
+              defaultValue={book.description}
+              rows={8}
+              className="admin-book-description-textarea"
+              onInput={resizeDescription}
+            />
+          </section>
+        </main>
       </form>
 
-      <section className="form" style={{ marginTop: '32px' }}>
-        <h2>Stock Management</h2>
-        <div style={{ marginBottom: '16px' }}>
-          <strong>Current Stock: </strong> {book.stock ?? 0}
+      <section className="admin-book-panel admin-book-change-history">
+        <div className="admin-book-panel-heading">
+          <h2>Recent changes</h2>
+          <span>Latest field-level updates</span>
         </div>
-        
-        <Button onClick={() => setShowStockModal(true)} variant="primary">
-          Create Import / Export Request
-        </Button>
-
-        {showStockModal && (
-          <Modal title="Import / Export Stock Request" onClose={() => setShowStockModal(false)}>
-            <form onSubmit={handleStockUpdate} style={{ padding: '16px' }}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Quantity (+ to Import, - to Export)</label>
-                <input
-                  type="number"
-                  value={stockDelta}
-                  onChange={(event) => setStockDelta(event.target.value)}
-                  placeholder="e.g. 5 or -2"
-                  style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-                />
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Note / Reason</label>
-                <input
-                  type="text"
-                  value={stockNote}
-                  onChange={(event) => setStockNote(event.target.value)}
-                  placeholder="Reason for adjustment"
-                  style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-                />
-              </div>
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <Button type="button" onClick={() => setShowStockModal(false)}>Cancel</Button>
-                <Button type="submit" variant="primary" loading={updatingStock}>
-                  Submit Request
-                </Button>
-              </div>
-            </form>
-          </Modal>
+        {changeLogsLoading ? (
+          <p className="form-hint">Loading change history...</p>
+        ) : changeLogs.length === 0 ? (
+          <p className="form-hint">No book information changes have been recorded yet.</p>
+        ) : (
+          <div className="admin-book-change-list">
+            {changeLogs.map((log) => (
+              <article className="admin-book-change-item" key={log.id}>
+                <div className="admin-book-change-meta">
+                  <strong>{FIELD_LABELS[log.fieldName] || log.fieldName}</strong>
+                  <span>{log.changedByName || `Admin #${log.changedBy}`} · {formatDateTime(log.createdAt)}</span>
+                </div>
+                <div className="admin-book-change-values">
+                  <div>
+                    <span>Before</span>
+                    <p>{log.oldValue || 'Not set'}</p>
+                  </div>
+                  <div>
+                    <span>After</span>
+                    <p>{log.newValue || 'Not set'}</p>
+                  </div>
+                </div>
+              </article>
+            ))}
+            <Pagination
+              currentPage={changeLogPage + 1}
+              totalPages={changeLogTotalPages}
+              onPageChange={(page) => setChangeLogPage(page - 1)}
+            />
+          </div>
         )}
       </section>
+
+      {showStockModal && (
+        <Modal title="Import / Export Stock Request" onClose={() => setShowStockModal(false)} hideClose={true}>
+          <form onSubmit={handleStockUpdate} style={{ padding: '16px' }}>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Quantity (+ to Import, - to Export)</label>
+              <input
+                type="number"
+                value={stockDelta}
+                onChange={(event) => setStockDelta(event.target.value)}
+                placeholder="e.g. 5 or -2"
+                style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+              />
+            </div>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Note / Reason</label>
+              <input
+                type="text"
+                value={stockNote}
+                onChange={(event) => setStockNote(event.target.value)}
+                placeholder="Reason for adjustment"
+                style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <Button type="button" onClick={() => setShowStockModal(false)}>Cancel</Button>
+              <Button type="submit" variant="primary" loading={updatingStock}>
+                Submit Request
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </section>
   );
 }

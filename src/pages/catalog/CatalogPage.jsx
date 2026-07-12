@@ -6,8 +6,8 @@ import BookGrid from '../../components/catalog/BookGrid';
 import Pagination from '../../components/catalog/Pagination';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 
-import banner1 from '../../assets/banner1.png';
-import banner2 from '../../assets/banner2.png';
+import banner1 from '../../assets/banner1.jpg';
+import banner2 from '../../assets/banner2.jpg';
 
 const BANNERS = [
   {

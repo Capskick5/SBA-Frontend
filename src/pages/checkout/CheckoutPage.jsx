@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import AddressForm from '../../components/checkout/AddressForm';
 import CheckoutSummary from '../../components/checkout/CheckoutSummary';
@@ -9,8 +9,20 @@ import { captureFormError } from '../../utils/formErrorUtils';
 import { addressService } from '../../services/addressService';
 import { cartService } from '../../services/cartService';
 import { checkoutService } from '../../services/checkoutService';
+import { voucherService } from '../../services/voucherService';
+import { formatCurrency, formatDateTime } from '../../utils/formatters';
 
-const GIFT_WRAP_FEE = 10000;
+function formatVoucherDiscount(voucher) {
+  if (!voucher) return '';
+  if (voucher.discountType === 'PERCENTAGE') {
+    return `${voucher.discountValue}% off`;
+  }
+  return `${formatCurrency(voucher.discountValue)} off`;
+}
+
+function formatVoucherDate(value) {
+  return formatDateTime(value, 'No expiry date');
+}
 
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams();
@@ -18,7 +30,10 @@ export default function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [cartItemIds, setCartItemIds] = useState([]);
   const [selectedCartItems, setSelectedCartItems] = useState([]);
-  const [preview, setPreview] = useState({ items: [], subtotal: 0, shippingFee: null, total: 0 });
+  const [preview, setPreview] = useState({ items: [], subtotal: 0, shippingFee: null, discountAmount: 0, total: 0 });
+  const [vouchers, setVouchers] = useState([]);
+  const [selectedVoucherId, setSelectedVoucherId] = useState('');
+  const [voucherError, setVoucherError] = useState('');
   const [deliveryMode, setDeliveryMode] = useState('self');
   const [loading, setLoading] = useState(true);
   const [checkoutError, setCheckoutError] = useState('');
@@ -32,12 +47,13 @@ export default function CheckoutPage() {
   const [editFieldErrors, setEditFieldErrors] = useState({});
   const [showAddressList, setShowAddressList] = useState(false);
   const [showAddAddress, setShowAddAddress] = useState(false);
+  const [showVoucherList, setShowVoucherList] = useState(false);
   const [addressToDelete, setAddressToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const selectedAddress = addresses.find((address) => address.id === Number(selectedAddressId));
   const editingAddress = addresses.find((address) => address.id === editingAddressId);
-  const giftWrapFee = deliveryMode === 'gift' ? GIFT_WRAP_FEE : 0;
+  const deliveryType = deliveryMode === 'gift' ? 'GIFT' : 'SELF';
 
   const buildCartPreview = (items, shippingFee = null) => {
     const summaryItems = items.map((item) => ({
@@ -54,6 +70,9 @@ export default function CheckoutPage() {
       items: summaryItems,
       subtotal,
       shippingFee,
+      deliveryType: 'SELF',
+      giftWrapFee: 0,
+      discountAmount: 0,
       total: subtotal + (hasShipping ? shippingFee : 0),
     };
   };
@@ -70,12 +89,24 @@ export default function CheckoutPage() {
       };
     });
 
-  const refreshPreview = async (addressId, itemIds, fallbackItems = selectedCartItems) => {
+  const refreshPreview = async (
+    addressId,
+    itemIds,
+    fallbackItems = selectedCartItems,
+    voucherId = selectedVoucherId,
+    mode = deliveryMode,
+  ) => {
     if (!addressId || itemIds.length === 0) {
       setPreview(buildCartPreview(fallbackItems));
       return;
     }
-    const previewData = await checkoutService.preview(addressId, itemIds);
+    const requestedDeliveryType = mode === 'gift' ? 'GIFT' : 'SELF';
+    const previewData = await checkoutService.preview(
+      addressId,
+      itemIds,
+      voucherId || undefined,
+      requestedDeliveryType,
+    );
     setPreview({
       ...previewData,
       items: mergePreviewItems(previewData.items, fallbackItems),
@@ -84,11 +115,16 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setCheckoutError('');
-
-    Promise.all([addressService.list(), cartService.getCart()])
-      .then(([addrList, cart]) => {
+    Promise.resolve().then(() => {
+      setLoading(true);
+      setCheckoutError('');
+      return Promise.all([
+      addressService.list(),
+      cartService.getCart(),
+      voucherService.listMine().catch(() => []),
+      ]);
+    })
+      .then(([addrList, cart, voucherList]) => {
         if (!active) return;
         const cartIds = (cart.items || []).map((item) => item.itemId);
         const requestedIds = (searchParams.get('items') || '')
@@ -100,17 +136,24 @@ export default function CheckoutPage() {
         const requestedAddressId = Number(searchParams.get('address'));
         const requestedAddress = addrList.find((address) => address.id === requestedAddressId);
         const defaultAddress = requestedAddress || addrList.find((address) => address.isDefault) || addrList[0];
+        const requestedVoucherId = searchParams.get('voucher');
+        const requestedVoucher = (voucherList || []).find((voucher) => String(voucher.id) === String(requestedVoucherId));
+        const voucherIdToUse = requestedVoucher?.id || '';
 
         setAddresses(addrList);
         setCartItemIds(itemIds);
         setSelectedCartItems(selectedItems);
+        setVouchers(voucherList || []);
+        setSelectedVoucherId(voucherIdToUse);
+        setVoucherError('');
         setSelectedAddressId(defaultAddress?.id || '');
         setPreview(buildCartPreview(selectedItems));
         setShowAddAddress(addrList.length === 0);
         setShowAddressList(false);
+        setShowVoucherList(false);
 
         if (defaultAddress?.id && itemIds.length > 0) {
-          return refreshPreview(defaultAddress.id, itemIds, selectedItems);
+          return refreshPreview(defaultAddress.id, itemIds, selectedItems, voucherIdToUse);
         }
         return null;
       })
@@ -125,29 +168,55 @@ export default function CheckoutPage() {
     return () => {
       active = false;
     };
+  // Checkout initialization intentionally reruns only when URL selections change.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
-
-  const handleAddressChange = async (event) => {
-    const addressId = Number(event.target.value);
-    if (!addressId) return;
-    setSelectedAddressId(addressId);
-    try {
-      await refreshPreview(addressId, cartItemIds);
-      setCheckoutError('');
-    } catch (err) {
-      console.error('Failed to load checkout preview:', err);
-      setCheckoutError('Could not calculate shipping fee for this address.');
-    }
-  };
 
   const handleSelectAddress = async (addressId) => {
     setSelectedAddressId(addressId);
     try {
-      await refreshPreview(addressId, cartItemIds);
+      await refreshPreview(addressId, cartItemIds, selectedCartItems);
       setCheckoutError('');
+      setVoucherError('');
     } catch (err) {
       console.error('Failed to load checkout preview:', err);
-      setCheckoutError('Could not calculate shipping fee for this address.');
+      setCheckoutError(err.response?.data?.message || 'Could not calculate shipping fee for this address.');
+    }
+  };
+
+  const applyVoucher = async (voucherId) => {
+    setSelectedVoucherId(voucherId);
+    setVoucherError('');
+    setCheckoutError('');
+
+    try {
+      await refreshPreview(selectedAddressId, cartItemIds, selectedCartItems, voucherId);
+      setShowVoucherList(false);
+    } catch (err) {
+      console.error('Failed to apply voucher:', err);
+      setVoucherError(err.response?.data?.message || 'This voucher cannot be applied to this order.');
+      setSelectedVoucherId('');
+      await refreshPreview(selectedAddressId, cartItemIds, selectedCartItems, '');
+    }
+  };
+
+  const clearVoucher = async () => {
+    setSelectedVoucherId('');
+    setVoucherError('');
+    await refreshPreview(selectedAddressId, cartItemIds, selectedCartItems, '');
+    setShowVoucherList(false);
+  };
+
+  const handleDeliveryModeChange = async (mode) => {
+    setDeliveryMode(mode);
+    setCheckoutError('');
+    if (!selectedAddressId || cartItemIds.length === 0) return;
+
+    try {
+      await refreshPreview(selectedAddressId, cartItemIds, selectedCartItems, selectedVoucherId, mode);
+    } catch (err) {
+      console.error('Failed to update delivery type:', err);
+      setCheckoutError(err.response?.data?.message || 'Could not update the delivery type.');
     }
   };
 
@@ -157,7 +226,13 @@ export default function CheckoutPage() {
 
     try {
       const key = uuidv4();
-      const result = await checkoutService.checkout(selectedAddressId, cartItemIds, key);
+      const result = await checkoutService.checkout(
+        selectedAddressId,
+        cartItemIds,
+        key,
+        selectedVoucherId || undefined,
+        deliveryType,
+      );
 
       if (result.checkoutUrl) {
         window.location.href = result.checkoutUrl;
@@ -271,18 +346,27 @@ export default function CheckoutPage() {
     }
   };
 
+  const selectedVoucher = vouchers.find((voucher) => String(voucher.id) === String(selectedVoucherId));
+
   return (
-    <section className="checkout-grid">
-      <div className="stack">
+    <div className="stack" style={{ gap: '24px' }}>
+      <div className="checkout-page-header">
+        <Link to="/cart" className="checkout-back-cart-link">
+          Back to cart
+        </Link>
         <h1>Checkout Information</h1>
-        {checkoutError && <p className="form-message form-message-error">{checkoutError}</p>}
-        <div className="panel checkout-delivery-mode">
+      </div>
+      {checkoutError && <p className="form-message form-message-error">{checkoutError}</p>}
+
+      <section className="checkout-grid">
+        <div className="stack">
+          <div className="panel checkout-delivery-mode">
           <h3>Delivery type</h3>
           <div className="delivery-mode-options" role="group" aria-label="Delivery type">
             <button
               type="button"
               className={deliveryMode === 'self' ? 'is-active' : ''}
-              onClick={() => setDeliveryMode('self')}
+              onClick={() => handleDeliveryModeChange('self')}
             >
               <strong>For myself</strong>
               <span>Ship this order to me.</span>
@@ -290,7 +374,7 @@ export default function CheckoutPage() {
             <button
               type="button"
               className={deliveryMode === 'gift' ? 'is-active' : ''}
-              onClick={() => setDeliveryMode('gift')}
+              onClick={() => handleDeliveryModeChange('gift')}
             >
               <strong>Gift to someone</strong>
               <span>Ship to another receiver with gift wrapping.</span>
@@ -303,19 +387,12 @@ export default function CheckoutPage() {
             <h3>Delivery address</h3>
             <p>
               {addresses.length > 0
-                ? 'Use a saved address for this order, or change it if needed.'
+                ? 'Review the delivery address selected from your cart.'
                 : 'You do not have any saved address yet. Add a delivery address below.'}
             </p>
           </div>
           {addresses.length > 0 ? (
             <>
-              <select className="address-select" value={selectedAddressId} onChange={handleAddressChange}>
-                {addresses.map((address) => (
-                  <option key={address.id} value={address.id}>
-                    {address.recipient} - {address.line}, {address.city}
-                  </option>
-                ))}
-              </select>
               {selectedAddress && (
                 <article className="selected-address-card">
                   <div>
@@ -332,29 +409,13 @@ export default function CheckoutPage() {
                     <Button
                       type="button"
                       className="btn-secondary"
-                      onClick={() => startEditingAddress(selectedAddress.id)}
+                      onClick={() => setShowAddressList((open) => !open)}
                     >
-                      Edit
-                    </Button>
-                    <Button
-                      type="button"
-                      className="btn-secondary danger-action"
-                      onClick={() => requestDeleteAddress(selectedAddress)}
-                    >
-                      Delete
+                      {showAddressList ? 'Hide' : 'Change'}
                     </Button>
                   </div>
                 </article>
               )}
-              <div className="address-panel-actions">
-                <Button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => setShowAddressList((open) => !open)}
-                >
-                  {showAddressList ? 'Hide saved addresses' : `Change address (${addresses.length})`}
-                </Button>
-              </div>
             </>
           ) : (
             <p className="empty-address-box">No saved address available. Please create one below.</p>
@@ -429,6 +490,104 @@ export default function CheckoutPage() {
             </div>
           )}
         </div>
+        <div className="panel checkout-voucher-panel">
+          <div className="panel-heading">
+            <h3>Voucher</h3>
+            <p>
+              Review the voucher selected from your cart, or choose another available voucher.
+            </p>
+          </div>
+          {vouchers.length > 0 ? (
+            <>
+              {selectedVoucher ? (
+                <article className="checkout-selected-voucher-card">
+                  <div>
+                    <span className="voucher-card-label">Applied voucher</span>
+                    <strong>{selectedVoucher.code}</strong>
+                    <p>{selectedVoucher.name}</p>
+                  </div>
+                  <dl>
+                    <div>
+                      <dt>Discount</dt>
+                      <dd>{formatVoucherDiscount(selectedVoucher)}</dd>
+                    </div>
+                    <div>
+                      <dt>Minimum subtotal</dt>
+                      <dd>{formatCurrency(selectedVoucher.tierMinAmount)}</dd>
+                    </div>
+                  </dl>
+                  <div className="checkout-voucher-actions">
+                    <Button type="button" className="btn-secondary" onClick={() => setShowVoucherList((open) => !open)}>
+                      {showVoucherList ? 'Hide' : 'Change'}
+                    </Button>
+                    <Button type="button" className="btn-secondary" onClick={clearVoucher}>
+                      Remove
+                    </Button>
+                  </div>
+                </article>
+              ) : (
+                <div className="voucher-empty-inline">
+                  <strong>No voucher selected</strong>
+                  <p>You can continue without a voucher or choose one from your account.</p>
+                  <Button type="button" className="btn-secondary" onClick={() => setShowVoucherList((open) => !open)}>
+                    {showVoucherList ? 'Hide vouchers' : 'Choose voucher'}
+                  </Button>
+                </div>
+              )}
+              {showVoucherList && (
+                <div className="checkout-voucher-list">
+                {vouchers.map((voucher) => {
+                  const isSelected = String(voucher.id) === String(selectedVoucherId);
+                  return (
+                    <article className={`checkout-voucher-card${isSelected ? ' is-selected' : ''}`} key={voucher.id}>
+                      <div>
+                        <span className="voucher-card-label">Voucher code</span>
+                        <strong>{voucher.code}</strong>
+                        <p>{voucher.name}</p>
+                      </div>
+                      <dl>
+                        <div>
+                          <dt>Discount</dt>
+                          <dd>{formatVoucherDiscount(voucher)}</dd>
+                        </div>
+                        <div>
+                          <dt>Minimum subtotal</dt>
+                          <dd>{formatCurrency(voucher.tierMinAmount)}</dd>
+                        </div>
+                        <div>
+                          <dt>Expires</dt>
+                          <dd>{formatVoucherDate(voucher.expiresAt)}</dd>
+                        </div>
+                      </dl>
+                      <Button
+                        type="button"
+                        className={isSelected ? 'btn-secondary' : ''}
+                        onClick={() => (isSelected ? clearVoucher() : applyVoucher(voucher.id))}
+                      >
+                        {isSelected ? 'Applied' : 'Apply voucher'}
+                      </Button>
+                    </article>
+                  );
+                })}
+                </div>
+              )}
+              {selectedVoucher && (
+                <p className="voucher-applied-note">
+                  Voucher {selectedVoucher.code} is applied to this checkout.
+                </p>
+              )}
+            </>
+          ) : (
+            <div className="voucher-empty-inline">
+              <strong>No available voucher</strong>
+              <p>
+                Complete an eligible paid order first. A voucher can appear in your account for
+                the next purchase.
+              </p>
+            </div>
+          )}
+          {voucherError && <p className="form-message form-message-error">{voucherError}</p>}
+        </div>
         <div className={`panel ${!showAddAddress && addresses.length > 0 ? 'collapsed-panel' : ''}`}>
           <div className="panel-heading">
             <h3>Add delivery address</h3>
@@ -457,8 +616,6 @@ export default function CheckoutPage() {
       </div>
       <CheckoutSummary
         preview={preview}
-        giftWrapFee={giftWrapFee}
-        giftFeeSupported={false}
         loading={loading}
         canPay={Boolean(selectedAddressId) && cartItemIds.length > 0}
         disabledReason={!selectedAddressId ? 'Add a delivery address to continue to payment.' : ''}
@@ -496,6 +653,7 @@ export default function CheckoutPage() {
           </div>
         </div>
       )}
-    </section>
+      </section>
+    </div>
   );
 }
