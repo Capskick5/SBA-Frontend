@@ -364,7 +364,6 @@ export default function BookDetailPage() {
 
   const addToCart = async (buyNow = false) => {
     if (!book || isOutOfStock) return;
-    if (!ensureAuthenticated()) return;
 
     setCartLoading(true);
     try {

@@ -8,6 +8,7 @@ import { addressService } from '../../services/addressService';
 import { voucherService } from '../../services/voucherService';
 import { notifyCartUpdated } from '../../utils/cartEvents';
 import { formatCurrency } from '../../utils/formatters';
+import { useAuth } from '../../context/AuthContext';
 
 const selectDefaultAddress = (addresses = []) =>
   addresses.find((address) => address.isDefault) || null;
@@ -35,6 +36,8 @@ function formatVoucherDiscount(voucher) {
 
 export default function CartPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
   const [cart, setCart] = useState({ items: [], subtotal: 0 });
   const [selectedItemIds, setSelectedItemIds] = useState([]);
   const [itemErrors, setItemErrors] = useState({});
@@ -69,6 +72,10 @@ export default function CartPage() {
   }, []);
 
   useEffect(() => {
+    if (!isLoggedIn) {
+      setAddressLoading(false);
+      return;
+    }
     addressService.list()
       .then((list) => {
         setAddresses(list);
@@ -77,9 +84,13 @@ export default function CartPage() {
         setAddressLoading(false);
       })
       .catch(() => { setAddressLoading(false); });
-  }, []);
+  }, [isLoggedIn]);
 
   useEffect(() => {
+    if (!isLoggedIn) {
+      setVoucherLoading(false);
+      return;
+    }
     voucherService.listMine()
       .then((list) => {
         setVouchers(list || []);
@@ -87,7 +98,7 @@ export default function CartPage() {
       })
       .catch(() => setVouchers([]))
       .finally(() => setVoucherLoading(false));
-  }, []);
+  }, [isLoggedIn]);
 
   if (loading) return <LoadingState text="Loading cart..." />;
   if (!cart.items || cart.items.length === 0) {
@@ -221,18 +232,24 @@ export default function CartPage() {
             <div className="cart-summary-section-title">
               <MapPin size={16} />
               Delivery Address
-              <button
-                type="button"
-                className="cart-address-change-link"
-                onClick={() => setAddressPickerOpen(true)}
-                disabled={addressLoading || addresses.length === 0}
-              >
-                <Pencil size={12} />
-                Change
-              </button>
+              {isLoggedIn && (
+                <button
+                  type="button"
+                  className="cart-address-change-link"
+                  onClick={() => setAddressPickerOpen(true)}
+                  disabled={addressLoading || addresses.length === 0}
+                >
+                  <Pencil size={12} />
+                  Change
+                </button>
+              )}
             </div>
             {addressLoading ? (
               <div className="cart-address-empty">Loading address...</div>
+            ) : !isLoggedIn ? (
+              <div className="cart-address-empty">
+                You will enter delivery address at checkout
+              </div>
             ) : defaultAddress ? (
               <div className="cart-address-box">
                 <div className="cart-address-name-row">
@@ -254,41 +271,43 @@ export default function CartPage() {
           <div className="cart-summary-divider" />
 
           {/* Voucher */}
-          <div className="cart-summary-section">
-            <div className="cart-summary-section-title">
-              <TicketPercent size={16} />
-              Voucher
-            </div>
-            {voucherLoading ? (
-              <div className="cart-address-empty">Loading vouchers...</div>
-            ) : vouchers.length > 0 ? (
-              <div className="cart-voucher-box">
-                <select
-                  className="cart-voucher-select"
-                  value={selectedVoucherId}
-                  onChange={(event) => setSelectedVoucherId(event.target.value)}
-                >
-                  <option value="">No voucher selected</option>
-                  {vouchers.map((voucher) => (
-                    <option key={voucher.id} value={voucher.id}>
-                      {voucher.code} - {formatVoucherDiscount(voucher)}
-                    </option>
-                  ))}
-                </select>
-                {selectedVoucher ? (
-                  <p>
-                    {selectedVoucher.code} will be checked again at checkout.
-                  </p>
-                ) : (
-                  <p>Select a voucher now, then confirm the discount at checkout.</p>
-                )}
+          {isLoggedIn && (
+            <div className="cart-summary-section">
+              <div className="cart-summary-section-title">
+                <TicketPercent size={16} />
+                Voucher
               </div>
-            ) : (
-              <Link to="/profile?tab=vouchers" className="cart-address-empty">
-                No voucher available. View voucher wallet
-              </Link>
-            )}
-          </div>
+              {voucherLoading ? (
+                <div className="cart-address-empty">Loading vouchers...</div>
+              ) : vouchers.length > 0 ? (
+                <div className="cart-voucher-box">
+                  <select
+                    className="cart-voucher-select"
+                    value={selectedVoucherId}
+                    onChange={(event) => setSelectedVoucherId(event.target.value)}
+                  >
+                    <option value="">No voucher selected</option>
+                    {vouchers.map((voucher) => (
+                      <option key={voucher.id} value={voucher.id}>
+                        {voucher.code} - {formatVoucherDiscount(voucher)}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedVoucher ? (
+                    <p>
+                      {selectedVoucher.code} will be checked again at checkout.
+                    </p>
+                  ) : (
+                    <p>Select a voucher now, then confirm the discount at checkout.</p>
+                  )}
+                </div>
+              ) : (
+                <Link to="/profile?tab=vouchers" className="cart-address-empty">
+                  No voucher available. View voucher wallet
+                </Link>
+              )}
+            </div>
+          )}
 
           {/* Price breakdown */}
           <div className="cart-summary-section">

@@ -5,6 +5,7 @@ import { paymentService } from '../../services/paymentService';
 import { voucherService } from '../../services/voucherService';
 import { formatCurrency } from '../../utils/formatters';
 import { CheckCircle, XCircle, Loader2, Home, ShoppingBag, TicketPercent } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 function formatVoucherDiscount(voucher) {
   if (!voucher) return '';
@@ -18,6 +19,8 @@ export default function PaymentResultPage() {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState('loading');
   const [availableVoucher, setAvailableVoucher] = useState(null);
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
 
   useEffect(() => {
     const verify = async () => {
@@ -26,7 +29,7 @@ export default function PaymentResultPage() {
         const result = await paymentService.verifyPayment(params);
         const isPaid = result.status === 'PAID';
         setStatus(isPaid ? 'success' : 'failed');
-        if (isPaid) {
+        if (isPaid && isLoggedIn) {
           const vouchers = await voucherService.listMine().catch(() => []);
           setAvailableVoucher(vouchers[0] || null);
         }
@@ -35,7 +38,7 @@ export default function PaymentResultPage() {
       }
     };
     verify();
-  }, [searchParams]);
+  }, [searchParams, isLoggedIn]);
 
   return (
     <>
@@ -77,39 +80,41 @@ export default function PaymentResultPage() {
               <p style={{ color: '#374151', margin: '0 0 4px 0', fontSize: '1.1rem' }}>Thank you for shopping at BookVerse.</p>
               <p style={{ color: '#6b7280', margin: 0, fontSize: '0.95rem' }}>Your order has been processed and is now being prepared.</p>
             </div>
-            <div className="payment-voucher-reward">
-              <div className="payment-voucher-icon">
-                <TicketPercent size={22} />
+            {isLoggedIn && (
+              <div className="payment-voucher-reward">
+                <div className="payment-voucher-icon">
+                  <TicketPercent size={22} />
+                </div>
+                <div>
+                  <span>Next order reward</span>
+                  {availableVoucher ? (
+                    <>
+                      <strong>{availableVoucher.code}</strong>
+                      <p>
+                        {formatVoucherDiscount(availableVoucher)} for your next eligible checkout.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <strong>Check your voucher wallet</strong>
+                      <p>
+                        If this order is eligible, your next-order voucher will appear in My Vouchers.
+                      </p>
+                    </>
+                  )}
+                </div>
+                <Link to="/profile?tab=vouchers">View vouchers</Link>
               </div>
-              <div>
-                <span>Next order reward</span>
-                {availableVoucher ? (
-                  <>
-                    <strong>{availableVoucher.code}</strong>
-                    <p>
-                      {formatVoucherDiscount(availableVoucher)} for your next eligible checkout.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <strong>Check your voucher wallet</strong>
-                    <p>
-                      If this order is eligible, your next-order voucher will appear in My Vouchers.
-                    </p>
-                  </>
-                )}
-              </div>
-              <Link to="/profile?tab=vouchers">View vouchers</Link>
-            </div>
+            )}
             <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', width: '100%', marginTop: '12px' }}>
               <Link to="/" style={{ flex: 1, textDecoration: 'none' }}>
                 <Button className="payment-btn-secondary" style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
                   <Home size={18} /> Home
                 </Button>
               </Link>
-              <Link to="/orders" style={{ flex: 1, textDecoration: 'none' }}>
+              <Link to={isLoggedIn ? '/orders' : '/'} style={{ flex: 1, textDecoration: 'none' }}>
                 <Button style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                  <ShoppingBag size={18} /> Orders
+                  <ShoppingBag size={18} /> {isLoggedIn ? 'Orders' : 'Shop Now'}
                 </Button>
               </Link>
             </div>
@@ -130,9 +135,9 @@ export default function PaymentResultPage() {
                   <Home size={18} /> Home
                 </Button>
               </Link>
-              <Link to="/orders" style={{ flex: 1, textDecoration: 'none' }}>
+              <Link to={isLoggedIn ? '/orders' : '/'} style={{ flex: 1, textDecoration: 'none' }}>
                 <Button style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                  <ShoppingBag size={18} /> Orders
+                  <ShoppingBag size={18} /> {isLoggedIn ? 'Orders' : 'Shop Now'}
                 </Button>
               </Link>
             </div>

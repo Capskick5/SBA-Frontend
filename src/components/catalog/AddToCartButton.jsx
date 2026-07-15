@@ -56,11 +56,6 @@ export default function AddToCartButton({ book, redirectTo, className = '' }) {
     event.stopPropagation();
     setError('');
 
-    if (!authService.getCurrentUser()) {
-      navigate(`/login?redirect=${encodeURIComponent(redirectTo || `/books/${book.id}`)}`);
-      return;
-    }
-
     setAdding(true);
     debouncedAddToCart(book);
   };

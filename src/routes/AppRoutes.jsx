@@ -55,13 +55,13 @@ export default function AppRoutes() {
       <Route path="/verify-email" element={main(<VerifyEmailPage />)} />
       <Route path="/forgot-password" element={main(<ForgotPasswordPage />)} />
       <Route path="/reset-password" element={main(<ResetPasswordPage />)} />
-      <Route path="/cart" element={customerPage(<CartPage />)} />
-      <Route path="/checkout" element={customerPage(<CheckoutPage />)} />
-      <Route path="/payment/result" element={customerPage(<PaymentResultPage />)} />
-      <Route path="/payment/success" element={customerPage(<PaymentResultPage />)} />
-      <Route path="/payment/cancel" element={customerPage(<PaymentResultPage />)} />
+      <Route path="/cart" element={main(<CartPage />)} />
+      <Route path="/checkout" element={main(<CheckoutPage />)} />
+      <Route path="/payment/result" element={main(<PaymentResultPage />)} />
+      <Route path="/payment/success" element={main(<PaymentResultPage />)} />
+      <Route path="/payment/cancel" element={main(<PaymentResultPage />)} />
       <Route path="/orders" element={customerPage(<OrdersPage />)} />
-      <Route path="/orders/:id" element={customerPage(<OrderDetailPage />)} />
+      <Route path="/orders/:id" element={main(<OrderDetailPage />)} />
       <Route path="/books/chat" element={customerPage(<BookChatPage />)} />
       <Route path="/profile" element={protectedPage(<ProfilePage />)} />
       <Route path="/profile/addresses" element={protectedPage(<AddressesPage />)} />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import AddressForm from '../../components/checkout/AddressForm';
 import CheckoutSummary from '../../components/checkout/CheckoutSummary';
@@ -11,6 +11,7 @@ import { cartService } from '../../services/cartService';
 import { checkoutService } from '../../services/checkoutService';
 import { voucherService } from '../../services/voucherService';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
+import { useAuth } from '../../context/AuthContext';
 
 function formatVoucherDiscount(voucher) {
   if (!voucher) return '';
@@ -26,6 +27,12 @@ function formatVoucherDate(value) {
 
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
+  const [guestAddress, setGuestAddress] = useState(null);
+  const [guestEmail, setGuestEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [cartItemIds, setCartItemIds] = useState([]);
@@ -96,6 +103,37 @@ export default function CheckoutPage() {
     voucherId = selectedVoucherId,
     mode = deliveryMode,
   ) => {
+    if (!isLoggedIn) {
+      if (!guestAddress) {
+        setPreview(buildCartPreview(fallbackItems, 0));
+        return;
+      }
+      try {
+        const payload = {
+          email: guestEmail || null,
+          recipient: guestAddress.recipient,
+          phone: guestAddress.phone,
+          line: guestAddress.line,
+          ward: guestAddress.ward || null,
+          district: guestAddress.district || null,
+          city: guestAddress.city,
+          items: fallbackItems.map((item) => ({
+            bookId: item.bookId,
+            quantity: item.quantity,
+          })),
+          deliveryType: mode === 'gift' ? 'GIFT' : 'SELF',
+        };
+        const previewData = await checkoutService.previewGuest(payload);
+        setPreview({
+          ...previewData,
+          items: mergePreviewItems(previewData.items, fallbackItems),
+        });
+      } catch (err) {
+        console.error('Failed to load guest preview:', err);
+        setCheckoutError(err.response?.data?.message || 'Could not calculate shipping fee for this address.');
+      }
+      return;
+    }
     if (!addressId || itemIds.length === 0) {
       setPreview(buildCartPreview(fallbackItems));
       return;
@@ -118,10 +156,17 @@ export default function CheckoutPage() {
     Promise.resolve().then(() => {
       setLoading(true);
       setCheckoutError('');
+      if (!isLoggedIn) {
+        return Promise.all([
+          Promise.resolve([]),
+          cartService.getCart(),
+          Promise.resolve([]),
+        ]);
+      }
       return Promise.all([
-      addressService.list(),
-      cartService.getCart(),
-      voucherService.listMine().catch(() => []),
+        addressService.list(),
+        cartService.getCart(),
+        voucherService.listMine().catch(() => []),
       ]);
     })
       .then(([addrList, cart, voucherList]) => {
@@ -168,9 +213,19 @@ export default function CheckoutPage() {
     return () => {
       active = false;
     };
-  // Checkout initialization intentionally reruns only when URL selections change.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Checkout initialization intentionally reruns only when URL selections change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!isLoggedIn && guestAddress) {
+      refreshPreview(null, cartItemIds, selectedCartItems, '', deliveryMode);
+    }
+  }, [guestEmail, guestAddress, deliveryMode, isLoggedIn, cartItemIds, selectedCartItems]);
+
+  const handleGuestAddressSubmit = (values) => {
+    setGuestAddress(values);
+  };
 
   const handleSelectAddress = async (addressId) => {
     setSelectedAddressId(addressId);
@@ -221,6 +276,42 @@ export default function CheckoutPage() {
   };
 
   const pay = async () => {
+    if (!isLoggedIn) {
+      if (!guestAddress || cartItemIds.length === 0) return;
+      if (guestEmail) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(guestEmail)) {
+          setEmailError('Invalid email format');
+          return;
+        }
+      }
+      setCheckoutError('');
+      try {
+        const key = uuidv4();
+        const payload = {
+          email: guestEmail || null,
+          recipient: guestAddress.recipient,
+          phone: guestAddress.phone,
+          line: guestAddress.line,
+          ward: guestAddress.ward || null,
+          district: guestAddress.district || null,
+          city: guestAddress.city,
+          items: selectedCartItems.map((item) => ({
+            bookId: item.bookId,
+            quantity: item.quantity,
+          })),
+          deliveryType: deliveryMode === 'gift' ? 'GIFT' : 'SELF',
+        };
+        const result = await checkoutService.checkoutGuest(payload, key);
+        localStorage.removeItem('bookverse_guest_cart');
+        if (result.checkoutUrl) {
+          window.location.href = result.checkoutUrl;
+        }
+      } catch (err) {
+        setCheckoutError(err.response?.data?.message || 'Checkout failed. Please try again.');
+      }
+      return;
+    }
     if (!selectedAddressId || cartItemIds.length === 0) return;
     setCheckoutError('');
 
@@ -361,298 +452,366 @@ export default function CheckoutPage() {
       <section className="checkout-grid">
         <div className="stack">
           <div className="panel checkout-delivery-mode">
-          <h3>Delivery type</h3>
-          <div className="delivery-mode-options" role="group" aria-label="Delivery type">
-            <button
-              type="button"
-              className={deliveryMode === 'self' ? 'is-active' : ''}
-              onClick={() => handleDeliveryModeChange('self')}
-            >
-              <strong>For myself</strong>
-              <span>Ship this order to me.</span>
-            </button>
-            <button
-              type="button"
-              className={deliveryMode === 'gift' ? 'is-active' : ''}
-              onClick={() => handleDeliveryModeChange('gift')}
-            >
-              <strong>Gift to someone</strong>
-              <span>Ship to another receiver with gift wrapping.</span>
-              <small>Gift wrap fee: 10,000 VND</small>
-            </button>
-          </div>
-        </div>
-        <div className="panel">
-          <div className="panel-heading">
-            <h3>Delivery address</h3>
-            <p>
-              {addresses.length > 0
-                ? 'Review the delivery address selected from your cart.'
-                : 'You do not have any saved address yet. Add a delivery address below.'}
-            </p>
-          </div>
-          {addresses.length > 0 ? (
-            <>
-              {selectedAddress && (
-                <article className="selected-address-card">
-                  <div>
-                    <span>Selected for this order</span>
-                    <strong>{selectedAddress.recipient}</strong>
-                    <p>
-                      {selectedAddress.line}
-                      {selectedAddress.ward && `, ${selectedAddress.ward}`}
-                      {selectedAddress.district && `, ${selectedAddress.district}`}
-                      {selectedAddress.city && `, ${selectedAddress.city}`}
-                    </p>
-                  </div>
-                  <div className="selected-address-card-actions">
-                    <Button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={() => setShowAddressList((open) => !open)}
-                    >
-                      {showAddressList ? 'Hide' : 'Change'}
-                    </Button>
-                  </div>
-                </article>
-              )}
-            </>
-          ) : (
-            <p className="empty-address-box">No saved address available. Please create one below.</p>
-          )}
-          {showAddressList && (
-            <div className="saved-address-list">
-              {addresses.map((address) => (
-                <article
-                  className={`saved-address-card ${Number(selectedAddressId) === address.id ? 'is-selected' : ''}`}
-                  key={address.id}
-                >
-                  <div className="saved-address-card-body">
-                    <span className="saved-address-main">
-                      <strong>{address.recipient}</strong>
-                      <span>
-                        {Number(selectedAddressId) === address.id && <em>Selected</em>}
-                        {address.isDefault && <em>Default</em>}
-                      </span>
-                    </span>
-                    <span>{address.phone}</span>
-                    <span>
-                      {address.line}
-                      {address.ward && `, ${address.ward}`}
-                      {address.district && `, ${address.district}`}
-                      {address.city && `, ${address.city}`}
-                    </span>
-                  </div>
-                  <div className="saved-address-actions">
-                    <Button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={() => handleSelectAddress(address.id)}
-                      disabled={Number(selectedAddressId) === address.id}
-                    >
-                      {Number(selectedAddressId) === address.id ? 'Selected' : 'Select'}
-                    </Button>
-                    <Button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={() => startEditingAddress(address.id)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      type="button"
-                      className="btn-secondary danger-action"
-                      onClick={() => requestDeleteAddress(address)}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                  {editingAddressId === address.id && editingAddress && (
-                    <div className="saved-address-edit">
-                      <div className="panel-heading compact">
-                        <h4>Edit saved address</h4>
-                        <p>Changes will update this saved address in your account.</p>
-                      </div>
-                      <AuthFormMessage error={editError} />
-                      <AddressForm
-                        key={`edit-${editingAddress.id}-${deliveryMode}`}
-                        initialValues={editingAddress}
-                        submitLabel="Save changes"
-                        fieldErrors={editFieldErrors}
-                        onSubmit={handleUpdateAddress}
-                        loading={editLoading}
-                        onCancel={cancelEditingAddress}
-                      />
-                    </div>
-                  )}
-                </article>
-              ))}
+            <h3>Delivery type</h3>
+            <div className="delivery-mode-options" role="group" aria-label="Delivery type">
+              <button
+                type="button"
+                className={deliveryMode === 'self' ? 'is-active' : ''}
+                onClick={() => handleDeliveryModeChange('self')}
+              >
+                <strong>For myself</strong>
+                <span>Ship this order to me.</span>
+              </button>
+              <button
+                type="button"
+                className={deliveryMode === 'gift' ? 'is-active' : ''}
+                onClick={() => handleDeliveryModeChange('gift')}
+              >
+                <strong>Gift to someone</strong>
+                <span>Ship to another receiver with gift wrapping.</span>
+                <small>Gift wrap fee: 10,000 VND</small>
+              </button>
             </div>
-          )}
-        </div>
-        <div className="panel checkout-voucher-panel">
-          <div className="panel-heading">
-            <h3>Voucher</h3>
-            <p>
-              Review the voucher selected from your cart, or choose another available voucher.
-            </p>
           </div>
-          {vouchers.length > 0 ? (
-            <>
-              {selectedVoucher ? (
-                <article className="checkout-selected-voucher-card">
-                  <div>
-                    <span className="voucher-card-label">Applied voucher</span>
-                    <strong>{selectedVoucher.code}</strong>
-                    <p>{selectedVoucher.name}</p>
-                  </div>
-                  <dl>
-                    <div>
-                      <dt>Discount</dt>
-                      <dd>{formatVoucherDiscount(selectedVoucher)}</dd>
-                    </div>
-                    <div>
-                      <dt>Minimum subtotal</dt>
-                      <dd>{formatCurrency(selectedVoucher.tierMinAmount)}</dd>
-                    </div>
-                  </dl>
-                  <div className="checkout-voucher-actions">
-                    <Button type="button" className="btn-secondary" onClick={() => setShowVoucherList((open) => !open)}>
-                      {showVoucherList ? 'Hide' : 'Change'}
-                    </Button>
-                    <Button type="button" className="btn-secondary" onClick={clearVoucher}>
-                      Remove
-                    </Button>
-                  </div>
-                </article>
-              ) : (
-                <div className="voucher-empty-inline">
-                  <strong>No voucher selected</strong>
-                  <p>You can continue without a voucher or choose one from your account.</p>
-                  <Button type="button" className="btn-secondary" onClick={() => setShowVoucherList((open) => !open)}>
-                    {showVoucherList ? 'Hide vouchers' : 'Choose voucher'}
-                  </Button>
+        {!isLoggedIn && (
+          <div className="panel">
+            <div className="panel-heading">
+              <h3>Contact Information</h3>
+              <p>Enter your email to receive order updates.</p>
+            </div>
+            <div className="stack" style={{ gap: '12px', marginTop: '12px' }}>
+              <input
+                type="email"
+                placeholder="Email address (optional)"
+                value={guestEmail}
+                onChange={(e) => {
+                  setGuestEmail(e.target.value);
+                  setEmailError('');
+                }}
+                className="cart-voucher-select"
+                style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid #d1d5db' }}
+              />
+              {emailError && <p className="form-message form-message-error" style={{ margin: 0 }}>{emailError}</p>}
+            </div>
+          </div>
+        )}
+            {isLoggedIn ? (
+              <div className="panel">
+                <div className="panel-heading">
+                  <h3>Delivery address</h3>
+                  <p>
+                    {addresses.length > 0
+                      ? 'Review the delivery address selected from your cart.'
+                      : 'You do not have any saved address yet. Add a delivery address below.'}
+                  </p>
                 </div>
-              )}
-              {showVoucherList && (
-                <div className="checkout-voucher-list">
-                {vouchers.map((voucher) => {
-                  const isSelected = String(voucher.id) === String(selectedVoucherId);
-                  return (
-                    <article className={`checkout-voucher-card${isSelected ? ' is-selected' : ''}`} key={voucher.id}>
-                      <div>
-                        <span className="voucher-card-label">Voucher code</span>
-                        <strong>{voucher.code}</strong>
-                        <p>{voucher.name}</p>
-                      </div>
-                      <dl>
+                {addresses.length > 0 ? (
+                  <>
+                    {selectedAddress && (
+                      <article className="selected-address-card">
                         <div>
-                          <dt>Discount</dt>
-                          <dd>{formatVoucherDiscount(voucher)}</dd>
+                          <span>Selected for this order</span>
+                          <strong>{selectedAddress.recipient}</strong>
+                          <p>
+                            {selectedAddress.line}
+                            {selectedAddress.ward && `, ${selectedAddress.ward}`}
+                            {selectedAddress.district && `, ${selectedAddress.district}`}
+                            {selectedAddress.city && `, ${selectedAddress.city}`}
+                          </p>
                         </div>
-                        <div>
-                          <dt>Minimum subtotal</dt>
-                          <dd>{formatCurrency(voucher.tierMinAmount)}</dd>
+                        <div className="selected-address-card-actions">
+                          <Button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() => setShowAddressList((open) => !open)}
+                          >
+                            {showAddressList ? 'Hide' : 'Change'}
+                          </Button>
                         </div>
-                        <div>
-                          <dt>Expires</dt>
-                          <dd>{formatVoucherDate(voucher.expiresAt)}</dd>
+                      </article>
+                    )}
+                  </>
+                ) : (
+                  <p className="empty-address-box">No saved address available. Please create one below.</p>
+                )}
+                {showAddressList && (
+                  <div className="saved-address-list">
+                    {addresses.map((address) => (
+                      <article
+                        className={`saved-address-card ${Number(selectedAddressId) === address.id ? 'is-selected' : ''}`}
+                        key={address.id}
+                      >
+                        <div className="saved-address-card-body">
+                          <span className="saved-address-main">
+                            <strong>{address.recipient}</strong>
+                            <span>
+                              {Number(selectedAddressId) === address.id && <em>Selected</em>}
+                              {address.isDefault && <em>Default</em>}
+                            </span>
+                          </span>
+                          <span>{address.phone}</span>
+                          <span>
+                            {address.line}
+                            {address.ward && `, ${address.ward}`}
+                            {address.district && `, ${address.district}`}
+                            {address.city && `, ${address.city}`}
+                          </span>
                         </div>
-                      </dl>
+                        <div className="saved-address-actions">
+                          <Button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() => handleSelectAddress(address.id)}
+                            disabled={Number(selectedAddressId) === address.id}
+                          >
+                            {Number(selectedAddressId) === address.id ? 'Selected' : 'Select'}
+                          </Button>
+                          <Button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() => startEditingAddress(address.id)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            type="button"
+                            className="btn-secondary danger-action"
+                            onClick={() => requestDeleteAddress(address)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                        {editingAddressId === address.id && editingAddress && (
+                          <div className="saved-address-edit">
+                            <div className="panel-heading compact">
+                              <h4>Edit saved address</h4>
+                              <p>Changes will update this saved address in your account.</p>
+                            </div>
+                            <AuthFormMessage error={editError} />
+                            <AddressForm
+                              key={`edit-${editingAddress.id}-${deliveryMode}`}
+                              initialValues={editingAddress}
+                              submitLabel="Save changes"
+                              fieldErrors={editFieldErrors}
+                              onSubmit={handleUpdateAddress}
+                              loading={editLoading}
+                              onCancel={cancelEditingAddress}
+                            />
+                          </div>
+                        )}
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="panel">
+                <div className="panel-heading">
+                  <h3>Delivery address</h3>
+                  <p>Enter your shipping information below.</p>
+                </div>
+                {guestAddress ? (
+                  <article className="selected-address-card">
+                    <div>
+                      <span>Selected for this order</span>
+                      <strong>{guestAddress.recipient}</strong>
+                      <p>
+                        {guestAddress.line}
+                        {guestAddress.ward && `, ${guestAddress.ward}`}
+                        {guestAddress.district && `, ${guestAddress.district}`}
+                        {guestAddress.city && `, ${guestAddress.city}`}
+                      </p>
+                      <p>Phone: {guestAddress.phone}</p>
+                    </div>
+                    <div className="selected-address-card-actions">
                       <Button
                         type="button"
-                        className={isSelected ? 'btn-secondary' : ''}
-                        onClick={() => (isSelected ? clearVoucher() : applyVoucher(voucher.id))}
+                        className="btn-secondary"
+                        onClick={() => setGuestAddress(null)}
                       >
-                        {isSelected ? 'Applied' : 'Apply voucher'}
+                        Change
                       </Button>
-                    </article>
-                  );
-                })}
+                    </div>
+                  </article>
+                ) : (
+                  <AddressForm
+                    key={`guest-address-${deliveryMode}`}
+                    submitLabel="Confirm Address"
+                    onSubmit={handleGuestAddressSubmit}
+                    loading={false}
+                  />
+                )}
+              </div>
+            )}
+
+            {isLoggedIn && (
+              <div className="panel checkout-voucher-panel">
+                <div className="panel-heading">
+                  <h3>Voucher</h3>
+                  <p>
+                    Review the voucher selected from your cart, or choose another available voucher.
+                  </p>
                 </div>
-              )}
-              {selectedVoucher && (
-                <p className="voucher-applied-note">
-                  Voucher {selectedVoucher.code} is applied to this checkout.
-                </p>
-              )}
-            </>
-          ) : (
-            <div className="voucher-empty-inline">
-              <strong>No available voucher</strong>
-              <p>
-                Complete an eligible paid order first. A voucher can appear in your account for
-                the next purchase.
-              </p>
+                {vouchers.length > 0 ? (
+                  <>
+                    {selectedVoucher ? (
+                      <article className="checkout-selected-voucher-card">
+                        <div>
+                          <span className="voucher-card-label">Applied voucher</span>
+                          <strong>{selectedVoucher.code}</strong>
+                          <p>{selectedVoucher.name}</p>
+                        </div>
+                        <dl>
+                          <div>
+                            <dt>Discount</dt>
+                            <dd>{formatVoucherDiscount(selectedVoucher)}</dd>
+                          </div>
+                          <div>
+                            <dt>Minimum subtotal</dt>
+                            <dd>{formatCurrency(selectedVoucher.tierMinAmount)}</dd>
+                          </div>
+                        </dl>
+                        <div className="checkout-voucher-actions">
+                          <Button type="button" className="btn-secondary" onClick={() => setShowVoucherList((open) => !open)}>
+                            {showVoucherList ? 'Hide' : 'Change'}
+                          </Button>
+                          <Button type="button" className="btn-secondary" onClick={clearVoucher}>
+                            Remove
+                          </Button>
+                        </div>
+                      </article>
+                    ) : (
+                      <div className="voucher-empty-inline">
+                        <strong>No voucher selected</strong>
+                        <p>You can continue without a voucher or choose one from your account.</p>
+                        <Button type="button" className="btn-secondary" onClick={() => setShowVoucherList((open) => !open)}>
+                          {showVoucherList ? 'Hide vouchers' : 'Choose voucher'}
+                        </Button>
+                      </div>
+                    )}
+                    {showVoucherList && (
+                      <div className="checkout-voucher-list">
+                        {vouchers.map((voucher) => {
+                          const isSelected = String(voucher.id) === String(selectedVoucherId);
+                          return (
+                            <article className={`checkout-voucher-card${isSelected ? ' is-selected' : ''}`} key={voucher.id}>
+                              <div>
+                                <span className="voucher-card-label">Voucher code</span>
+                                <strong>{voucher.code}</strong>
+                                <p>{voucher.name}</p>
+                              </div>
+                              <dl>
+                                <div>
+                                  <dt>Discount</dt>
+                                  <dd>{formatVoucherDiscount(voucher)}</dd>
+                                </div>
+                                <div>
+                                  <dt>Minimum subtotal</dt>
+                                  <dd>{formatCurrency(voucher.tierMinAmount)}</dd>
+                                </div>
+                                <div>
+                                  <dt>Expires</dt>
+                                  <dd>{formatVoucherDate(voucher.expiresAt)}</dd>
+                                </div>
+                              </dl>
+                              <Button
+                                type="button"
+                                className={isSelected ? 'btn-secondary' : ''}
+                                onClick={() => (isSelected ? clearVoucher() : applyVoucher(voucher.id))}
+                              >
+                                {isSelected ? 'Applied' : 'Apply voucher'}
+                              </Button>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {selectedVoucher && (
+                      <p className="voucher-applied-note">
+                        Voucher {selectedVoucher.code} is applied to this checkout.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <div className="voucher-empty-inline">
+                    <strong>No available voucher</strong>
+                    <p>
+                      Complete an eligible paid order first. A voucher can appear in your account for
+                      the next purchase.
+                    </p>
+                  </div>
+                )}
+                {voucherError && <p className="form-message form-message-error">{voucherError}</p>}
+              </div>
+            )}
+
+            {isLoggedIn && (
+              <div className={`panel ${!showAddAddress && addresses.length > 0 ? 'collapsed-panel' : ''}`}>
+                <div className="panel-heading">
+                  <h3>Add delivery address</h3>
+                  <p>
+                    {addresses.length > 0
+                      ? 'Use this only when you want to save another delivery address.'
+                      : 'Enter a delivery address before continuing to payment.'}
+                  </p>
+                </div>
+                {showAddAddress ? (
+                  <>
+                    <AuthFormMessage error={formError} />
+                    <AddressForm
+                      key={`${formKey}-${deliveryMode}`}
+                      fieldErrors={formFieldErrors}
+                      onSubmit={handleAddAddress}
+                      loading={formLoading}
+                    />
+                  </>
+                ) : (
+                  <Button type="button" onClick={() => setShowAddAddress(true)}>
+                    Add new address
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+          <CheckoutSummary
+            preview={preview}
+            loading={loading}
+            canPay={isLoggedIn ? (Boolean(selectedAddressId) && cartItemIds.length > 0) : (Boolean(guestAddress) && cartItemIds.length > 0)}
+            disabledReason={!(isLoggedIn ? selectedAddressId : guestAddress) ? 'Add a delivery address to continue to payment.' : ''}
+            onPay={pay}
+          />
+          {addressToDelete && (
+            <div className="modal-backdrop" role="presentation">
+              <div className="modal" role="dialog" aria-modal="true" aria-labelledby="delete-address-title">
+                <div className="stack">
+                  <div>
+                    <h2 id="delete-address-title">Delete address?</h2>
+                    <p className="muted">
+                      This saved address will be removed from your account. You can add a new one later.
+                    </p>
+                  </div>
+                  <div className="delete-address-preview">
+                    <strong>{addressToDelete.recipient}</strong>
+                    <span>{addressToDelete.phone}</span>
+                    <span>
+                      {addressToDelete.line}
+                      {addressToDelete.ward && `, ${addressToDelete.ward}`}
+                      {addressToDelete.district && `, ${addressToDelete.district}`}
+                      {addressToDelete.city && `, ${addressToDelete.city}`}
+                    </span>
+                  </div>
+                  <div className="actions">
+                    <Button type="button" className="btn-secondary" onClick={cancelDeleteAddress} disabled={deleteLoading}>
+                      Cancel
+                    </Button>
+                    <Button type="button" onClick={confirmDeleteAddress} loading={deleteLoading}>
+                      Delete address
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
-          {voucherError && <p className="form-message form-message-error">{voucherError}</p>}
-        </div>
-        <div className={`panel ${!showAddAddress && addresses.length > 0 ? 'collapsed-panel' : ''}`}>
-          <div className="panel-heading">
-            <h3>Add delivery address</h3>
-            <p>
-              {addresses.length > 0
-                ? 'Use this only when you want to save another delivery address.'
-                : 'Enter a delivery address before continuing to payment.'}
-            </p>
-          </div>
-          {showAddAddress ? (
-            <>
-              <AuthFormMessage error={formError} />
-              <AddressForm
-                key={`${formKey}-${deliveryMode}`}
-                fieldErrors={formFieldErrors}
-                onSubmit={handleAddAddress}
-                loading={formLoading}
-              />
-            </>
-          ) : (
-            <Button type="button" onClick={() => setShowAddAddress(true)}>
-              Add new address
-            </Button>
-          )}
-        </div>
-      </div>
-      <CheckoutSummary
-        preview={preview}
-        loading={loading}
-        canPay={Boolean(selectedAddressId) && cartItemIds.length > 0}
-        disabledReason={!selectedAddressId ? 'Add a delivery address to continue to payment.' : ''}
-        onPay={pay}
-      />
-      {addressToDelete && (
-        <div className="modal-backdrop" role="presentation">
-          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="delete-address-title">
-            <div className="stack">
-              <div>
-                <h2 id="delete-address-title">Delete address?</h2>
-                <p className="muted">
-                  This saved address will be removed from your account. You can add a new one later.
-                </p>
-              </div>
-              <div className="delete-address-preview">
-                <strong>{addressToDelete.recipient}</strong>
-                <span>{addressToDelete.phone}</span>
-                <span>
-                  {addressToDelete.line}
-                  {addressToDelete.ward && `, ${addressToDelete.ward}`}
-                  {addressToDelete.district && `, ${addressToDelete.district}`}
-                  {addressToDelete.city && `, ${addressToDelete.city}`}
-                </span>
-              </div>
-              <div className="actions">
-                <Button type="button" className="btn-secondary" onClick={cancelDeleteAddress} disabled={deleteLoading}>
-                  Cancel
-                </Button>
-                <Button type="button" onClick={confirmDeleteAddress} loading={deleteLoading}>
-                  Delete address
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
       </section>
     </div>
   );

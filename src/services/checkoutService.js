@@ -17,4 +17,15 @@ export const checkoutService = {
       headers: { 'Idempotency-Key': idempotencyKey },
     });
   },
+
+  previewGuest(payload) {
+    return apiClient.post('/orders/guest/preview', payload, { auth: false });
+  },
+
+  checkoutGuest(payload, idempotencyKey) {
+    return apiClient.post('/orders/guest', payload, {
+      auth: false,
+      headers: { 'Idempotency-Key': idempotencyKey },
+    });
+  },
 };
