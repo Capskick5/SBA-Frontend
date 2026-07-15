@@ -1,7 +1,7 @@
 import { authService } from './authService';
 import { cartService } from './cartService';
 import { guestCartService } from './guestCartService';
-import { clearGuestCart, getGuestCartItems, getGuestToken } from './guestCartStorage';
+import { clearGuestCart, getGuestCartItems } from './guestCartStorage';
 import { apiClient } from './apiClient';
 
 function isLoggedInCustomer() {
@@ -61,11 +61,9 @@ export const cartFacade = {
 
     try {
       try {
-        const merged = await apiClient.post(
-          '/cart/merge',
-          {},
-          { headers: { 'X-Guest-Token': getGuestToken() } },
-        );
+        const merged = await apiClient.post('/cart/merge', {
+          items: guestItems.map(({ bookId, quantity }) => ({ bookId, quantity })),
+        });
         clearGuestCart();
         return merged ? mapServerCart(merged) : cartService.getCart();
       } catch (err) {

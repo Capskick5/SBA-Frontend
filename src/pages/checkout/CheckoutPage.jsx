@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import AddressForm from '../../components/checkout/AddressForm';
 import CheckoutSummary from '../../components/checkout/CheckoutSummary';
@@ -48,7 +48,6 @@ function formatVoucherDate(value) {
 
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
   const isLoggedIn = !!user;
@@ -141,21 +140,22 @@ export default function CheckoutPage() {
     fallbackItems = selectedCartItems,
     voucherId = selectedVoucherId,
     mode = deliveryMode,
+    guestAddressOverride = guestAddress,
   ) => {
     if (!isLoggedIn) {
-      if (!guestAddress) {
+      if (!guestAddressOverride) {
         setPreview(buildCartPreview(fallbackItems, 0));
         return;
       }
       try {
         const payload = {
           email: guestEmail || null,
-          recipient: guestAddress.recipient,
-          phone: guestAddress.phone,
-          line: guestAddress.line,
-          ward: guestAddress.ward || null,
-          district: guestAddress.district || null,
-          city: guestAddress.city,
+          recipient: guestAddressOverride.recipient,
+          phone: guestAddressOverride.phone,
+          line: guestAddressOverride.line,
+          ward: guestAddressOverride.ward || null,
+          district: guestAddressOverride.district || null,
+          city: guestAddressOverride.city,
           items: fallbackItems.map((item) => ({
             bookId: item.bookId,
             quantity: item.quantity,
@@ -261,14 +261,10 @@ export default function CheckoutPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, isGuest]);
 
-  useEffect(() => {
-    if (!isLoggedIn && guestAddress) {
-      refreshPreview(null, cartItemIds, selectedCartItems, '', deliveryMode);
-    }
-  }, [guestEmail, guestAddress, deliveryMode, isLoggedIn, cartItemIds, selectedCartItems]);
-
-  const handleGuestAddressSubmit = (values) => {
+  const handleGuestAddressSubmit = async (values) => {
     setGuestAddress(values);
+    setCheckoutError('');
+    await refreshPreview(null, cartItemIds, selectedCartItems, '', deliveryMode, values);
   };
 
   const handleSelectAddress = async (addressId) => {
@@ -311,7 +307,16 @@ export default function CheckoutPage() {
     setCheckoutError('');
     if (cartItemIds.length === 0) return;
 
-    if (isGuest) return;
+    if (isGuest) {
+      if (!guestAddress) return;
+      try {
+        await refreshPreview(null, cartItemIds, selectedCartItems, '', mode, guestAddress);
+      } catch (err) {
+        console.error('Failed to update guest delivery type:', err);
+        setCheckoutError(err.message || 'Could not update the delivery type.');
+      }
+      return;
+    }
 
     try {
       if (!selectedAddressId) return;

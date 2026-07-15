@@ -33,7 +33,7 @@ function getLocalCart() {
     const raw = localStorage.getItem(GUEST_CART_KEY);
     if (!raw) return { items: [], subtotal: 0 };
     return JSON.parse(raw);
-  } catch (err) {
+  } catch {
     return { items: [], subtotal: 0 };
   }
 }
