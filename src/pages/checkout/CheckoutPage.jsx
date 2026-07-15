@@ -58,7 +58,6 @@ export default function CheckoutPage() {
   const [emailError, setEmailError] = useState('');
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
-  const [guestAddress, setGuestAddress] = useState(null);
   const [cartItemIds, setCartItemIds] = useState([]);
   const [selectedCartItems, setSelectedCartItems] = useState([]);
   const [preview, setPreview] = useState({ items: [], subtotal: 0, shippingFee: null, discountAmount: 0, total: 0 });
