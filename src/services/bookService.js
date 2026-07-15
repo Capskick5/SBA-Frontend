@@ -8,7 +8,9 @@ function mapBook(book) {
     category: book.category?.name || 'General',
     categoryId: book.category?.id,
     coverUrl: book.coverUrl || coverFor(book),
-    ratingAvg: Number(book.ratingAvg || 0),
+    ratingAvg: Number(book.ratingAvg ?? 0),
+    reviewCount: Number(book.reviewCount ?? 0),
+    soldCount: Number(book.soldCount ?? 0),
   };
 }
 

@@ -59,7 +59,7 @@ export default function Header() {
 
   const bottomLinks = [
     { label: "All Books", to: "/", isActive: location.pathname === "/" && !activeCategory && !queryParam && !activeSort },
-    { label: "Best Sellers", to: "/?sort=rating_desc", isActive: activeSort === "rating_desc" },
+    { label: "Best Sellers", to: "/?sort=sold_desc", isActive: activeSort === "sold_desc" },
     ...navCategories.map((category) => ({
       label: compactCategoryName(category.name),
       to: `/?category=${category.id}`,
@@ -112,7 +112,6 @@ export default function Header() {
 
   useEffect(() => {
     if (user?.role === "ADMIN") {
-      setCartItemCount(0);
       return undefined;
     }
 
@@ -145,6 +144,8 @@ export default function Header() {
       window.removeEventListener(CART_UPDATED_EVENT, handleCartUpdated);
     };
   }, [user, location.pathname]);
+
+  const visibleCartItemCount = user?.role === "ADMIN" ? 0 : cartItemCount;
 
   const handleLogout = async () => {
     setDropdownOpen(false);
@@ -215,11 +216,11 @@ export default function Header() {
               <Link
                 className="control-btn"
                 to="/cart"
-                aria-label={`Cart${cartItemCount ? `, ${cartItemCount} items` : ""}`}
+                aria-label={`Cart${visibleCartItemCount ? `, ${visibleCartItemCount} items` : ""}`}
               >
                 <ShoppingBag size={20} aria-hidden="true" />
-                {cartItemCount > 0 && (
-                  <span className="cart-badge">{cartItemCount}</span>
+                {visibleCartItemCount > 0 && (
+                  <span className="cart-badge">{visibleCartItemCount}</span>
                 )}
               </Link>
             )}

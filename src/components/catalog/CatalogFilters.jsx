@@ -10,6 +10,7 @@ export default function CatalogFilters({ category, setCategory, sort, setSort, c
       <Select label="Sort" value={sort} onChange={(event) => setSort(event.target.value)}>
         <option value="relevance">Relevance</option>
         <option value="title_asc">Title A-Z</option>
+        <option value="sold_desc">Best sellers</option>
         <option value="price_asc">Price low to high</option>
         <option value="price_desc">Price high to low</option>
         <option value="rating_desc">Rating</option>

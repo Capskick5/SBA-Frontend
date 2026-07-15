@@ -9,10 +9,8 @@ export default function BookCard({ book }) {
   const isDiscounted = hasSalePrice(book);
   const discountRate = isDiscounted ? deriveDiscountPercent(book.originalPrice, book.price) : 0;
   const originalPrice = isDiscounted ? book.originalPrice : book.price;
-  
-  // Deterministic mock tags for visual flair
-  const isNew = book.id % 4 === 0;
-  const soldCount = (book.id * 17) % 80 + 5;
+  const hasReviews = book.reviewCount > 0;
+  const hasSales = book.soldCount > 0;
 
   return (
     <article className="book-card">
@@ -23,7 +21,6 @@ export default function BookCard({ book }) {
         
         {/* Floating tags */}
         <div className="book-card-tags">
-          {isNew && <span className="book-tag is-new">New</span>}
           {isDiscounted && <span className="book-tag is-discount">-{discountRate}%</span>}
         </div>
 
@@ -46,12 +43,20 @@ export default function BookCard({ book }) {
 
         {/* Rating and Sold stats */}
         <div className="book-card-meta">
-          <div className="book-card-rating">
-            <Star size={13} fill="#ffc107" stroke="#ffc107" />
-            <span>{book.ratingAvg ? book.ratingAvg.toFixed(1) : '4.5'}</span>
-          </div>
-          <span className="book-card-divider">•</span>
-          <span className="book-card-sold">{soldCount} sold</span>
+          {hasReviews ? (
+            <div className="book-card-rating" title={`${book.reviewCount} customer reviews`}>
+              <Star size={13} fill="#ffc107" stroke="#ffc107" />
+              <span>{book.ratingAvg.toFixed(1)} ({book.reviewCount})</span>
+            </div>
+          ) : (
+            <span className="book-card-no-rating">No ratings</span>
+          )}
+          {hasSales && (
+            <>
+              <span className="book-card-divider">•</span>
+              <span className="book-card-sold">{book.soldCount} sold</span>
+            </>
+          )}
         </div>
 
         {/* Pricing block */}
