@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import AdminLayout from '../layouts/AdminLayout';
-import { AdminRoute, CustomerRoute, ProtectedRoute, StorefrontRoute } from './RouteGuards';
+import { AdminRoute, CustomerRoute, GuestOrCustomerRoute, ProtectedRoute, StorefrontRoute } from './RouteGuards';
 import CatalogPage from '../pages/catalog/CatalogPage';
 import BookDetailPage from '../pages/catalog/BookDetailPage';
 import LoginPage from '../pages/auth/LoginPage';
@@ -38,6 +38,7 @@ const main = (page) => (
 );
 const protectedPage = (page) => main(<ProtectedRoute>{page}</ProtectedRoute>);
 const customerPage = (page) => main(<CustomerRoute>{page}</CustomerRoute>);
+const guestOrCustomerPage = (page) => main(<GuestOrCustomerRoute>{page}</GuestOrCustomerRoute>);
 const admin = (page) => (
   <AdminRoute>
     <AdminLayout>{page}</AdminLayout>
@@ -55,11 +56,11 @@ export default function AppRoutes() {
       <Route path="/verify-email" element={main(<VerifyEmailPage />)} />
       <Route path="/forgot-password" element={main(<ForgotPasswordPage />)} />
       <Route path="/reset-password" element={main(<ResetPasswordPage />)} />
-      <Route path="/cart" element={customerPage(<CartPage />)} />
-      <Route path="/checkout" element={customerPage(<CheckoutPage />)} />
-      <Route path="/payment/result" element={customerPage(<PaymentResultPage />)} />
-      <Route path="/payment/success" element={customerPage(<PaymentResultPage />)} />
-      <Route path="/payment/cancel" element={customerPage(<PaymentResultPage />)} />
+      <Route path="/cart" element={guestOrCustomerPage(<CartPage />)} />
+      <Route path="/checkout" element={guestOrCustomerPage(<CheckoutPage />)} />
+      <Route path="/payment/result" element={guestOrCustomerPage(<PaymentResultPage />)} />
+      <Route path="/payment/success" element={guestOrCustomerPage(<PaymentResultPage />)} />
+      <Route path="/payment/cancel" element={guestOrCustomerPage(<PaymentResultPage />)} />
       <Route path="/orders" element={customerPage(<OrdersPage />)} />
       <Route path="/orders/:id" element={customerPage(<OrderDetailPage />)} />
       <Route path="/books/chat" element={customerPage(<BookChatPage />)} />
