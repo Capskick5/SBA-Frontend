@@ -127,6 +127,18 @@ export default function CartPage() {
     return () => { active = false; };
   }, [isGuest]);
 
+  useEffect(() => {
+    const updateStickyTop = () => {
+      const navbar = document.querySelector('.navbar');
+      const offset = navbar ? navbar.getBoundingClientRect().height + 16 : 112;
+      document.documentElement.style.setProperty('--cart-sticky-top', `${offset}px`);
+    };
+
+    updateStickyTop();
+    window.addEventListener('resize', updateStickyTop);
+    return () => window.removeEventListener('resize', updateStickyTop);
+  }, []);
+
   if (loading) return <LoadingState text="Loading cart..." />;
   if (!cart.items || cart.items.length === 0) {
     return (

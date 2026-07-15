@@ -4214,7 +4214,9 @@ html[data-theme="dark"] .footer {
   gap: 16px;
   box-shadow: var(--shadow-sm);
   position: sticky;
-  top: 80px;
+  top: var(--cart-sticky-top, 112px);
+  align-self: start;
+  z-index: 2;
 }
 
 .cart-summary-section {
@@ -5097,7 +5099,8 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 
-  .checkout-summary-card {
+  .checkout-summary-card,
+  .cart-summary-panel {
     position: static;
   }
 
