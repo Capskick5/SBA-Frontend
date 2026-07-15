@@ -21,7 +21,7 @@ import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
 import { addressService } from '../../services/addressService';
 import { bookService } from '../../services/bookService';
-import { cartService } from '../../services/cartService';
+import { cartFacade } from '../../services/cartFacade';
 import { reviewService } from '../../services/reviewService';
 import { formatProductPrice } from '../../utils/formatters';
 import { deriveDiscountPercent, hasSalePrice } from '../../utils/pricing';
@@ -340,12 +340,6 @@ export default function BookDetailPage() {
 
   const thumbnails = book ? Array.from({ length: 4 }, () => book.coverUrl) : [];
 
-  const ensureAuthenticated = () => {
-    if (authService.getCurrentUser()) return true;
-    navigate(`/login?redirect=${encodeURIComponent(`/books/${id}`)}`);
-    return false;
-  };
-
   const changeQuantity = (delta) => {
     setQuantity((current) => Math.min(maxQuantity, Math.max(1, current + delta)));
   };
@@ -367,13 +361,13 @@ export default function BookDetailPage() {
 
     setCartLoading(true);
     try {
-      const cart = await cartService.addItem(book, quantity);
+      const cart = await cartFacade.addItem(book, quantity);
       notifyCartUpdated(cart);
 
       if (buyNow) {
-        const cartItem = cart.items.find((item) => item.bookId === book.id);
+        const cartItem = cart.items.find((item) => String(item.bookId) === String(book.id));
         if (cartItem) {
-          navigate(`/checkout?items=${cartItem.itemId}`);
+          navigate(`/checkout?items=${encodeURIComponent(cartItem.itemId)}`);
           return;
         }
       }

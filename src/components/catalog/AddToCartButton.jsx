@@ -1,9 +1,7 @@
 import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Button from '../ui/Button';
 import { ERROR_MESSAGES } from '../../services/apiError';
-import { authService } from '../../services/authService';
-import { cartService } from '../../services/cartService';
+import { cartFacade } from '../../services/cartFacade';
 import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../utils/toast';
 import { notifyCartUpdated } from '../../utils/cartEvents';
@@ -25,18 +23,17 @@ function debounce(func, delay) {
   };
 }
 
-export default function AddToCartButton({ book, redirectTo, className = '' }) {
-  const navigate = useNavigate();
+export default function AddToCartButton({ book, className = '' }) {
   const { user } = useAuth();
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState('');
 
   const debouncedAddToCart = useRef(
-    debounce(async (book) => {
+    debounce(async (bookToAdd) => {
       try {
-        const updatedCart = await cartService.addItem(book, 1);
+        const updatedCart = await cartFacade.addItem(bookToAdd, 1);
         notifyCartUpdated(updatedCart);
-        showToast(`Added "${book.title}" to cart!`);
+        showToast(`Added "${bookToAdd.title}" to cart!`);
       } catch (err) {
         const errMsg = getAddToCartErrorMessage(err);
         setError(errMsg);
@@ -49,13 +46,10 @@ export default function AddToCartButton({ book, redirectTo, className = '' }) {
 
   if (user?.role === 'ADMIN') return null;
 
-
-
   const addToCart = (event) => {
     event.preventDefault();
     event.stopPropagation();
     setError('');
-
     setAdding(true);
     debouncedAddToCart(book);
   };

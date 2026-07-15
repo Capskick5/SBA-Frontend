@@ -15,7 +15,7 @@ import {
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { bookService } from "../services/bookService";
-import { cartService } from "../services/cartService";
+import { cartFacade } from "../services/cartFacade";
 import { CART_UPDATED_EVENT, getCartItemCount } from "../utils/cartEvents";
 
 const CATEGORY_NAV_LIMIT = 6;
@@ -111,12 +111,15 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    if (!user || user.role === "ADMIN") return undefined;
+    if (user?.role === "ADMIN") {
+      setCartItemCount(0);
+      return undefined;
+    }
 
     let active = true;
 
     const loadCartCount = () => {
-      cartService
+      cartFacade
         .getCart()
         .then((cart) => {
           if (active) setCartItemCount(getCartItemCount(cart));
@@ -215,7 +218,7 @@ export default function Header() {
                 aria-label={`Cart${cartItemCount ? `, ${cartItemCount} items` : ""}`}
               >
                 <ShoppingBag size={20} aria-hidden="true" />
-                {user && cartItemCount > 0 && (
+                {cartItemCount > 0 && (
                   <span className="cart-badge">{cartItemCount}</span>
                 )}
               </Link>

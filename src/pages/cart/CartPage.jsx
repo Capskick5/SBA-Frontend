@@ -3,12 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ShoppingCart, TicketPercent, ArrowRight, ChevronRight, MapPin, Pencil } from 'lucide-react';
 import CartItemRow from '../../components/cart/CartItemRow';
 import { EmptyState, LoadingState } from '../../components/ui/State';
-import { cartService } from '../../services/cartService';
+import { cartFacade } from '../../services/cartFacade';
 import { addressService } from '../../services/addressService';
 import { voucherService } from '../../services/voucherService';
+import { useAuth } from '../../context/AuthContext';
 import { notifyCartUpdated } from '../../utils/cartEvents';
 import { formatCurrency } from '../../utils/formatters';
-import { useAuth } from '../../context/AuthContext';
 
 const selectDefaultAddress = (addresses = []) =>
   addresses.find((address) => address.isDefault) || null;
@@ -38,6 +38,7 @@ export default function CartPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isLoggedIn = !!user;
+  const isGuest = !user;
   const [cart, setCart] = useState({ items: [], subtotal: 0 });
   const [selectedItemIds, setSelectedItemIds] = useState([]);
   const [itemErrors, setItemErrors] = useState({});
@@ -64,41 +65,80 @@ export default function CartPage() {
 
   useEffect(() => {
     let active = true;
-    cartService.getCart()
+    Promise.resolve().then(() => {
+      setLoading(true);
+      return cartFacade.getCart();
+    })
       .then((data) => { if (active) syncCart(data, { selectAll: true }); })
       .catch((err) => console.error('Failed to load cart:', err))
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      setAddressLoading(false);
-      return;
-    }
-    addressService.list()
-      .then((list) => {
-        setAddresses(list);
-        const def = selectDefaultAddress(list);
-        setDefaultAddress(def);
+    let active = true;
+    Promise.resolve().then(() => {
+      if (isGuest) {
+        if (!active) return null;
+        setAddresses([]);
+        setDefaultAddress(null);
         setAddressLoading(false);
+        return null;
+      }
+
+      setAddressLoading(true);
+      return addressService.list();
+    })
+      .then((list) => {
+        if (!active || list == null) return;
+        setAddresses(list);
+        setDefaultAddress(selectDefaultAddress(list));
       })
-      .catch(() => { setAddressLoading(false); });
-  }, [isLoggedIn]);
+      .catch(() => {
+        if (active) {
+          setAddresses([]);
+          setDefaultAddress(null);
+        }
+      })
+      .finally(() => { if (active && !isGuest) setAddressLoading(false); });
+    return () => { active = false; };
+  }, [isGuest]);
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      setVoucherLoading(false);
-      return;
-    }
-    voucherService.listMine()
+    let active = true;
+    Promise.resolve().then(() => {
+      if (isGuest) {
+        if (!active) return null;
+        setVouchers([]);
+        setSelectedVoucherId('');
+        setVoucherLoading(false);
+        return null;
+      }
+
+      setVoucherLoading(true);
+      return voucherService.listMine();
+    })
       .then((list) => {
+        if (!active || list == null) return;
         setVouchers(list || []);
         setSelectedVoucherId('');
       })
-      .catch(() => setVouchers([]))
-      .finally(() => setVoucherLoading(false));
-  }, [isLoggedIn]);
+      .catch(() => { if (active) setVouchers([]); })
+      .finally(() => { if (active && !isGuest) setVoucherLoading(false); });
+    return () => { active = false; };
+  }, [isGuest]);
+
+  useEffect(() => {
+    const updateStickyTop = () => {
+      const navbar = document.querySelector('.navbar');
+      const offset = navbar ? navbar.getBoundingClientRect().height + 16 : 112;
+      document.documentElement.style.setProperty('--cart-sticky-top', `${offset}px`);
+    };
+
+    updateStickyTop();
+    window.addEventListener('resize', updateStickyTop);
+    return () => window.removeEventListener('resize', updateStickyTop);
+  }, []);
 
   if (loading) return <LoadingState text="Loading cart..." />;
   if (!cart.items || cart.items.length === 0) {
@@ -140,7 +180,7 @@ export default function CartPage() {
 
   const handleQuantityChange = (item, quantity) => {
     clearItemError(item.itemId);
-    cartService.updateQuantity(item.itemId, item.bookId, quantity)
+    cartFacade.updateQuantity(item.itemId, item.bookId, quantity)
       .then((nextCart) => { syncCart(nextCart); clearItemError(item.itemId); })
       .catch(() => {
         const message = quantity > item.quantity
@@ -160,7 +200,7 @@ export default function CartPage() {
     const itemId = itemToRemove.itemId;
     clearItemError(itemId);
     setItemToRemove(null);
-    cartService.removeItem(itemId)
+    cartFacade.removeItem(itemId)
       .then((nextCart) => { syncCart(nextCart); clearItemError(itemId); })
       .catch(() => setItemError(itemId, 'Could not remove this item. Please try again.'));
   };
@@ -244,7 +284,11 @@ export default function CartPage() {
                 </button>
               )}
             </div>
-            {addressLoading ? (
+            {isGuest ? (
+              <div className="cart-address-empty">
+                Enter your delivery address at checkout. Guests do not need an account.
+              </div>
+            ) : addressLoading ? (
               <div className="cart-address-empty">Loading address...</div>
             ) : !isLoggedIn ? (
               <div className="cart-address-empty">
@@ -308,6 +352,7 @@ export default function CartPage() {
               )}
             </div>
           )}
+          {isLoggedIn && <div className="cart-summary-divider" />}
 
           {/* Price breakdown */}
           <div className="cart-summary-section">

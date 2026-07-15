@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import { BotMessageSquare } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { aiChatService } from '../../services/aiChatService';
-import { cartService } from '../../services/cartService';
+import { cartFacade } from '../../services/cartFacade';
 import { formatCurrency } from '../../utils/formatters';
 import { showToast } from '../../utils/toast';
 import { notifyCartUpdated } from '../../utils/cartEvents';
@@ -36,7 +36,7 @@ export default function AiChatbot() {
   const debouncedAddToCart = useRef(
     debounce(async (book) => {
       try {
-        const updatedCart = await cartService.addItem(book, 1);
+        const updatedCart = await cartFacade.addItem(book, 1);
         notifyCartUpdated(updatedCart);
         showToast(`Added "${book.title}" to cart!`);
       } catch (err) {
@@ -47,7 +47,7 @@ export default function AiChatbot() {
     }, 500)
   ).current;
 
-  if (!user) {
+  if (user?.role === 'ADMIN') {
     return null;
   }
 

@@ -1,17 +1,38 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import AddressForm from '../../components/checkout/AddressForm';
 import CheckoutSummary from '../../components/checkout/CheckoutSummary';
 import { AuthFormMessage } from '../../components/auth/AuthFormFooter';
 import Button from '../../components/ui/Button';
 import { captureFormError } from '../../utils/formErrorUtils';
+import { useAuth } from '../../context/AuthContext';
 import { addressService } from '../../services/addressService';
-import { cartService } from '../../services/cartService';
+import { cartFacade } from '../../services/cartFacade';
 import { checkoutService } from '../../services/checkoutService';
 import { voucherService } from '../../services/voucherService';
+import { clearGuestCart } from '../../services/guestCartStorage';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
-import { useAuth } from '../../context/AuthContext';
+
+function pickCartItemIds(param, cartItems) {
+  const cartIds = (cartItems || []).map((item) => item.itemId);
+  const requested = (param || '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean)
+    .map((id) => cartIds.find((cartId) => String(cartId) === String(id)))
+    .filter((id) => id !== undefined && id !== null);
+  return requested.length > 0 ? requested : cartIds;
+}
+
+function isAddressComplete(address) {
+  return Boolean(
+    address?.recipient?.trim()
+    && address?.phone?.trim()
+    && address?.line?.trim()
+    && address?.city?.trim(),
+  );
+}
 
 function formatVoucherDiscount(voucher) {
   if (!voucher) return '';
@@ -28,13 +49,16 @@ function formatVoucherDate(value) {
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const isLoggedIn = !!user;
+  const isGuest = !user;
   const [guestAddress, setGuestAddress] = useState(null);
   const [guestEmail, setGuestEmail] = useState('');
   const [emailError, setEmailError] = useState('');
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
+  const [guestAddress, setGuestAddress] = useState(null);
   const [cartItemIds, setCartItemIds] = useState([]);
   const [selectedCartItems, setSelectedCartItems] = useState([]);
   const [preview, setPreview] = useState({ items: [], subtotal: 0, shippingFee: null, discountAmount: 0, total: 0 });
@@ -57,10 +81,24 @@ export default function CheckoutPage() {
   const [showVoucherList, setShowVoucherList] = useState(false);
   const [addressToDelete, setAddressToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [paying, setPaying] = useState(false);
 
   const selectedAddress = addresses.find((address) => address.id === Number(selectedAddressId));
   const editingAddress = addresses.find((address) => address.id === editingAddressId);
   const deliveryType = deliveryMode === 'gift' ? 'GIFT' : 'SELF';
+  const loginRedirect = `${location.pathname}${location.search || ''}`;
+
+  useEffect(() => {
+    const updateStickyTop = () => {
+      const navbar = document.querySelector('.navbar');
+      const offset = navbar ? navbar.getBoundingClientRect().height + 16 : 112;
+      document.documentElement.style.setProperty('--checkout-sticky-top', `${offset}px`);
+    };
+
+    updateStickyTop();
+    window.addEventListener('resize', updateStickyTop);
+    return () => window.removeEventListener('resize', updateStickyTop);
+  }, []);
 
   const buildCartPreview = (items, shippingFee = null) => {
     const summaryItems = items.map((item) => ({
@@ -95,6 +133,8 @@ export default function CheckoutPage() {
         lineTotal: item.lineTotal ?? fallback?.lineTotal ?? 0,
       };
     });
+
+
 
   const refreshPreview = async (
     addressId,
@@ -153,55 +193,60 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     let active = true;
-    Promise.resolve().then(() => {
+    Promise.resolve().then(async () => {
       setLoading(true);
       setCheckoutError('');
-      if (!isLoggedIn) {
-        return Promise.all([
-          Promise.resolve([]),
-          cartService.getCart(),
-          Promise.resolve([]),
-        ]);
+
+      const cart = await cartFacade.getCart();
+      if (!active) return;
+
+      const itemIds = pickCartItemIds(searchParams.get('items'), cart.items || []);
+      const selectedItems = (cart.items || []).filter((item) =>
+        itemIds.some((id) => String(id) === String(item.itemId)),
+      );
+
+      setCartItemIds(itemIds);
+      setSelectedCartItems(selectedItems);
+      setPreview(buildCartPreview(selectedItems));
+      setShowAddressList(false);
+      setShowVoucherList(false);
+
+      if (isGuest) {
+        setAddresses([]);
+        setSelectedAddressId('');
+        setVouchers([]);
+        setSelectedVoucherId('');
+        setShowAddAddress(true);
+        if (guestAddress && itemIds.length > 0) {
+          await refreshPreview(null, itemIds, selectedItems);
+        }
+        return;
       }
-      return Promise.all([
+
+      const [addrList, voucherList] = await Promise.all([
         addressService.list(),
-        cartService.getCart(),
         voucherService.listMine().catch(() => []),
       ]);
+      if (!active) return;
+
+      const requestedAddressId = Number(searchParams.get('address'));
+      const requestedAddress = addrList.find((address) => address.id === requestedAddressId);
+      const defaultAddress = requestedAddress || addrList.find((address) => address.isDefault) || addrList[0];
+      const requestedVoucherId = searchParams.get('voucher');
+      const requestedVoucher = (voucherList || []).find((voucher) => String(voucher.id) === String(requestedVoucherId));
+      const voucherIdToUse = requestedVoucher?.id || '';
+
+      setAddresses(addrList);
+      setVouchers(voucherList || []);
+      setSelectedVoucherId(voucherIdToUse);
+      setVoucherError('');
+      setSelectedAddressId(defaultAddress?.id || '');
+      setShowAddAddress(addrList.length === 0);
+
+      if (defaultAddress?.id && itemIds.length > 0) {
+        await refreshPreview(defaultAddress.id, itemIds, selectedItems, voucherIdToUse);
+      }
     })
-      .then(([addrList, cart, voucherList]) => {
-        if (!active) return;
-        const cartIds = (cart.items || []).map((item) => item.itemId);
-        const requestedIds = (searchParams.get('items') || '')
-          .split(',')
-          .map((id) => Number(id))
-          .filter((id) => cartIds.includes(id));
-        const itemIds = requestedIds.length > 0 ? requestedIds : cartIds;
-        const selectedItems = (cart.items || []).filter((item) => itemIds.includes(item.itemId));
-        const requestedAddressId = Number(searchParams.get('address'));
-        const requestedAddress = addrList.find((address) => address.id === requestedAddressId);
-        const defaultAddress = requestedAddress || addrList.find((address) => address.isDefault) || addrList[0];
-        const requestedVoucherId = searchParams.get('voucher');
-        const requestedVoucher = (voucherList || []).find((voucher) => String(voucher.id) === String(requestedVoucherId));
-        const voucherIdToUse = requestedVoucher?.id || '';
-
-        setAddresses(addrList);
-        setCartItemIds(itemIds);
-        setSelectedCartItems(selectedItems);
-        setVouchers(voucherList || []);
-        setSelectedVoucherId(voucherIdToUse);
-        setVoucherError('');
-        setSelectedAddressId(defaultAddress?.id || '');
-        setPreview(buildCartPreview(selectedItems));
-        setShowAddAddress(addrList.length === 0);
-        setShowAddressList(false);
-        setShowVoucherList(false);
-
-        if (defaultAddress?.id && itemIds.length > 0) {
-          return refreshPreview(defaultAddress.id, itemIds, selectedItems, voucherIdToUse);
-        }
-        return null;
-      })
       .catch((err) => {
         console.error('Failed to load checkout page:', err);
         if (active) setCheckoutError('Could not load checkout information. Please try again.');
@@ -213,9 +258,9 @@ export default function CheckoutPage() {
     return () => {
       active = false;
     };
-    // Checkout initialization intentionally reruns only when URL selections change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  // Checkout initialization intentionally reruns when URL or auth mode changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, isGuest]);
 
   useEffect(() => {
     if (!isLoggedIn && guestAddress) {
@@ -265,58 +310,52 @@ export default function CheckoutPage() {
   const handleDeliveryModeChange = async (mode) => {
     setDeliveryMode(mode);
     setCheckoutError('');
-    if (!selectedAddressId || cartItemIds.length === 0) return;
+    if (cartItemIds.length === 0) return;
+
+    if (isGuest) return;
 
     try {
+      if (!selectedAddressId) return;
       await refreshPreview(selectedAddressId, cartItemIds, selectedCartItems, selectedVoucherId, mode);
     } catch (err) {
       console.error('Failed to update delivery type:', err);
-      setCheckoutError(err.response?.data?.message || 'Could not update the delivery type.');
+      setCheckoutError(err.message || 'Could not update the delivery type.');
     }
   };
 
   const pay = async () => {
-    if (!isLoggedIn) {
-      if (!guestAddress || cartItemIds.length === 0) return;
-      if (guestEmail) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(guestEmail)) {
-          setEmailError('Invalid email format');
+    if (cartItemIds.length === 0) return;
+    setCheckoutError('');
+    setPaying(true);
+
+    try {
+      const key = uuidv4();
+
+      if (isGuest) {
+        if (!isAddressComplete(guestAddress)) {
+          setCheckoutError('Add a delivery address to continue to payment.');
+          setPaying(false);
           return;
         }
-      }
-      setCheckoutError('');
-      try {
-        const key = uuidv4();
-        const payload = {
+        const result = await checkoutService.checkoutGuest({
           email: guestEmail || null,
-          recipient: guestAddress.recipient,
-          phone: guestAddress.phone,
-          line: guestAddress.line,
-          ward: guestAddress.ward || null,
-          district: guestAddress.district || null,
-          city: guestAddress.city,
+          ...guestAddress,
           items: selectedCartItems.map((item) => ({
             bookId: item.bookId,
             quantity: item.quantity,
           })),
-          deliveryType: deliveryMode === 'gift' ? 'GIFT' : 'SELF',
-        };
-        const result = await checkoutService.checkoutGuest(payload, key);
-        localStorage.removeItem('bookverse_guest_cart');
-        if (result.checkoutUrl) {
+          deliveryType,
+        }, key);
+        if (result?.checkoutUrl) {
+          clearGuestCart();
           window.location.href = result.checkoutUrl;
+          return;
         }
-      } catch (err) {
-        setCheckoutError(err.response?.data?.message || 'Checkout failed. Please try again.');
+        setCheckoutError('Guest checkout is not available yet. Please try again later or sign in.');
+        return;
       }
-      return;
-    }
-    if (!selectedAddressId || cartItemIds.length === 0) return;
-    setCheckoutError('');
 
-    try {
-      const key = uuidv4();
+      if (!selectedAddressId) return;
       const result = await checkoutService.checkout(
         selectedAddressId,
         cartItemIds,
@@ -329,7 +368,10 @@ export default function CheckoutPage() {
         window.location.href = result.checkoutUrl;
       }
     } catch (err) {
-      setCheckoutError(err.response?.data?.message || 'Checkout failed. Please try again.');
+      const message = err?.response?.data?.message || err?.message || 'Checkout failed. Please try again.';
+      setCheckoutError(message);
+    } finally {
+      setPaying(false);
     }
   };
 
@@ -439,6 +481,13 @@ export default function CheckoutPage() {
 
   const selectedVoucher = vouchers.find((voucher) => String(voucher.id) === String(selectedVoucherId));
 
+  const canPay = isGuest
+    ? isAddressComplete(guestAddress) && cartItemIds.length > 0
+    : Boolean(selectedAddressId) && cartItemIds.length > 0;
+  const disabledReason = isGuest
+    ? (!isAddressComplete(guestAddress) ? 'Confirm a delivery address below to continue to payment.' : '')
+    : (!selectedAddressId ? 'Add a delivery address to continue to payment.' : '');
+
   return (
     <div className="stack" style={{ gap: '24px' }}>
       <div className="checkout-page-header">
@@ -447,56 +496,97 @@ export default function CheckoutPage() {
         </Link>
         <h1>Checkout Information</h1>
       </div>
+      {isGuest && (
+        <p className="form-message form-message-success">
+          Checkout as guest. Have an account?{' '}
+          <Link to={`/login?redirect=${encodeURIComponent(loginRedirect)}`}>Log in</Link>
+          {' '}to use saved addresses and vouchers.
+        </p>
+      )}
       {checkoutError && <p className="form-message form-message-error">{checkoutError}</p>}
+      <section className="checkout-layout">
+        <div className="checkout-sticky-region">
+          <div className="checkout-sticky-left stack">
+            <div className="panel checkout-delivery-mode">
+              <h3>Delivery type</h3>
+              <div className="delivery-mode-options" role="group" aria-label="Delivery type">
+                <button
+                  type="button"
+                  className={deliveryMode === 'self' ? 'is-active' : ''}
+                  onClick={() => handleDeliveryModeChange('self')}
+                >
+                  <strong>For myself</strong>
+                  <span>Ship this order to me.</span>
+                </button>
+                <button
+                  type="button"
+                  className={deliveryMode === 'gift' ? 'is-active' : ''}
+                  onClick={() => handleDeliveryModeChange('gift')}
+                >
+                  <strong>Gift to someone</strong>
+                  <span>Ship to another receiver with gift wrapping.</span>
+                  <small>Gift wrap fee: 10,000 VND</small>
+                </button>
+              </div>
+            </div>
 
-      <section className="checkout-grid">
-        <div className="stack">
-          <div className="panel checkout-delivery-mode">
-            <h3>Delivery type</h3>
-            <div className="delivery-mode-options" role="group" aria-label="Delivery type">
-              <button
-                type="button"
-                className={deliveryMode === 'self' ? 'is-active' : ''}
-                onClick={() => handleDeliveryModeChange('self')}
-              >
-                <strong>For myself</strong>
-                <span>Ship this order to me.</span>
-              </button>
-              <button
-                type="button"
-                className={deliveryMode === 'gift' ? 'is-active' : ''}
-                onClick={() => handleDeliveryModeChange('gift')}
-              >
-                <strong>Gift to someone</strong>
-                <span>Ship to another receiver with gift wrapping.</span>
-                <small>Gift wrap fee: 10,000 VND</small>
-              </button>
-            </div>
-          </div>
-        {!isLoggedIn && (
-          <div className="panel">
-            <div className="panel-heading">
-              <h3>Contact Information</h3>
-              <p>Enter your email to receive order updates.</p>
-            </div>
-            <div className="stack" style={{ gap: '12px', marginTop: '12px' }}>
-              <input
-                type="email"
-                placeholder="Email address (optional)"
-                value={guestEmail}
-                onChange={(e) => {
-                  setGuestEmail(e.target.value);
-                  setEmailError('');
-                }}
-                className="cart-voucher-select"
-                style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid #d1d5db' }}
-              />
-              {emailError && <p className="form-message form-message-error" style={{ margin: 0 }}>{emailError}</p>}
-            </div>
-          </div>
-        )}
-            {isLoggedIn ? (
+            {isGuest && (
               <div className="panel">
+                <div className="panel-heading">
+                  <h3>Contact Information</h3>
+                  <p>Enter your email to receive order updates.</p>
+                </div>
+                <div className="stack" style={{ gap: '12px', marginTop: '12px' }}>
+                  <input
+                    type="email"
+                    placeholder="Email address (optional)"
+                    value={guestEmail}
+                    onChange={(e) => {
+                      setGuestEmail(e.target.value);
+                      setEmailError('');
+                    }}
+                    className="cart-voucher-select"
+                    style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid #d1d5db' }}
+                  />
+                  {emailError && <p className="form-message form-message-error" style={{ margin: 0 }}>{emailError}</p>}
+                </div>
+              </div>
+            )}
+
+            {isGuest ? (
+              <div className="panel checkout-delivery-address">
+                <div className="panel-heading">
+                  <h3>Delivery address</h3>
+                  <p>Enter where we should deliver this order. You do not need an account.</p>
+                </div>
+                {guestAddress && (
+                  <article className="selected-address-card">
+                    <div>
+                      <span>Selected for this order</span>
+                      <strong>{guestAddress.recipient}</strong>
+                      <p>
+                        {guestAddress.line}
+                        {guestAddress.ward && `, ${guestAddress.ward}`}
+                        {guestAddress.district && `, ${guestAddress.district}`}
+                        {guestAddress.city && `, ${guestAddress.city}`}
+                      </p>
+                      <p>{guestAddress.phone}</p>
+                    </div>
+                  </article>
+                )}
+                <AuthFormMessage error={formError} />
+                <AddressForm
+                  key={`guest-${formKey}-${deliveryMode}`}
+                  initialValues={guestAddress || undefined}
+                  fieldErrors={formFieldErrors}
+                  onSubmit={handleGuestAddressSubmit}
+                  submitLabel={guestAddress ? 'Update address' : 'Use this address'}
+                  loading={formLoading}
+                  showDefaultOption={false}
+                />
+              </div>
+            ) : (
+              <div className="panel checkout-delivery-address">
                 <div className="panel-heading">
                   <h3>Delivery address</h3>
                   <p>
@@ -604,44 +694,6 @@ export default function CheckoutPage() {
                   </div>
                 )}
               </div>
-            ) : (
-              <div className="panel">
-                <div className="panel-heading">
-                  <h3>Delivery address</h3>
-                  <p>Enter your shipping information below.</p>
-                </div>
-                {guestAddress ? (
-                  <article className="selected-address-card">
-                    <div>
-                      <span>Selected for this order</span>
-                      <strong>{guestAddress.recipient}</strong>
-                      <p>
-                        {guestAddress.line}
-                        {guestAddress.ward && `, ${guestAddress.ward}`}
-                        {guestAddress.district && `, ${guestAddress.district}`}
-                        {guestAddress.city && `, ${guestAddress.city}`}
-                      </p>
-                      <p>Phone: {guestAddress.phone}</p>
-                    </div>
-                    <div className="selected-address-card-actions">
-                      <Button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() => setGuestAddress(null)}
-                      >
-                        Change
-                      </Button>
-                    </div>
-                  </article>
-                ) : (
-                  <AddressForm
-                    key={`guest-address-${deliveryMode}`}
-                    submitLabel="Confirm Address"
-                    onSubmit={handleGuestAddressSubmit}
-                    loading={false}
-                  />
-                )}
-              </div>
             )}
 
             {isLoggedIn && (
@@ -746,7 +798,7 @@ export default function CheckoutPage() {
             )}
 
             {isLoggedIn && (
-              <div className={`panel ${!showAddAddress && addresses.length > 0 ? 'collapsed-panel' : ''}`}>
+              <div className={`panel checkout-add-address ${!showAddAddress && addresses.length > 0 ? 'collapsed-panel' : ''}`}>
                 <div className="panel-heading">
                   <h3>Add delivery address</h3>
                   <p>
@@ -773,46 +825,49 @@ export default function CheckoutPage() {
               </div>
             )}
           </div>
+
           <CheckoutSummary
             preview={preview}
-            loading={loading}
-            canPay={isLoggedIn ? (Boolean(selectedAddressId) && cartItemIds.length > 0) : (Boolean(guestAddress) && cartItemIds.length > 0)}
-            disabledReason={!(isLoggedIn ? selectedAddressId : guestAddress) ? 'Add a delivery address to continue to payment.' : ''}
+            loading={loading || paying}
+            canPay={canPay}
+            disabledReason={disabledReason}
             onPay={pay}
           />
-          {addressToDelete && (
-            <div className="modal-backdrop" role="presentation">
-              <div className="modal" role="dialog" aria-modal="true" aria-labelledby="delete-address-title">
-                <div className="stack">
-                  <div>
-                    <h2 id="delete-address-title">Delete address?</h2>
-                    <p className="muted">
-                      This saved address will be removed from your account. You can add a new one later.
-                    </p>
-                  </div>
-                  <div className="delete-address-preview">
-                    <strong>{addressToDelete.recipient}</strong>
-                    <span>{addressToDelete.phone}</span>
-                    <span>
-                      {addressToDelete.line}
-                      {addressToDelete.ward && `, ${addressToDelete.ward}`}
-                      {addressToDelete.district && `, ${addressToDelete.district}`}
-                      {addressToDelete.city && `, ${addressToDelete.city}`}
-                    </span>
-                  </div>
-                  <div className="actions">
-                    <Button type="button" className="btn-secondary" onClick={cancelDeleteAddress} disabled={deleteLoading}>
-                      Cancel
-                    </Button>
-                    <Button type="button" onClick={confirmDeleteAddress} loading={deleteLoading}>
-                      Delete address
-                    </Button>
-                  </div>
-                </div>
+        </div>
+      </section>
+
+      {addressToDelete && (
+        <div className="modal-backdrop" role="presentation">
+          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="delete-address-title">
+            <div className="stack">
+              <div>
+                <h2 id="delete-address-title">Delete address?</h2>
+                <p className="muted">
+                  This saved address will be removed from your account. You can add a new one later.
+                </p>
+              </div>
+              <div className="delete-address-preview">
+                <strong>{addressToDelete.recipient}</strong>
+                <span>{addressToDelete.phone}</span>
+                <span>
+                  {addressToDelete.line}
+                  {addressToDelete.ward && `, ${addressToDelete.ward}`}
+                  {addressToDelete.district && `, ${addressToDelete.district}`}
+                  {addressToDelete.city && `, ${addressToDelete.city}`}
+                </span>
+              </div>
+              <div className="actions">
+                <Button type="button" className="btn-secondary" onClick={cancelDeleteAddress} disabled={deleteLoading}>
+                  Cancel
+                </Button>
+                <Button type="button" onClick={confirmDeleteAddress} loading={deleteLoading}>
+                  Delete address
+                </Button>
               </div>
             </div>
-          )}
-      </section>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

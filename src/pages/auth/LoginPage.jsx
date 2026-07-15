@@ -6,6 +6,9 @@ import { AuthFormFooter, AuthFormMessage } from '../../components/auth/AuthFormF
 import { captureFormError } from '../../utils/formErrorUtils';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
+import { cartFacade } from '../../services/cartFacade';
+import { notifyCartUpdated } from '../../utils/cartEvents';
+import { showToast } from '../../utils/toast';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -41,6 +44,15 @@ export default function LoginPage() {
       }
 
       await refreshUser();
+      try {
+        const mergedCart = await cartFacade.mergeGuestCartAfterLogin();
+        if (mergedCart) {
+          notifyCartUpdated(mergedCart);
+          showToast('Your guest cart was moved to your account.');
+        }
+      } catch {
+        // Non-blocking: user can still shop with the account cart.
+      }
       navigate(redirect);
     } catch (err) {
       if (err.error_type === 'EMAIL_NOT_VERIFIED') {
