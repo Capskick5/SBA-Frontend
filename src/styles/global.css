@@ -870,7 +870,8 @@ html[data-theme="dark"] .footer {
 }
 
 .filters,
-.checkout-grid,
+.checkout-layout,
+.checkout-sticky-region,
 .detail-grid {
   display: grid;
   gap: 24px;
@@ -1501,9 +1502,11 @@ html[data-theme="dark"] .footer {
 
 .checkout-summary-card {
   position: sticky;
-  top: 104px;
+  top: var(--checkout-sticky-top, 112px);
+  align-self: start;
   display: grid;
   gap: 20px;
+  z-index: 2;
 }
 
 .summary-kicker {
@@ -4596,9 +4599,13 @@ html[data-theme="dark"] .footer {
   border-top: 1px solid var(--border);
 }
 
-.checkout-grid {
+.checkout-sticky-region {
   grid-template-columns: 1fr 360px;
   align-items: start;
+}
+
+.checkout-sticky-left {
+  min-width: 0;
 }
 
 .badge {
@@ -5081,13 +5088,17 @@ tr:last-child td {
   .filters,
   .detail-grid,
   .book-detail-layout,
-  .checkout-grid,
+  .checkout-sticky-region,
   .admin-shell,
   .admin-book-detail-layout,
   .admin-book-field-grid,
   .cart-row,
   .address-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .checkout-summary-card {
+    position: static;
   }
 
   .admin-book-detail-header {

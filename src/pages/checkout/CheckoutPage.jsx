@@ -83,6 +83,18 @@ export default function CheckoutPage() {
   const deliveryType = deliveryMode === 'gift' ? 'GIFT' : 'SELF';
   const loginRedirect = `${location.pathname}${location.search || ''}`;
 
+  useEffect(() => {
+    const updateStickyTop = () => {
+      const navbar = document.querySelector('.navbar');
+      const offset = navbar ? navbar.getBoundingClientRect().height + 16 : 112;
+      document.documentElement.style.setProperty('--checkout-sticky-top', `${offset}px`);
+    };
+
+    updateStickyTop();
+    window.addEventListener('resize', updateStickyTop);
+    return () => window.removeEventListener('resize', updateStickyTop);
+  }, []);
+
   const buildCartPreview = (items, shippingFee = null) => {
     const summaryItems = items.map((item) => ({
       bookId: item.bookId,
@@ -508,305 +520,313 @@ export default function CheckoutPage() {
       )}
       {checkoutError && <p className="form-message form-message-error">{checkoutError}</p>}
 
-      <section className="checkout-grid">
-        <div className="stack">
-          <div className="panel checkout-delivery-mode">
-          <h3>Delivery type</h3>
-          <div className="delivery-mode-options" role="group" aria-label="Delivery type">
-            <button
-              type="button"
-              className={deliveryMode === 'self' ? 'is-active' : ''}
-              onClick={() => handleDeliveryModeChange('self')}
-            >
-              <strong>For myself</strong>
-              <span>Ship this order to me.</span>
-            </button>
-            <button
-              type="button"
-              className={deliveryMode === 'gift' ? 'is-active' : ''}
-              onClick={() => handleDeliveryModeChange('gift')}
-            >
-              <strong>Gift to someone</strong>
-              <span>Ship to another receiver with gift wrapping.</span>
-              <small>Gift wrap fee: 10,000 VND</small>
-            </button>
-          </div>
-        </div>
-        {isGuest ? (
-          <div className="panel">
-            <div className="panel-heading">
-              <h3>Delivery address</h3>
-              <p>Enter where we should deliver this order. You do not need an account.</p>
-            </div>
-            {guestAddress && (
-              <article className="selected-address-card">
-                <div>
-                  <span>Selected for this order</span>
-                  <strong>{guestAddress.recipient}</strong>
-                  <p>
-                    {guestAddress.line}
-                    {guestAddress.ward && `, ${guestAddress.ward}`}
-                    {guestAddress.district && `, ${guestAddress.district}`}
-                    {guestAddress.city && `, ${guestAddress.city}`}
-                  </p>
-                  <p>{guestAddress.phone}</p>
-                </div>
-              </article>
-            )}
-            <AuthFormMessage error={formError} />
-            <AddressForm
-              key={`guest-${formKey}-${deliveryMode}`}
-              initialValues={guestAddress || undefined}
-              fieldErrors={formFieldErrors}
-              onSubmit={handleGuestAddressSubmit}
-              submitLabel={guestAddress ? 'Update address' : 'Use this address'}
-              loading={formLoading}
-              showDefaultOption={false}
-            />
-          </div>
-        ) : (
-          <>
-            <div className="panel">
-              <div className="panel-heading">
-                <h3>Delivery address</h3>
-                <p>
-                  {addresses.length > 0
-                    ? 'Review the delivery address selected from your cart.'
-                    : 'You do not have any saved address yet. Add a delivery address below.'}
-                </p>
+      <section className="checkout-layout">
+        <div className="checkout-sticky-region">
+          <div className="checkout-sticky-left stack">
+            <div className="panel checkout-delivery-mode">
+              <h3>Delivery type</h3>
+              <div className="delivery-mode-options" role="group" aria-label="Delivery type">
+                <button
+                  type="button"
+                  className={deliveryMode === 'self' ? 'is-active' : ''}
+                  onClick={() => handleDeliveryModeChange('self')}
+                >
+                  <strong>For myself</strong>
+                  <span>Ship this order to me.</span>
+                </button>
+                <button
+                  type="button"
+                  className={deliveryMode === 'gift' ? 'is-active' : ''}
+                  onClick={() => handleDeliveryModeChange('gift')}
+                >
+                  <strong>Gift to someone</strong>
+                  <span>Ship to another receiver with gift wrapping.</span>
+                  <small>Gift wrap fee: 10,000 VND</small>
+                </button>
               </div>
-              {addresses.length > 0 ? (
-                <>
-                  {selectedAddress && (
-                    <article className="selected-address-card">
-                      <div>
-                        <span>Selected for this order</span>
-                        <strong>{selectedAddress.recipient}</strong>
-                        <p>
-                          {selectedAddress.line}
-                          {selectedAddress.ward && `, ${selectedAddress.ward}`}
-                          {selectedAddress.district && `, ${selectedAddress.district}`}
-                          {selectedAddress.city && `, ${selectedAddress.city}`}
-                        </p>
-                      </div>
-                      <div className="selected-address-card-actions">
-                        <Button
-                          type="button"
-                          className="btn-secondary"
-                          onClick={() => setShowAddressList((open) => !open)}
-                        >
-                          {showAddressList ? 'Hide' : 'Change'}
-                        </Button>
-                      </div>
-                    </article>
-                  )}
-                </>
-              ) : (
-                <p className="empty-address-box">No saved address available. Please create one below.</p>
-              )}
-              {showAddressList && (
-                <div className="saved-address-list">
-                  {addresses.map((address) => (
-                    <article
-                      className={`saved-address-card ${Number(selectedAddressId) === address.id ? 'is-selected' : ''}`}
-                      key={address.id}
-                    >
-                      <div className="saved-address-card-body">
-                        <span className="saved-address-main">
-                          <strong>{address.recipient}</strong>
-                          <span>
-                            {Number(selectedAddressId) === address.id && <em>Selected</em>}
-                            {address.isDefault && <em>Default</em>}
+            </div>
+
+            {isGuest ? (
+              <div className="panel checkout-delivery-address">
+                <div className="panel-heading">
+                  <h3>Delivery address</h3>
+                  <p>Enter where we should deliver this order. You do not need an account.</p>
+                </div>
+                {guestAddress && (
+                  <article className="selected-address-card">
+                    <div>
+                      <span>Selected for this order</span>
+                      <strong>{guestAddress.recipient}</strong>
+                      <p>
+                        {guestAddress.line}
+                        {guestAddress.ward && `, ${guestAddress.ward}`}
+                        {guestAddress.district && `, ${guestAddress.district}`}
+                        {guestAddress.city && `, ${guestAddress.city}`}
+                      </p>
+                      <p>{guestAddress.phone}</p>
+                    </div>
+                  </article>
+                )}
+                <AuthFormMessage error={formError} />
+                <AddressForm
+                  key={`guest-${formKey}-${deliveryMode}`}
+                  initialValues={guestAddress || undefined}
+                  fieldErrors={formFieldErrors}
+                  onSubmit={handleGuestAddressSubmit}
+                  submitLabel={guestAddress ? 'Update address' : 'Use this address'}
+                  loading={formLoading}
+                  showDefaultOption={false}
+                />
+              </div>
+            ) : (
+              <>
+              <div className="panel checkout-delivery-address">
+                <div className="panel-heading">
+                  <h3>Delivery address</h3>
+                  <p>
+                    {addresses.length > 0
+                      ? 'Review the delivery address selected from your cart.'
+                      : 'You do not have any saved address yet. Add a delivery address below.'}
+                  </p>
+                </div>
+                {addresses.length > 0 ? (
+                  <>
+                    {selectedAddress && (
+                      <article className="selected-address-card">
+                        <div>
+                          <span>Selected for this order</span>
+                          <strong>{selectedAddress.recipient}</strong>
+                          <p>
+                            {selectedAddress.line}
+                            {selectedAddress.ward && `, ${selectedAddress.ward}`}
+                            {selectedAddress.district && `, ${selectedAddress.district}`}
+                            {selectedAddress.city && `, ${selectedAddress.city}`}
+                          </p>
+                        </div>
+                        <div className="selected-address-card-actions">
+                          <Button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() => setShowAddressList((open) => !open)}
+                          >
+                            {showAddressList ? 'Hide' : 'Change'}
+                          </Button>
+                        </div>
+                      </article>
+                    )}
+                  </>
+                ) : (
+                  <p className="empty-address-box">No saved address available. Please create one below.</p>
+                )}
+                {showAddressList && (
+                  <div className="saved-address-list">
+                    {addresses.map((address) => (
+                      <article
+                        className={`saved-address-card ${Number(selectedAddressId) === address.id ? 'is-selected' : ''}`}
+                        key={address.id}
+                      >
+                        <div className="saved-address-card-body">
+                          <span className="saved-address-main">
+                            <strong>{address.recipient}</strong>
+                            <span>
+                              {Number(selectedAddressId) === address.id && <em>Selected</em>}
+                              {address.isDefault && <em>Default</em>}
+                            </span>
                           </span>
-                        </span>
-                        <span>{address.phone}</span>
-                        <span>
-                          {address.line}
-                          {address.ward && `, ${address.ward}`}
-                          {address.district && `, ${address.district}`}
-                          {address.city && `, ${address.city}`}
-                        </span>
-                      </div>
-                      <div className="saved-address-actions">
-                        <Button
-                          type="button"
-                          className="btn-secondary"
-                          onClick={() => handleSelectAddress(address.id)}
-                          disabled={Number(selectedAddressId) === address.id}
-                        >
-                          {Number(selectedAddressId) === address.id ? 'Selected' : 'Select'}
-                        </Button>
-                        <Button
-                          type="button"
-                          className="btn-secondary"
-                          onClick={() => startEditingAddress(address.id)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          type="button"
-                          className="btn-secondary danger-action"
-                          onClick={() => requestDeleteAddress(address)}
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                      {editingAddressId === address.id && editingAddress && (
-                        <div className="saved-address-edit">
-                          <div className="panel-heading compact">
-                            <h4>Edit saved address</h4>
-                            <p>Changes will update this saved address in your account.</p>
-                          </div>
-                          <AuthFormMessage error={editError} />
-                          <AddressForm
-                            key={`edit-${editingAddress.id}-${deliveryMode}`}
-                            initialValues={editingAddress}
-                            submitLabel="Save changes"
-                            fieldErrors={editFieldErrors}
-                            onSubmit={handleUpdateAddress}
-                            loading={editLoading}
-                            onCancel={cancelEditingAddress}
-                          />
+                          <span>{address.phone}</span>
+                          <span>
+                            {address.line}
+                            {address.ward && `, ${address.ward}`}
+                            {address.district && `, ${address.district}`}
+                            {address.city && `, ${address.city}`}
+                          </span>
                         </div>
-                      )}
-                    </article>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="panel checkout-voucher-panel">
-              <div className="panel-heading">
-                <h3>Voucher</h3>
-                <p>
-                  Review the voucher selected from your cart, or choose another available voucher.
-                </p>
-              </div>
-              {vouchers.length > 0 ? (
-                <>
-                  {selectedVoucher ? (
-                    <article className="checkout-selected-voucher-card">
-                      <div>
-                        <span className="voucher-card-label">Applied voucher</span>
-                        <strong>{selectedVoucher.code}</strong>
-                        <p>{selectedVoucher.name}</p>
-                      </div>
-                      <dl>
-                        <div>
-                          <dt>Discount</dt>
-                          <dd>{formatVoucherDiscount(selectedVoucher)}</dd>
+                        <div className="saved-address-actions">
+                          <Button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() => handleSelectAddress(address.id)}
+                            disabled={Number(selectedAddressId) === address.id}
+                          >
+                            {Number(selectedAddressId) === address.id ? 'Selected' : 'Select'}
+                          </Button>
+                          <Button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() => startEditingAddress(address.id)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            type="button"
+                            className="btn-secondary danger-action"
+                            onClick={() => requestDeleteAddress(address)}
+                          >
+                            Delete
+                          </Button>
                         </div>
-                        <div>
-                          <dt>Minimum subtotal</dt>
-                          <dd>{formatCurrency(selectedVoucher.tierMinAmount)}</dd>
-                        </div>
-                      </dl>
-                      <div className="checkout-voucher-actions">
-                        <Button type="button" className="btn-secondary" onClick={() => setShowVoucherList((open) => !open)}>
-                          {showVoucherList ? 'Hide' : 'Change'}
-                        </Button>
-                        <Button type="button" className="btn-secondary" onClick={clearVoucher}>
-                          Remove
-                        </Button>
-                      </div>
-                    </article>
-                  ) : (
-                    <div className="voucher-empty-inline">
-                      <strong>No voucher selected</strong>
-                      <p>You can continue without a voucher or choose one from your account.</p>
-                      <Button type="button" className="btn-secondary" onClick={() => setShowVoucherList((open) => !open)}>
-                        {showVoucherList ? 'Hide vouchers' : 'Choose voucher'}
-                      </Button>
-                    </div>
-                  )}
-                  {showVoucherList && (
-                    <div className="checkout-voucher-list">
-                      {vouchers.map((voucher) => {
-                        const isSelected = String(voucher.id) === String(selectedVoucherId);
-                        return (
-                          <article className={`checkout-voucher-card${isSelected ? ' is-selected' : ''}`} key={voucher.id}>
-                            <div>
-                              <span className="voucher-card-label">Voucher code</span>
-                              <strong>{voucher.code}</strong>
-                              <p>{voucher.name}</p>
+                        {editingAddressId === address.id && editingAddress && (
+                          <div className="saved-address-edit">
+                            <div className="panel-heading compact">
+                              <h4>Edit saved address</h4>
+                              <p>Changes will update this saved address in your account.</p>
                             </div>
-                            <dl>
-                              <div>
-                                <dt>Discount</dt>
-                                <dd>{formatVoucherDiscount(voucher)}</dd>
-                              </div>
-                              <div>
-                                <dt>Minimum subtotal</dt>
-                                <dd>{formatCurrency(voucher.tierMinAmount)}</dd>
-                              </div>
-                              <div>
-                                <dt>Expires</dt>
-                                <dd>{formatVoucherDate(voucher.expiresAt)}</dd>
-                              </div>
-                            </dl>
-                            <Button
-                              type="button"
-                              className={isSelected ? 'btn-secondary' : ''}
-                              onClick={() => (isSelected ? clearVoucher() : applyVoucher(voucher.id))}
-                            >
-                              {isSelected ? 'Applied' : 'Apply voucher'}
-                            </Button>
-                          </article>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {selectedVoucher && (
-                    <p className="voucher-applied-note">
-                      Voucher {selectedVoucher.code} is applied to this checkout.
-                    </p>
-                  )}
-                </>
-              ) : (
-                <div className="voucher-empty-inline">
-                  <strong>No available voucher</strong>
+                            <AuthFormMessage error={editError} />
+                            <AddressForm
+                              key={`edit-${editingAddress.id}-${deliveryMode}`}
+                              initialValues={editingAddress}
+                              submitLabel="Save changes"
+                              fieldErrors={editFieldErrors}
+                              onSubmit={handleUpdateAddress}
+                              loading={editLoading}
+                              onCancel={cancelEditingAddress}
+                            />
+                          </div>
+                        )}
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="panel checkout-voucher-panel">
+                <div className="panel-heading">
+                  <h3>Voucher</h3>
                   <p>
-                    Complete an eligible paid order first. A voucher can appear in your account for
-                    the next purchase.
+                    Review the voucher selected from your cart, or choose another available voucher.
                   </p>
                 </div>
-              )}
-              {voucherError && <p className="form-message form-message-error">{voucherError}</p>}
-            </div>
-            <div className={`panel ${!showAddAddress && addresses.length > 0 ? 'collapsed-panel' : ''}`}>
-              <div className="panel-heading">
-                <h3>Add delivery address</h3>
-                <p>
-                  {addresses.length > 0
-                    ? 'Use this only when you want to save another delivery address.'
-                    : 'Enter a delivery address before continuing to payment.'}
-                </p>
+                {vouchers.length > 0 ? (
+                  <>
+                    {selectedVoucher ? (
+                      <article className="checkout-selected-voucher-card">
+                        <div>
+                          <span className="voucher-card-label">Applied voucher</span>
+                          <strong>{selectedVoucher.code}</strong>
+                          <p>{selectedVoucher.name}</p>
+                        </div>
+                        <dl>
+                          <div>
+                            <dt>Discount</dt>
+                            <dd>{formatVoucherDiscount(selectedVoucher)}</dd>
+                          </div>
+                          <div>
+                            <dt>Minimum subtotal</dt>
+                            <dd>{formatCurrency(selectedVoucher.tierMinAmount)}</dd>
+                          </div>
+                        </dl>
+                        <div className="checkout-voucher-actions">
+                          <Button type="button" className="btn-secondary" onClick={() => setShowVoucherList((open) => !open)}>
+                            {showVoucherList ? 'Hide' : 'Change'}
+                          </Button>
+                          <Button type="button" className="btn-secondary" onClick={clearVoucher}>
+                            Remove
+                          </Button>
+                        </div>
+                      </article>
+                    ) : (
+                      <div className="voucher-empty-inline">
+                        <strong>No voucher selected</strong>
+                        <p>You can continue without a voucher or choose one from your account.</p>
+                        <Button type="button" className="btn-secondary" onClick={() => setShowVoucherList((open) => !open)}>
+                          {showVoucherList ? 'Hide vouchers' : 'Choose voucher'}
+                        </Button>
+                      </div>
+                    )}
+                    {showVoucherList && (
+                      <div className="checkout-voucher-list">
+                        {vouchers.map((voucher) => {
+                          const isSelected = String(voucher.id) === String(selectedVoucherId);
+                          return (
+                            <article className={`checkout-voucher-card${isSelected ? ' is-selected' : ''}`} key={voucher.id}>
+                              <div>
+                                <span className="voucher-card-label">Voucher code</span>
+                                <strong>{voucher.code}</strong>
+                                <p>{voucher.name}</p>
+                              </div>
+                              <dl>
+                                <div>
+                                  <dt>Discount</dt>
+                                  <dd>{formatVoucherDiscount(voucher)}</dd>
+                                </div>
+                                <div>
+                                  <dt>Minimum subtotal</dt>
+                                  <dd>{formatCurrency(voucher.tierMinAmount)}</dd>
+                                </div>
+                                <div>
+                                  <dt>Expires</dt>
+                                  <dd>{formatVoucherDate(voucher.expiresAt)}</dd>
+                                </div>
+                              </dl>
+                              <Button
+                                type="button"
+                                className={isSelected ? 'btn-secondary' : ''}
+                                onClick={() => (isSelected ? clearVoucher() : applyVoucher(voucher.id))}
+                              >
+                                {isSelected ? 'Applied' : 'Apply voucher'}
+                              </Button>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {selectedVoucher && (
+                      <p className="voucher-applied-note">
+                        Voucher {selectedVoucher.code} is applied to this checkout.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <div className="voucher-empty-inline">
+                    <strong>No available voucher</strong>
+                    <p>
+                      Complete an eligible paid order first. A voucher can appear in your account for
+                      the next purchase.
+                    </p>
+                  </div>
+                )}
+                {voucherError && <p className="form-message form-message-error">{voucherError}</p>}
               </div>
-              {showAddAddress ? (
-                <>
-                  <AuthFormMessage error={formError} />
-                  <AddressForm
-                    key={`${formKey}-${deliveryMode}`}
-                    fieldErrors={formFieldErrors}
-                    onSubmit={handleAddAddress}
-                    loading={formLoading}
-                  />
-                </>
-              ) : (
-                <Button type="button" onClick={() => setShowAddAddress(true)}>
-                  Add new address
-                </Button>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-      <CheckoutSummary
-        preview={preview}
-        loading={loading || paying}
-        canPay={canPay}
-        disabledReason={disabledReason}
-        onPay={pay}
-      />
+
+              <div className={`panel checkout-add-address ${!showAddAddress && addresses.length > 0 ? 'collapsed-panel' : ''}`}>
+                <div className="panel-heading">
+                  <h3>Add delivery address</h3>
+                  <p>
+                    {addresses.length > 0
+                      ? 'Use this only when you want to save another delivery address.'
+                      : 'Enter a delivery address before continuing to payment.'}
+                  </p>
+                </div>
+                {showAddAddress ? (
+                  <>
+                    <AuthFormMessage error={formError} />
+                    <AddressForm
+                      key={`${formKey}-${deliveryMode}`}
+                      fieldErrors={formFieldErrors}
+                      onSubmit={handleAddAddress}
+                      loading={formLoading}
+                    />
+                  </>
+                ) : (
+                  <Button type="button" onClick={() => setShowAddAddress(true)}>
+                    Add new address
+                  </Button>
+                )}
+              </div>
+              </>
+            )}
+          </div>
+
+          <CheckoutSummary
+            preview={preview}
+            loading={loading || paying}
+            canPay={canPay}
+            disabledReason={disabledReason}
+            onPay={pay}
+          />
+        </div>
+      </section>
+
       {addressToDelete && (
         <div className="modal-backdrop" role="presentation">
           <div className="modal" role="dialog" aria-modal="true" aria-labelledby="delete-address-title">
@@ -839,7 +859,6 @@ export default function CheckoutPage() {
           </div>
         </div>
       )}
-      </section>
     </div>
   );
 }
