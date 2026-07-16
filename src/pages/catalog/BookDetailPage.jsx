@@ -627,9 +627,8 @@ export default function BookDetailPage() {
             <h2 className="book-detail-section-title">Product description</h2>
             <h3 className="book-detail-description-title">{book.title}</h3>
             <div
-              className={`book-detail-description ${
-                isLongDescription && !descriptionExpanded ? 'is-collapsed' : ''
-              }`}
+              className={`book-detail-description ${isLongDescription && !descriptionExpanded ? 'is-collapsed' : ''
+                }`}
             >
               <p>{description}</p>
             </div>
