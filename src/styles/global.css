@@ -6833,8 +6833,8 @@ html[data-theme="dark"] .status-badge.cancelled {
 .admin-order-flow-lines {
   position: absolute;
   top: 46px; /* Aligned with the dots: (36 icon + 6 margin) + (8 dot / 2) = 46px */
-  left: 40px;
-  right: 40px;
+  left: 60px;
+  right: 60px;
   height: 4px;
   display: flex;
   z-index: 1;

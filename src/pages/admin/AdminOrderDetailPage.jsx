@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import OrderDetailPage from '../orders/OrderDetailPage';
 import OrderStatusBadge from '../../components/orders/OrderStatusBadge';
 import Button from '../../components/ui/Button';
@@ -98,6 +98,12 @@ export default function AdminOrderDetailPage() {
 
   return (
     <>
+      <div style={{ marginBottom: '16px' }}>
+        <Link to="/admin/orders" className="order-detail-back-link" style={{ textDecoration: 'none' }}>
+          &lt;&lt; Back to orders
+        </Link>
+      </div>
+
       {order && (
         <div className={`admin-order-flow-container ${isCancelled ? 'cancelled' : ''}`}>
           <div className="admin-actions-heading" style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -139,21 +145,11 @@ export default function AdminOrderDetailPage() {
             })}
           </div>
 
-          <div className="admin-order-next-action" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '16px', marginTop: '4px' }}>
-            {order?.status === 'PAID' && (
-              <Button onClick={() => handleUpdateStatus('PROCESSING')} loading={updating}>Start processing</Button>
-            )}
-            {order?.status === 'PROCESSING' && (
-              <Button onClick={() => handleUpdateStatus('SHIPPED')} loading={updating}>Mark as shipped</Button>
-            )}
-            {order?.status === 'SHIPPED' && (
-              <Button onClick={() => handleUpdateStatus('DELIVERED')} loading={updating}>Mark as delivered</Button>
-            )}
-            {order && !['PAID', 'PROCESSING', 'SHIPPED'].includes(order.status) && (
-              <span className="admin-order-no-action">No fulfilment action is available for this status.</span>
-            )}
-          </div>
-          {updateError && <p className="admin-action-error" role="alert" style={{ color: 'var(--error)', marginTop: '8px', width: '100%', textAlign: 'center' }}>{updateError}</p>}
+          {updateError && (
+            <div style={{ width: '100%', borderTop: '1px solid var(--border)', paddingTop: '12px', marginTop: '12px' }}>
+              <p className="admin-action-error" role="alert" style={{ color: 'var(--error)', margin: 0, textAlign: 'center' }}>{updateError}</p>
+            </div>
+          )}
         </div>
       )}
 

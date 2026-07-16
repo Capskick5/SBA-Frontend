@@ -324,18 +324,20 @@ export default function OrderDetailPage({ adminView = false }) {
         </div>
 
         {/* Footer controls */}
-        <div className="order-detail-footer-actions">
-          <Link to={adminView ? '/admin/orders' : (isLoggedIn ? '/orders' : '/')} className="order-detail-back-link">
-            &lt;&lt; {adminView ? 'Back to orders' : (isLoggedIn ? 'Back to my orders' : 'Back to home')}
-          </Link>
-          <button
-            type="button"
-            onClick={() => setShowTimeline(!showTimeline)}
-            style={{ padding: '10px 20px', borderRadius: 'var(--radius-sm)', fontSize: '14px', background: '#ffd814', color: '#111', border: '1px solid #fcd200', fontWeight: '500', cursor: 'pointer' }}
-          >
-            {showTimeline ? 'Hide timeline' : 'Track order'}
-          </button>
-        </div>
+        {!adminView && (
+          <div className="order-detail-footer-actions">
+            <Link to={isLoggedIn ? '/orders' : '/'} className="order-detail-back-link">
+              &lt;&lt; {isLoggedIn ? 'Back to my orders' : 'Back to home'}
+            </Link>
+            <button
+              type="button"
+              onClick={() => setShowTimeline(!showTimeline)}
+              style={{ padding: '10px 20px', borderRadius: 'var(--radius-sm)', fontSize: '14px', background: '#ffd814', color: '#111', border: '1px solid #fcd200', fontWeight: '500', cursor: 'pointer' }}
+            >
+              {showTimeline ? 'Hide timeline' : 'Track order'}
+            </button>
+          </div>
+        )}
 
         {/* Order Timeline (Track Order history) */}
         {showTimeline && (
