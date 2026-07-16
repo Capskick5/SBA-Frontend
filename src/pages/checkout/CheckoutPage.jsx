@@ -257,8 +257,8 @@ export default function CheckoutPage() {
     return () => {
       active = false;
     };
-  // Checkout initialization intentionally reruns when URL or auth mode changes.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Checkout initialization intentionally reruns when URL or auth mode changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, isGuest]);
 
   const handleGuestAddressSubmit = async (values) => {

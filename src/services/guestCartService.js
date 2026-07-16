@@ -10,7 +10,7 @@ import {
 const fallbackCover = (title) =>
   `https://placehold.co/120x170?text=${encodeURIComponent(title || 'Book')}`;
 
-let guestApiAvailable = null;
+let guestApiAvailable = false;
 
 function guestHeaders() {
   return { 'X-Guest-Token': getGuestToken() };
