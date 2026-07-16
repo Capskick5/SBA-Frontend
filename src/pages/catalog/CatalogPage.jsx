@@ -23,7 +23,7 @@ const BANNERS = [
 ];
 
 const PAGE_SIZE = 20;
-const DEFAULT_SORT = 'title_asc';
+const DEFAULT_SORT = 'relevance';
 const DEFAULT_CATEGORY = 'all';
 
 function pageFromParam(value) {

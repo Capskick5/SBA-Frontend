@@ -870,7 +870,8 @@ html[data-theme="dark"] .footer {
 }
 
 .filters,
-.checkout-grid,
+.checkout-layout,
+.checkout-sticky-region,
 .detail-grid {
   display: grid;
   gap: 24px;
@@ -1501,9 +1502,11 @@ html[data-theme="dark"] .footer {
 
 .checkout-summary-card {
   position: sticky;
-  top: 104px;
+  top: var(--checkout-sticky-top, 112px);
+  align-self: start;
   display: grid;
   gap: 20px;
+  z-index: 2;
 }
 
 .summary-kicker {
@@ -2367,6 +2370,33 @@ html[data-theme="dark"] .footer {
   display: inline-flex;
   align-items: center;
   gap: 2px;
+}
+
+.star-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star-rating-item {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.star-rating-bg,
+.star-rating-fill {
+  display: block;
+  line-height: 0;
+}
+
+.star-rating-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .book-detail-meta-divider {
@@ -4211,7 +4241,9 @@ html[data-theme="dark"] .footer {
   gap: 16px;
   box-shadow: var(--shadow-sm);
   position: sticky;
-  top: 80px;
+  top: var(--cart-sticky-top, 112px);
+  align-self: start;
+  z-index: 2;
 }
 
 .cart-summary-section {
@@ -4596,9 +4628,13 @@ html[data-theme="dark"] .footer {
   border-top: 1px solid var(--border);
 }
 
-.checkout-grid {
+.checkout-sticky-region {
   grid-template-columns: 1fr 360px;
   align-items: start;
+}
+
+.checkout-sticky-left {
+  min-width: 0;
 }
 
 .badge {
@@ -4699,6 +4735,11 @@ tr:last-child td {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 260px 1fr;
+  transition: grid-template-columns 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-shell.sidebar-collapsed {
+  grid-template-columns: 72px 1fr;
 }
 
 .admin-login-page {
@@ -4755,6 +4796,26 @@ tr:last-child td {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  transition: padding 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-shell.sidebar-collapsed .admin-sidebar {
+  padding: 32px 8px;
+}
+
+.admin-shell.sidebar-collapsed .admin-sidebar a {
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
 }
 
 .admin-sidebar h2 {
@@ -5081,13 +5142,18 @@ tr:last-child td {
   .filters,
   .detail-grid,
   .book-detail-layout,
-  .checkout-grid,
+  .checkout-sticky-region,
   .admin-shell,
   .admin-book-detail-layout,
   .admin-book-field-grid,
   .cart-row,
   .address-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .checkout-summary-card,
+  .cart-summary-panel {
+    position: static;
   }
 
   .admin-book-detail-header {
@@ -6731,3 +6797,168 @@ html[data-theme="dark"] .status-badge.cancelled {
     display: none; /* Hide discount column on smaller screens */
   }
 }
+
+/* Admin Order Process Flow */
+.admin-order-flow-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 24px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-order-flow-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+  text-align: center;
+}
+
+.admin-order-flow-steps {
+  display: flex;
+  width: 100%;
+  max-width: 800px;
+  position: relative;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0;
+}
+
+.admin-order-flow-lines {
+  position: absolute;
+  top: 46px; /* Aligned with the dots: (36 icon + 6 margin) + (8 dot / 2) = 46px */
+  left: 60px;
+  right: 60px;
+  height: 4px;
+  display: flex;
+  z-index: 1;
+}
+
+.admin-order-flow-line-segment {
+  flex: 1;
+  height: 100%;
+  background: var(--border);
+  transition: background 0.4s ease;
+}
+
+.admin-order-flow-line-segment.active {
+  background: #1b64f2; /* Royal blue */
+}
+
+.admin-order-flow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 3;
+  width: 120px;
+}
+
+.admin-order-flow-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  margin-bottom: 6px;
+  transition: all 0.4s ease;
+}
+
+.admin-order-flow-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  border: 2px solid var(--surface);
+  margin-bottom: 8px;
+  transition: all 0.4s ease;
+  z-index: 4;
+}
+
+.admin-order-flow-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Active States */
+.admin-order-flow-step.active .admin-order-flow-icon-wrapper {
+  color: #1b64f2;
+  border-color: #1b64f2;
+  background: rgba(27, 100, 242, 0.05);
+}
+
+.admin-order-flow-step.active .admin-order-flow-dot {
+  background: #1b64f2;
+  border-color: var(--surface);
+  box-shadow: 0 0 0 4px rgba(27, 100, 242, 0.15);
+}
+
+.admin-order-flow-step.active .admin-order-flow-label {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Clickable / Interactive Step Styles */
+.admin-order-flow-step.clickable {
+  cursor: pointer;
+}
+
+.admin-order-flow-step.clickable:hover .admin-order-flow-icon-wrapper {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 6px rgba(27, 100, 242, 0.1);
+  color: #1b64f2;
+  border-color: #1b64f2;
+}
+
+.admin-order-flow-step.clickable:hover .admin-order-flow-dot {
+  transform: scale(1.2);
+  background: #1b64f2;
+}
+
+@keyframes step-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(27, 100, 242, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(27, 100, 242, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(27, 100, 242, 0);
+  }
+}
+
+.admin-order-flow-step.clickable .admin-order-flow-icon-wrapper {
+  animation: step-pulse 2s infinite;
+  border-color: #1b64f2;
+  color: #1b64f2;
+}
+
+/* Cancelled State */
+.admin-order-flow-container.cancelled .admin-order-flow-line-segment.active {
+  background: var(--error);
+}
+
+.admin-order-flow-container.cancelled .admin-order-flow-step.active .admin-order-flow-icon-wrapper {
+  color: var(--error);
+  border-color: var(--error);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.admin-order-flow-container.cancelled .admin-order-flow-step.active .admin-order-flow-dot {
+  background: var(--error);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+}
+

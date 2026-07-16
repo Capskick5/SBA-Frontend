@@ -22,8 +22,8 @@ const EMPTY_FORM = {
 };
 
 function formatReward(rule) {
-  if (rule.discountType === 'PERCENTAGE') return `${rule.discountValue}% off`;
-  return `${formatCurrency(rule.discountValue)} off`;
+  if (rule.discountType === 'PERCENTAGE') return `${rule.discountValue}% `;
+  return `${formatCurrency(rule.discountValue)} `;
 }
 
 function getErrorMessage(error, fallback) {
@@ -50,11 +50,11 @@ export default function AdminVouchersPage() {
     const active = filter === 'all' ? undefined : filter === 'active';
 
     adminService.getVoucherRules({
-        page: currentPage,
-        size: PAGE_SIZE,
-        sort: 'createdAt,desc',
-        ...(active === undefined ? {} : { active }),
-      })
+      page: currentPage,
+      size: PAGE_SIZE,
+      sort: 'createdAt,desc',
+      ...(active === undefined ? {} : { active }),
+    })
       .then((page) => {
         if (!activeRequest) return;
         setRules(Array.isArray(page?.items) ? page.items : []);

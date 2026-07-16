@@ -20,6 +20,7 @@ export default function AddressForm({
   loading = false,
   onCancel,
   fieldErrors = {},
+  showDefaultOption = true,
 }) {
   const [values, setValues] = useState({ ...defaultValues, ...initialValues });
   const [provinces, setProvinces] = useState([]);
@@ -297,17 +298,19 @@ export default function AddressForm({
       </div>
       {addressLookupError && <p className="form-hint">{addressLookupError}</p>}
 
-      <label className="check address-default-check">
-        <input
-          type="checkbox"
-          checked={values.isDefault}
-          onChange={(e) => setField('isDefault', e.target.checked)}
-        />
-        <span>
-          <strong>Save as default address</strong>
-          <small>Use this address faster next time.</small>
-        </span>
-      </label>
+      {showDefaultOption && (
+        <label className="check address-default-check">
+          <input
+            type="checkbox"
+            checked={values.isDefault}
+            onChange={(e) => setField('isDefault', e.target.checked)}
+          />
+          <span>
+            <strong>Save as default address</strong>
+            <small>Use this address faster next time.</small>
+          </span>
+        </label>
+      )}
 
       <div className="actions address-form-actions">
         <Button type="submit" disabled={loading}>

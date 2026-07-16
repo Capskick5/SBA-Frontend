@@ -25,6 +25,8 @@ export default function AdminInventoryPage() {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const PAGE_SIZE = 10;
 
   useEffect(() => {
     let active = true;
@@ -33,7 +35,7 @@ export default function AdminInventoryPage() {
       setError(null);
       try {
         const [movementsRes, usersRes] = await Promise.all([
-          adminService.getStockMovements({ page: 0, size: 100, sort: 'createdAt,desc' }),
+          adminService.getStockMovements({ page: 0, size: 200, sort: 'createdAt,desc' }),
           adminService.getUsers({ limit: 1000 })
         ]);
 
@@ -75,6 +77,11 @@ export default function AdminInventoryPage() {
     );
   }
 
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(0);
+  };
+
   const filteredMovements = movements.filter((mov) => {
     if (!searchQuery) return true;
     const lowerQuery = searchQuery.toLowerCase();
@@ -96,6 +103,9 @@ export default function AdminInventoryPage() {
       quantity.includes(lowerQuery);
   });
 
+  const paginatedMovements = filteredMovements.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+  const totalPages = Math.ceil(filteredMovements.length / PAGE_SIZE) || 1;
+
   return (
     <section>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px' }}>
@@ -108,7 +118,7 @@ export default function AdminInventoryPage() {
             type="text"
             placeholder="Search logs (book, note, user...)"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
             style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
           />
         </div>
@@ -117,51 +127,74 @@ export default function AdminInventoryPage() {
       {movements.length === 0 ? (
         <EmptyState title="No inventory activity" text="Stock changes will appear here after orders or manual adjustments." />
       ) : (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Book ID</th>
-              <th>Reason</th>
-              <th>Order ID</th>
-              <th>Quantity Change</th>
-              <th>Note</th>
-              <th>Created By</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredMovements.length === 0 ? (
-              <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>No matches found for "{searchQuery}"</td></tr>
-            ) : (
-              filteredMovements.map((mov) => (
-                <tr key={mov.id}>
-                  <td>{mov.id}</td>
-                  <td>{mov.bookId}</td>
-                  <td><span className={`inventory-reason inventory-reason-${(mov.reason || 'unknown').toLowerCase()}`}>{formatReason(mov.reason)}</span></td>
-                  <td>
-                    {mov.orderId
-                      ? <Link className="inventory-order-link" to={`/admin/orders/${mov.orderId}`}>#{mov.orderId}</Link>
-                      : <span className="muted">Manual</span>}
-                  </td>
-                  <td>
-                    {(() => {
-                      const q = getQuantity(mov);
-                      return (
-                        <span className={`inventory-delta ${q > 0 ? 'inventory-delta-positive' : q < 0 ? 'inventory-delta-negative' : ''}`}>
-                          {q > 0 ? `+${q}` : q}
-                        </span>
-                      );
-                    })()}
-                  </td>
-                  <td>{mov.note}</td>
-                  <td>{mov.createdByName || usersMap[mov.createdBy] || mov.createdBy || 'System'}</td>
-                  <td>{formatDateTime(mov.createdAt)}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Book ID</th>
+                <th>Reason</th>
+                <th>Order ID</th>
+                <th>Quantity Change</th>
+                <th>Note</th>
+                <th>Created By</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedMovements.length === 0 ? (
+                <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>No matches found for "{searchQuery}"</td></tr>
+              ) : (
+                paginatedMovements.map((mov) => (
+                  <tr key={mov.id}>
+                    <td>{mov.id}</td>
+                    <td>{mov.bookId}</td>
+                    <td><span className={`inventory-reason inventory-reason-${(mov.reason || 'unknown').toLowerCase()}`}>{formatReason(mov.reason)}</span></td>
+                    <td>
+                      {mov.orderId
+                        ? <Link className="inventory-order-link" to={`/admin/orders/${mov.orderId}`}>#{mov.orderId}</Link>
+                        : <span className="muted">Manual</span>}
+                    </td>
+                    <td>
+                      {(() => {
+                        const q = getQuantity(mov);
+                        return (
+                          <span className={`inventory-delta ${q > 0 ? 'inventory-delta-positive' : q < 0 ? 'inventory-delta-negative' : ''}`}>
+                            {q > 0 ? `+${q}` : q}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                    <td>{mov.note}</td>
+                    <td>{mov.createdByName || usersMap[mov.createdBy] || mov.createdBy || 'System'}</td>
+                    <td>{formatDateTime(mov.createdAt)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+          {filteredMovements.length > 0 && (
+            <div className="pagination" style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
+              <Button
+                type="button"
+                className="btn-secondary"
+                disabled={currentPage === 0}
+                onClick={() => setCurrentPage(currentPage - 1)}
+              >
+                Previous
+              </Button>
+              <span>Page {currentPage + 1} of {totalPages}</span>
+              <Button
+                type="button"
+                className="btn-secondary"
+                disabled={currentPage >= totalPages - 1}
+                onClick={() => setCurrentPage(currentPage + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </section>
   );

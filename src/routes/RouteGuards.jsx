@@ -7,7 +7,8 @@ export function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingState />;
   if (!user) {
-    return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
+    const redirect = `${location.pathname}${location.search || ''}`;
+    return <Navigate to={`/login?redirect=${encodeURIComponent(redirect)}`} replace />;
   }
   if (user.role === 'ADMIN') {
     return <Navigate to="/admin" replace />;
@@ -32,10 +33,23 @@ export function CustomerRoute({ children }) {
 
   if (loading) return <LoadingState />;
   if (!user) {
-    return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
+    const redirect = `${location.pathname}${location.search || ''}`;
+    return <Navigate to={`/login?redirect=${encodeURIComponent(redirect)}`} replace />;
   }
 
   if (user.role === 'ADMIN') {
+    return <Navigate to="/admin" replace />;
+  }
+
+  return children;
+}
+
+/** Allows guests and customers; admins are sent to /admin. */
+export function GuestOrCustomerRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) return <LoadingState />;
+  if (user?.role === 'ADMIN') {
     return <Navigate to="/admin" replace />;
   }
 

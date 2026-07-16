@@ -15,7 +15,7 @@ import {
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { bookService } from "../services/bookService";
-import { cartService } from "../services/cartService";
+import { cartFacade } from "../services/cartFacade";
 import { CART_UPDATED_EVENT, getCartItemCount } from "../utils/cartEvents";
 
 const CATEGORY_NAV_LIMIT = 6;
@@ -59,7 +59,7 @@ export default function Header() {
 
   const bottomLinks = [
     { label: "All Books", to: "/", isActive: location.pathname === "/" && !activeCategory && !queryParam && !activeSort },
-    { label: "Best Sellers", to: "/?sort=rating_desc", isActive: activeSort === "rating_desc" },
+    { label: "Best Sellers", to: "/?sort=sold_desc", isActive: activeSort === "sold_desc" },
     ...navCategories.map((category) => ({
       label: compactCategoryName(category.name),
       to: `/?category=${category.id}`,
@@ -111,12 +111,14 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    if (!user || user.role === "ADMIN") return undefined;
+    if (user?.role === "ADMIN") {
+      return undefined;
+    }
 
     let active = true;
 
     const loadCartCount = () => {
-      cartService
+      cartFacade
         .getCart()
         .then((cart) => {
           if (active) setCartItemCount(getCartItemCount(cart));
@@ -142,6 +144,8 @@ export default function Header() {
       window.removeEventListener(CART_UPDATED_EVENT, handleCartUpdated);
     };
   }, [user, location.pathname]);
+
+  const visibleCartItemCount = user?.role === "ADMIN" ? 0 : cartItemCount;
 
   const handleLogout = async () => {
     setDropdownOpen(false);
@@ -212,11 +216,11 @@ export default function Header() {
               <Link
                 className="control-btn"
                 to="/cart"
-                aria-label={`Cart${cartItemCount ? `, ${cartItemCount} items` : ""}`}
+                aria-label={`Cart${visibleCartItemCount ? `, ${visibleCartItemCount} items` : ""}`}
               >
                 <ShoppingBag size={20} aria-hidden="true" />
-                {user && cartItemCount > 0 && (
-                  <span className="cart-badge">{cartItemCount}</span>
+                {visibleCartItemCount > 0 && (
+                  <span className="cart-badge">{visibleCartItemCount}</span>
                 )}
               </Link>
             )}

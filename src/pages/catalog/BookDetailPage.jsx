@@ -8,11 +8,11 @@ import {
   Plus,
   RotateCcw,
   ShoppingCart,
-  Star,
   Truck,
   Users,
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
+import StarRating from '../../components/ui/StarRating';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import ReviewForm from '../../components/reviews/ReviewForm';
 import ReviewList from '../../components/reviews/ReviewList';
@@ -21,7 +21,7 @@ import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
 import { addressService } from '../../services/addressService';
 import { bookService } from '../../services/bookService';
-import { cartService } from '../../services/cartService';
+import { cartFacade } from '../../services/cartFacade';
 import { reviewService } from '../../services/reviewService';
 import { formatProductPrice } from '../../utils/formatters';
 import { deriveDiscountPercent, hasSalePrice } from '../../utils/pricing';
@@ -100,7 +100,7 @@ function RelatedBookCard({ book }) {
         )}
       </div>
       <div className="book-detail-related-rating">
-        <Star size={12} fill="#ffc107" stroke="#ffc107" />
+        <StarRating value={book.ratingAvg || 0} size={12} />
         <span>{rating}</span>
         <span>({book.reviewCount || 0})</span>
       </div>
@@ -310,8 +310,17 @@ export default function BookDetailPage() {
   const maxQuantity = book ? Math.max(1, book.stock) : 1;
   const description = book?.description || 'No description available for this book.';
   const isLongDescription = description.length > 480 || description.split('\n').length > 4;
-  const reviewCount = reviewSummary?.totalReviews ?? Math.max(reviewTotal, book?.reviewCount || 0);
-  const ratingValue = Number(reviewSummary?.averageRating ?? book?.ratingAvg ?? 0);
+  // Prefer live review list/summary over denormalized book fields (those can be stale).
+  const reviewCount = Math.max(
+    Number(reviewSummary?.totalReviews || 0),
+    Number(reviewTotal || 0),
+    Number(book?.reviewCount || 0),
+  );
+  const ratingValue = Number(
+    reviewSummary?.averageRating != null
+      ? reviewSummary.averageRating
+      : (book?.ratingAvg || 0),
+  );
   const currentUserReview = myReview;
   const ratingBreakdown = [5, 4, 3, 2, 1].map((stars) => ({
     stars,
@@ -340,12 +349,6 @@ export default function BookDetailPage() {
 
   const thumbnails = book ? Array.from({ length: 4 }, () => book.coverUrl) : [];
 
-  const ensureAuthenticated = () => {
-    if (authService.getCurrentUser()) return true;
-    navigate(`/login?redirect=${encodeURIComponent(`/books/${id}`)}`);
-    return false;
-  };
-
   const changeQuantity = (delta) => {
     setQuantity((current) => Math.min(maxQuantity, Math.max(1, current + delta)));
   };
@@ -364,17 +367,16 @@ export default function BookDetailPage() {
 
   const addToCart = async (buyNow = false) => {
     if (!book || isOutOfStock) return;
-    if (!ensureAuthenticated()) return;
 
     setCartLoading(true);
     try {
-      const cart = await cartService.addItem(book, quantity);
+      const cart = await cartFacade.addItem(book, quantity);
       notifyCartUpdated(cart);
 
       if (buyNow) {
-        const cartItem = cart.items.find((item) => item.bookId === book.id);
+        const cartItem = cart.items.find((item) => String(item.bookId) === String(book.id));
         if (cartItem) {
-          navigate(`/checkout?items=${cartItem.itemId}`);
+          navigate(`/checkout?items=${encodeURIComponent(cartItem.itemId)}`);
           return;
         }
       }
@@ -526,16 +528,7 @@ export default function BookDetailPage() {
             </div>
 
             <div className="book-detail-rating-row">
-              <div className="book-detail-rating">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Star
-                    key={index}
-                    size={15}
-                    fill={index < Math.round(ratingValue) ? '#ffc107' : 'transparent'}
-                    stroke="#d1d5db"
-                  />
-                ))}
-              </div>
+              <StarRating value={ratingValue} size={15} className="book-detail-rating" />
               <span>({reviewCount} reviews)</span>
               <span className="book-detail-meta-divider">|</span>
               <span>{book.soldCount || 0} sold</span>
@@ -634,9 +627,8 @@ export default function BookDetailPage() {
             <h2 className="book-detail-section-title">Product description</h2>
             <h3 className="book-detail-description-title">{book.title}</h3>
             <div
-              className={`book-detail-description ${
-                isLongDescription && !descriptionExpanded ? 'is-collapsed' : ''
-              }`}
+              className={`book-detail-description ${isLongDescription && !descriptionExpanded ? 'is-collapsed' : ''
+                }`}
             >
               <p>{description}</p>
             </div>
@@ -658,16 +650,7 @@ export default function BookDetailPage() {
         <div className="book-detail-reviews">
           <div className="book-detail-review-score">
             <strong>{ratingValue.toFixed(1)}/5</strong>
-            <div className="book-detail-rating">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <Star
-                  key={index}
-                  size={18}
-                  fill={index < Math.round(ratingValue) ? '#ffc107' : 'transparent'}
-                  stroke="#d1d5db"
-                />
-              ))}
-            </div>
+            <StarRating value={ratingValue} size={18} className="book-detail-rating" />
             <span>({reviewCount} reviews)</span>
           </div>
 

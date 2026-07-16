@@ -3,9 +3,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ShoppingCart, TicketPercent, ArrowRight, ChevronRight, MapPin, Pencil } from 'lucide-react';
 import CartItemRow from '../../components/cart/CartItemRow';
 import { EmptyState, LoadingState } from '../../components/ui/State';
-import { cartService } from '../../services/cartService';
+import { cartFacade } from '../../services/cartFacade';
 import { addressService } from '../../services/addressService';
 import { voucherService } from '../../services/voucherService';
+import { useAuth } from '../../context/AuthContext';
 import { notifyCartUpdated } from '../../utils/cartEvents';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -35,6 +36,9 @@ function formatVoucherDiscount(voucher) {
 
 export default function CartPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
+  const isGuest = !user;
   const [cart, setCart] = useState({ items: [], subtotal: 0 });
   const [selectedItemIds, setSelectedItemIds] = useState([]);
   const [itemErrors, setItemErrors] = useState({});
@@ -61,32 +65,79 @@ export default function CartPage() {
 
   useEffect(() => {
     let active = true;
-    cartService.getCart()
+    Promise.resolve().then(() => {
+      setLoading(true);
+      return cartFacade.getCart();
+    })
       .then((data) => { if (active) syncCart(data, { selectAll: true }); })
       .catch((err) => console.error('Failed to load cart:', err))
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    addressService.list()
-      .then((list) => {
-        setAddresses(list);
-        const def = selectDefaultAddress(list);
-        setDefaultAddress(def);
+    let active = true;
+    Promise.resolve().then(() => {
+      if (isGuest) {
+        if (!active) return null;
+        setAddresses([]);
+        setDefaultAddress(null);
         setAddressLoading(false);
+        return null;
+      }
+
+      setAddressLoading(true);
+      return addressService.list();
+    })
+      .then((list) => {
+        if (!active || list == null) return;
+        setAddresses(list);
+        setDefaultAddress(selectDefaultAddress(list));
       })
-      .catch(() => { setAddressLoading(false); });
-  }, []);
+      .catch(() => {
+        if (active) {
+          setAddresses([]);
+          setDefaultAddress(null);
+        }
+      })
+      .finally(() => { if (active && !isGuest) setAddressLoading(false); });
+    return () => { active = false; };
+  }, [isGuest]);
 
   useEffect(() => {
-    voucherService.listMine()
+    let active = true;
+    Promise.resolve().then(() => {
+      if (isGuest) {
+        if (!active) return null;
+        setVouchers([]);
+        setSelectedVoucherId('');
+        setVoucherLoading(false);
+        return null;
+      }
+
+      setVoucherLoading(true);
+      return voucherService.listMine();
+    })
       .then((list) => {
+        if (!active || list == null) return;
         setVouchers(list || []);
         setSelectedVoucherId('');
       })
-      .catch(() => setVouchers([]))
-      .finally(() => setVoucherLoading(false));
+      .catch(() => { if (active) setVouchers([]); })
+      .finally(() => { if (active && !isGuest) setVoucherLoading(false); });
+    return () => { active = false; };
+  }, [isGuest]);
+
+  useEffect(() => {
+    const updateStickyTop = () => {
+      const navbar = document.querySelector('.navbar');
+      const offset = navbar ? navbar.getBoundingClientRect().height + 16 : 112;
+      document.documentElement.style.setProperty('--cart-sticky-top', `${offset}px`);
+    };
+
+    updateStickyTop();
+    window.addEventListener('resize', updateStickyTop);
+    return () => window.removeEventListener('resize', updateStickyTop);
   }, []);
 
   if (loading) return <LoadingState text="Loading cart..." />;
@@ -129,7 +180,7 @@ export default function CartPage() {
 
   const handleQuantityChange = (item, quantity) => {
     clearItemError(item.itemId);
-    cartService.updateQuantity(item.itemId, item.bookId, quantity)
+    cartFacade.updateQuantity(item.itemId, item.bookId, quantity)
       .then((nextCart) => { syncCart(nextCart); clearItemError(item.itemId); })
       .catch(() => {
         const message = quantity > item.quantity
@@ -149,7 +200,7 @@ export default function CartPage() {
     const itemId = itemToRemove.itemId;
     clearItemError(itemId);
     setItemToRemove(null);
-    cartService.removeItem(itemId)
+    cartFacade.removeItem(itemId)
       .then((nextCart) => { syncCart(nextCart); clearItemError(itemId); })
       .catch(() => setItemError(itemId, 'Could not remove this item. Please try again.'));
   };
@@ -221,18 +272,28 @@ export default function CartPage() {
             <div className="cart-summary-section-title">
               <MapPin size={16} />
               Delivery Address
-              <button
-                type="button"
-                className="cart-address-change-link"
-                onClick={() => setAddressPickerOpen(true)}
-                disabled={addressLoading || addresses.length === 0}
-              >
-                <Pencil size={12} />
-                Change
-              </button>
+              {isLoggedIn && (
+                <button
+                  type="button"
+                  className="cart-address-change-link"
+                  onClick={() => setAddressPickerOpen(true)}
+                  disabled={addressLoading || addresses.length === 0}
+                >
+                  <Pencil size={12} />
+                  Change
+                </button>
+              )}
             </div>
-            {addressLoading ? (
+            {isGuest ? (
+              <div className="cart-address-empty">
+                Enter your delivery address at checkout. Guests do not need an account.
+              </div>
+            ) : addressLoading ? (
               <div className="cart-address-empty">Loading address...</div>
+            ) : !isLoggedIn ? (
+              <div className="cart-address-empty">
+                You will enter delivery address at checkout
+              </div>
             ) : defaultAddress ? (
               <div className="cart-address-box">
                 <div className="cart-address-name-row">
@@ -254,41 +315,44 @@ export default function CartPage() {
           <div className="cart-summary-divider" />
 
           {/* Voucher */}
-          <div className="cart-summary-section">
-            <div className="cart-summary-section-title">
-              <TicketPercent size={16} />
-              Voucher
-            </div>
-            {voucherLoading ? (
-              <div className="cart-address-empty">Loading vouchers...</div>
-            ) : vouchers.length > 0 ? (
-              <div className="cart-voucher-box">
-                <select
-                  className="cart-voucher-select"
-                  value={selectedVoucherId}
-                  onChange={(event) => setSelectedVoucherId(event.target.value)}
-                >
-                  <option value="">No voucher selected</option>
-                  {vouchers.map((voucher) => (
-                    <option key={voucher.id} value={voucher.id}>
-                      {voucher.code} - {formatVoucherDiscount(voucher)}
-                    </option>
-                  ))}
-                </select>
-                {selectedVoucher ? (
-                  <p>
-                    {selectedVoucher.code} will be checked again at checkout.
-                  </p>
-                ) : (
-                  <p>Select a voucher now, then confirm the discount at checkout.</p>
-                )}
+          {isLoggedIn && (
+            <div className="cart-summary-section">
+              <div className="cart-summary-section-title">
+                <TicketPercent size={16} />
+                Voucher
               </div>
-            ) : (
-              <Link to="/profile?tab=vouchers" className="cart-address-empty">
-                No voucher available. View voucher wallet
-              </Link>
-            )}
-          </div>
+              {voucherLoading ? (
+                <div className="cart-address-empty">Loading vouchers...</div>
+              ) : vouchers.length > 0 ? (
+                <div className="cart-voucher-box">
+                  <select
+                    className="cart-voucher-select"
+                    value={selectedVoucherId}
+                    onChange={(event) => setSelectedVoucherId(event.target.value)}
+                  >
+                    <option value="">No voucher selected</option>
+                    {vouchers.map((voucher) => (
+                      <option key={voucher.id} value={voucher.id}>
+                        {voucher.code} - {formatVoucherDiscount(voucher)}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedVoucher ? (
+                    <p>
+                      {selectedVoucher.code} will be checked again at checkout.
+                    </p>
+                  ) : (
+                    <p>Select a voucher now, then confirm the discount at checkout.</p>
+                  )}
+                </div>
+              ) : (
+                <Link to="/profile?tab=vouchers" className="cart-address-empty">
+                  No voucher available. View voucher wallet
+                </Link>
+              )}
+            </div>
+          )}
+          {isLoggedIn && <div className="cart-summary-divider" />}
 
           {/* Price breakdown */}
           <div className="cart-summary-section">

@@ -11,6 +11,8 @@ export default function AdminCategoriesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const PAGE_SIZE = 10;
 
   const fetchCategories = () => {
     setLoading(true);
@@ -19,6 +21,7 @@ export default function AdminCategoriesPage() {
       .then((res) => {
         const list = res.data?.items || res.items || (Array.isArray(res) ? res : []);
         setCategories(list);
+        setCurrentPage(0);
       })
       .catch((err) => {
         console.error('Failed to load categories:', err);
@@ -62,6 +65,9 @@ export default function AdminCategoriesPage() {
     }
   };
 
+  const paginatedCategories = categories.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+  const totalPages = Math.ceil(categories.length / PAGE_SIZE) || 1;
+
   return (
     <section className="stack">
       <h1>Category Management</h1>
@@ -83,15 +89,40 @@ export default function AdminCategoriesPage() {
 
       {loading ? <LoadingState text="Loading categories..." /> : error ? (
         <ErrorState text={error}><Button onClick={fetchCategories}>Try again</Button></ErrorState>
-      ) : <Table
-        emptyText="No categories found."
-        columns={[
-          { key: 'id', label: 'ID' },
-          { key: 'name', label: 'Category Name' },
-          { key: 'slug', label: 'Slug' },
-        ]}
-        rows={categories}
-      />}
+      ) : (
+        <>
+          <Table
+            emptyText="No categories found."
+            columns={[
+              { key: 'id', label: 'ID' },
+              { key: 'name', label: 'Category Name' },
+              { key: 'slug', label: 'Slug' },
+            ]}
+            rows={paginatedCategories}
+          />
+          {categories.length > 0 && (
+            <div className="pagination" style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
+              <Button
+                type="button"
+                className="btn-secondary"
+                disabled={currentPage === 0}
+                onClick={() => setCurrentPage(currentPage - 1)}
+              >
+                Previous
+              </Button>
+              <span>Page {currentPage + 1} of {totalPages}</span>
+              <Button
+                type="button"
+                className="btn-secondary"
+                disabled={currentPage >= totalPages - 1}
+                onClick={() => setCurrentPage(currentPage + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </>
+      )}
     </section>
   );
 }

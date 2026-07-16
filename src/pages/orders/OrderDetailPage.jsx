@@ -11,6 +11,7 @@ import { formatPaymentTimeLeft } from '../../utils/paymentExpiry';
 import { showToast } from '../../utils/toast';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { useAuth } from '../../context/AuthContext';
 
 const STATUS_MAP = {
   'PENDING_PAYMENT': { text: 'Pending payment', class: 'warning' },
@@ -24,6 +25,8 @@ const STATUS_MAP = {
 export default function OrderDetailPage({ adminView = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
   const [order, setOrder] = useState(null);
   const [error, setError] = useState(null);
   const [showTimeline, setShowTimeline] = useState(false);
@@ -37,33 +40,33 @@ export default function OrderDetailPage({ adminView = false }) {
     orderService.getOrderById(id)
       .then(async (ord) => {
         if (!ord) return;
-
-        // Fetch book cover images in parallel
-        const itemsWithCovers = await Promise.all(
-          (ord.items || []).map(async (item) => {
-            try {
-              const book = await bookService.getBookById(item.bookId);
-              return {
-                ...item,
-                coverUrl: book?.coverUrl,
-              };
-            } catch (err) {
-              console.error(`Failed to load cover for book #${item.bookId}:`, err);
-              return item;
-            }
-          })
-        );
-
-        setOrder({
-          ...ord,
-          items: itemsWithCovers,
-        });
-      })
-      .catch(err => {
-        console.error('Failed to load order detail:', err);
-        setError('Could not load order details. Please try again later.');
-      });
-  }, [id]);
+ 
+         // Fetch book cover images in parallel
+         const itemsWithCovers = await Promise.all(
+           (ord.items || []).map(async (item) => {
+             try {
+               const book = await bookService.getBookById(item.bookId);
+               return {
+                 ...item,
+                 coverUrl: book?.coverUrl,
+               };
+             } catch (err) {
+               console.error(`Failed to load cover for book #${item.bookId}:`, err);
+               return item;
+             }
+           })
+         );
+ 
+         setOrder({
+           ...ord,
+           items: itemsWithCovers,
+         });
+       })
+       .catch(err => {
+         console.error('Failed to load order detail:', err);
+         setError('Could not load order details. Please try again later.');
+       });
+   }, [id]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -74,7 +77,7 @@ export default function OrderDetailPage({ adminView = false }) {
     return (
       <section className="stack">
         <ErrorState text={error}>
-          <Link to="/orders"><Button>Back to orders</Button></Link>
+          <Link to={isLoggedIn ? '/orders' : '/'}><Button>Back to {isLoggedIn ? 'orders' : 'home'}</Button></Link>
         </ErrorState>
       </section>
     );
@@ -321,18 +324,20 @@ export default function OrderDetailPage({ adminView = false }) {
         </div>
 
         {/* Footer controls */}
-        <div className="order-detail-footer-actions">
-          <Link to={adminView ? '/admin/orders' : '/orders'} className="order-detail-back-link">
-            &lt;&lt; {adminView ? 'Back to orders' : 'Back to my orders'}
-          </Link>
-          <button
-            type="button"
-            onClick={() => setShowTimeline(!showTimeline)}
-            style={{ padding: '10px 20px', borderRadius: 'var(--radius-sm)', fontSize: '14px', background: '#ffd814', color: '#111', border: '1px solid #fcd200', fontWeight: '500', cursor: 'pointer' }}
-          >
-            {showTimeline ? 'Hide timeline' : 'Track order'}
-          </button>
-        </div>
+        {!adminView && (
+          <div className="order-detail-footer-actions">
+            <Link to={isLoggedIn ? '/orders' : '/'} className="order-detail-back-link">
+              &lt;&lt; {isLoggedIn ? 'Back to my orders' : 'Back to home'}
+            </Link>
+            <button
+              type="button"
+              onClick={() => setShowTimeline(!showTimeline)}
+              style={{ padding: '10px 20px', borderRadius: 'var(--radius-sm)', fontSize: '14px', background: '#ffd814', color: '#111', border: '1px solid #fcd200', fontWeight: '500', cursor: 'pointer' }}
+            >
+              {showTimeline ? 'Hide timeline' : 'Track order'}
+            </button>
+          </div>
+        )}
 
         {/* Order Timeline (Track Order history) */}
         {showTimeline && (
