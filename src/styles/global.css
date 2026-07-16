@@ -2372,6 +2372,33 @@ html[data-theme="dark"] .footer {
   gap: 2px;
 }
 
+.star-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star-rating-item {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.star-rating-bg,
+.star-rating-fill {
+  display: block;
+  line-height: 0;
+}
+
+.star-rating-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
 .book-detail-meta-divider {
   color: var(--border);
 }

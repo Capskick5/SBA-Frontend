@@ -8,11 +8,11 @@ import {
   Plus,
   RotateCcw,
   ShoppingCart,
-  Star,
   Truck,
   Users,
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
+import StarRating from '../../components/ui/StarRating';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import ReviewForm from '../../components/reviews/ReviewForm';
 import ReviewList from '../../components/reviews/ReviewList';
@@ -100,7 +100,7 @@ function RelatedBookCard({ book }) {
         )}
       </div>
       <div className="book-detail-related-rating">
-        <Star size={12} fill="#ffc107" stroke="#ffc107" />
+        <StarRating value={book.ratingAvg || 0} size={12} />
         <span>{rating}</span>
         <span>({book.reviewCount || 0})</span>
       </div>
@@ -528,16 +528,7 @@ export default function BookDetailPage() {
             </div>
 
             <div className="book-detail-rating-row">
-              <div className="book-detail-rating">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Star
-                    key={index}
-                    size={15}
-                    fill={index < Math.round(ratingValue) ? '#ffc107' : 'transparent'}
-                    stroke="#d1d5db"
-                  />
-                ))}
-              </div>
+              <StarRating value={ratingValue} size={15} className="book-detail-rating" />
               <span>({reviewCount} reviews)</span>
               <span className="book-detail-meta-divider">|</span>
               <span>{book.soldCount || 0} sold</span>
@@ -660,16 +651,7 @@ export default function BookDetailPage() {
         <div className="book-detail-reviews">
           <div className="book-detail-review-score">
             <strong>{ratingValue.toFixed(1)}/5</strong>
-            <div className="book-detail-rating">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <Star
-                  key={index}
-                  size={18}
-                  fill={index < Math.round(ratingValue) ? '#ffc107' : 'transparent'}
-                  stroke="#d1d5db"
-                />
-              ))}
-            </div>
+            <StarRating value={ratingValue} size={18} className="book-detail-rating" />
             <span>({reviewCount} reviews)</span>
           </div>
 

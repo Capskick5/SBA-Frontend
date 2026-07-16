@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import AddToCartButton from './AddToCartButton';
+import StarRating from '../ui/StarRating';
 import { formatCurrency } from '../../utils/formatters';
 import { hasSalePrice, deriveDiscountPercent } from '../../utils/pricing';
-import { Star } from 'lucide-react';
 
 export default function BookCard({ book }) {
   // Use real backend discount attributes if present, otherwise no discount
@@ -45,7 +45,7 @@ export default function BookCard({ book }) {
         <div className="book-card-meta">
           {hasReviews ? (
             <div className="book-card-rating" title={`${book.reviewCount} customer reviews`}>
-              <Star size={13} fill="#ffc107" stroke="#ffc107" />
+              <StarRating value={book.ratingAvg} size={13} />
               <span>{book.ratingAvg.toFixed(1)} ({book.reviewCount})</span>
             </div>
           ) : (
