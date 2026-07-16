@@ -310,8 +310,17 @@ export default function BookDetailPage() {
   const maxQuantity = book ? Math.max(1, book.stock) : 1;
   const description = book?.description || 'No description available for this book.';
   const isLongDescription = description.length > 480 || description.split('\n').length > 4;
-  const reviewCount = reviewSummary?.totalReviews ?? Math.max(reviewTotal, book?.reviewCount || 0);
-  const ratingValue = Number(reviewSummary?.averageRating ?? book?.ratingAvg ?? 0);
+  // Prefer live review list/summary over denormalized book fields (those can be stale).
+  const reviewCount = Math.max(
+    Number(reviewSummary?.totalReviews || 0),
+    Number(reviewTotal || 0),
+    Number(book?.reviewCount || 0),
+  );
+  const ratingValue = Number(
+    reviewSummary?.averageRating != null
+      ? reviewSummary.averageRating
+      : (book?.ratingAvg || 0),
+  );
   const currentUserReview = myReview;
   const ratingBreakdown = [5, 4, 3, 2, 1].map((stars) => ({
     stars,
