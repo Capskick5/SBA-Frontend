@@ -3,11 +3,31 @@ import Button from '../../components/ui/Button';
 import Table from '../../components/ui/Table';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
+import { showToast } from '../../utils/toast';
+
+const PAGE_SIZE = 10;
 
 function formatRole(role) {
   if (role === 'ADMIN') return 'Admin';
   if (role === 'CUSTOMER') return 'Customer';
   return role || 'Customer';
+}
+
+function normalizeUsersResponse(response) {
+  const responseBody = response?.data || response;
+  if (responseBody?.items && Array.isArray(responseBody.items)) {
+    return { items: responseBody.items, totalPages: responseBody.totalPages || 1 };
+  }
+  if (Array.isArray(responseBody)) {
+    return { items: responseBody, totalPages: 1 };
+  }
+  return { items: [], totalPages: 1 };
+}
+
+async function requestUsers(pageIndex) {
+  return normalizeUsersResponse(
+    await adminService.getUsers({ page: pageIndex, size: PAGE_SIZE }),
+  );
 }
 
 export default function AdminUsersPage() {
@@ -16,43 +36,57 @@ export default function AdminUsersPage() {
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const PAGE_SIZE = 10;
 
-  const fetchUsers = (pageIndex) => {
+  const fetchUsers = async (pageIndex) => {
     setLoading(true);
     setError('');
-    adminService.getUsers({ page: pageIndex, size: PAGE_SIZE })
-      .then((res) => {
-        const responseBody = res.data || res;
-        if (responseBody?.items && Array.isArray(responseBody.items)) {
-          setUsers(responseBody.items);
-          setTotalPages(responseBody.totalPages || 1);
-        } else if (Array.isArray(responseBody)) {
-          setUsers(responseBody);
-          setTotalPages(1);
-        } else {
-          setUsers([]);
-          setTotalPages(1);
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to load users:', err);
-        setError('Could not load user accounts.');
-      })
-      .finally(() => setLoading(false));
+    try {
+      const result = await requestUsers(pageIndex);
+      setUsers(result.items);
+      setTotalPages(result.totalPages);
+    } catch (requestError) {
+      console.error('Failed to load users:', requestError);
+      setError('Could not load user accounts.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    fetchUsers(currentPage);
+    let active = true;
+    requestUsers(currentPage)
+      .then((result) => {
+        if (!active) return;
+        setUsers(result.items);
+        setTotalPages(result.totalPages);
+      })
+      .catch((requestError) => {
+        if (!active) return;
+        console.error('Failed to load users:', requestError);
+        setError('Could not load user accounts.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [currentPage]);
 
   const handleToggle = async (user) => {
     try {
       await adminService.toggleUserStatus(user.id, !user.enabled);
-      fetchUsers(currentPage);
+      await fetchUsers(currentPage);
+      showToast(`Customer account ${user.enabled ? 'locked' : 'unlocked'}.`);
     } catch {
-      alert('Failed to update user status.');
+      showToast('Failed to update user status.', 'error');
     }
+  };
+
+  const changePage = (nextPage) => {
+    setLoading(true);
+    setError('');
+    setCurrentPage(nextPage);
   };
 
   return (
@@ -96,7 +130,7 @@ export default function AdminUsersPage() {
                 type="button"
                 className="btn-secondary"
                 disabled={currentPage === 0}
-                onClick={() => setCurrentPage(currentPage - 1)}
+                onClick={() => changePage(currentPage - 1)}
               >
                 Previous
               </Button>
@@ -105,7 +139,7 @@ export default function AdminUsersPage() {
                 type="button"
                 className="btn-secondary"
                 disabled={currentPage >= totalPages - 1}
-                onClick={() => setCurrentPage(currentPage + 1)}
+                onClick={() => changePage(currentPage + 1)}
               >
                 Next
               </Button>

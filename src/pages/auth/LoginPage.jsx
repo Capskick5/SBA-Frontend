@@ -51,7 +51,10 @@ export default function LoginPage() {
           showToast('Your guest cart was moved to your account.');
         }
       } catch {
-        // Non-blocking: user can still shop with the account cart.
+        showToast(
+          'Signed in, but your guest cart could not be merged. Its items were kept for you.',
+          'error',
+        );
       }
       navigate(redirect);
     } catch (err) {

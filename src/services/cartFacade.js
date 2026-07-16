@@ -51,43 +51,15 @@ export const cartFacade = {
     return activeCartService().removeItem(itemId);
   },
 
-  /**
-   * After login, push local guest lines into the server cart, then clear guest storage.
-   * Falls back to sequential addItem when /cart/merge is unavailable.
-   */
+  /** Push all guest lines atomically, then clear local storage only after success. */
   async mergeGuestCartAfterLogin() {
     const guestItems = getGuestCartItems();
     if (!guestItems.length || !isLoggedInCustomer()) return null;
 
-    try {
-      try {
-        const merged = await apiClient.post('/cart/merge', {
-          items: guestItems.map(({ bookId, quantity }) => ({ bookId, quantity })),
-        });
-        clearGuestCart();
-        return merged ? mapServerCart(merged) : cartService.getCart();
-      } catch (err) {
-        const missing = err?.code === 404 || err?.error_type === 'RESOURCE_NOT_FOUND';
-        if (!missing) throw err;
-      }
-
-      for (const item of guestItems) {
-        await cartService.addItem(
-          {
-            id: item.bookId,
-            title: item.title,
-            coverUrl: item.coverUrl,
-            price: item.price,
-            stock: item.available === false ? 0 : 1,
-          },
-          item.quantity || 1,
-        );
-      }
-      clearGuestCart();
-      return cartService.getCart();
-    } catch (err) {
-      console.error('Failed to merge guest cart:', err);
-      return null;
-    }
+    const merged = await apiClient.post('/cart/merge', {
+      items: guestItems.map(({ bookId, quantity }) => ({ bookId, quantity })),
+    });
+    clearGuestCart();
+    return merged ? mapServerCart(merged) : cartService.getCart();
   },
 };
