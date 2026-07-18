@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/v1/:path*",
+      "destination": "http://104.64.205.45:8080/api/v1/:path*"
+    },
+    {
+      "source": "/minio/:path*",
+      "destination": "http://104.64.205.45:9000/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
