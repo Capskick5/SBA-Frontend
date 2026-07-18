@@ -213,7 +213,19 @@ export default function CartPage() {
   const goToCheckout = async () => {
     if (selectedItemIds.length === 0) return;
 
-    if (isLoggedIn) {
+    if (isLoggedIn && user?.id) {
+      try {
+        const { checkServerOrderHistoryAndLock, getLockedTimeRemainingMessage } = await import('../../utils/userLockGuard');
+        const lockExpiresAt = await checkServerOrderHistoryAndLock(user.id);
+        if (lockExpiresAt) {
+          const lockMsg = getLockedTimeRemainingMessage(user.id);
+          showToast(lockMsg, 'error');
+          return;
+        }
+      } catch (lockErr) {
+        console.error(lockErr);
+      }
+
       const pendingOrder = await getPendingPaymentOrder({ force: true });
       if (pendingOrder) {
         showToast(PENDING_PAYMENT_MESSAGE, 'error');

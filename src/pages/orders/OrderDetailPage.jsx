@@ -93,29 +93,40 @@ export default function OrderDetailPage({ adminView = false }) {
     ? JSON.parse(order.addressSnapshot)
     : order.addressSnapshot || {};
   const calculatedSubtotal = (order.items || []).reduce((sum, item) => sum + (item.lineTotal || 0), 0);
-      const subtotal = order.subtotal ?? calculatedSubtotal;
-      const shippingFee = order.shippingFee || 0;
-      const giftWrapFee = order.giftWrapFee || 0;
-      const discount = order.discountAmount ?? Math.max(0, subtotal + shippingFee + giftWrapFee - order.total);
+  const subtotal = order.subtotal ?? calculatedSubtotal;
+  const shippingFee = order.shippingFee || 0;
+  const giftWrapFee = order.giftWrapFee || 0;
+  const discount = order.discountAmount ?? Math.max(0, subtotal + shippingFee + giftWrapFee - order.total);
 
 
-      const statusConfig = STATUS_MAP[order.status] || {text: order.status, class: 'info' };
+  const statusConfig = STATUS_MAP[order.status] || {text: order.status, class: 'info' };
 
-  const handleRebuyItem = async (bookId, title) => {
-        setRebuyingItemIds(prev => ({ ...prev, [bookId]: true }));
-      try {
-      const newCart = await cartFacade.addItem({id: bookId }, 1);
-      notifyCartUpdated(newCart);
-      navigate('/cart');
+  const handleRebuy = async (bookId) => {
+    if (rebuyingItemIds[bookId]) return;
+    setRebuyingItemIds(prev => ({ ...prev, [bookId]: true }));
+    try {
+      const book = await bookService.getBook(bookId);
+      const updated = await cartFacade.addItem(book, 1);
+      notifyCartUpdated(updated);
+      showToast('Added to cart successfully!');
     } catch (err) {
-        console.error('Failed to rebuy item:', err);
       showToast(
-        getPendingPaymentUserMessage(err) || `Could not buy "${title}" again. Please try again.`,
-        'error',
+        err?.message || 'Failed to add item to cart. Please try again.',
+        'error'
       );
     } finally {
         setRebuyingItemIds(prev => ({ ...prev, [bookId]: false }));
     }
+  };
+
+  const handleLockConfirm = async () => {
+    try {
+      const { authService } = await import('../../services/authService');
+      await authService.logout();
+    } catch (err) {
+      console.error(err);
+    }
+    navigate('/login');
   };
 
   const handleCancelPendingOrder = async () => {
@@ -128,6 +139,15 @@ export default function OrderDetailPage({ adminView = false }) {
       setOrder((current) => ({ ...current, ...cancelledOrder }));
       setShowCancelConfirm(false);
       showToast(`Order #${cancelledOrder.id} was cancelled.`, 'success');
+
+      if (user?.id) {
+        const { checkServerOrderHistoryAndLock } = await import('../../utils/userLockGuard');
+        const lockExpiresAt = await checkServerOrderHistoryAndLock(user.id);
+        if (lockExpiresAt) {
+          setShowLockDialog(true);
+          return;
+        }
+      }
     } catch (err) {
       showToast(err?.message || 'Could not cancel this order. Please try again.', 'error');
     } finally {
@@ -364,6 +384,16 @@ export default function OrderDetailPage({ adminView = false }) {
             onConfirm={handleCancelPendingOrder}
           >
             Order #{order.id} will be cancelled and its reserved stock will be released. This action cannot be undone.
+          </ConfirmDialog>
+        )}
+
+        {!adminView && showLockDialog && (
+          <ConfirmDialog
+            title="Tài khoản bị khóa"
+            onCancel={handleLockConfirm}
+            onConfirm={handleLockConfirm}
+          >
+            Tài khoản của bạn đã bị khóa tạm thời trong 15 phút do hủy liên tiếp 5 đơn hàng. Bạn sẽ bị đăng xuất khỏi hệ thống.
           </ConfirmDialog>
         )}
       </section>

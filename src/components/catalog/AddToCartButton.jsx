@@ -50,9 +50,25 @@ export default function AddToCartButton({ book, className = '' }) {
 
   if (user?.role === 'ADMIN') return null;
 
-  const addToCart = (event) => {
+  const addToCart = async (event) => {
     event.preventDefault();
     event.stopPropagation();
+
+    if (user?.id) {
+      try {
+        const { checkServerOrderHistoryAndLock, getLockedTimeRemainingMessage } = await import('../../utils/userLockGuard');
+        const lockExpiresAt = await checkServerOrderHistoryAndLock(user.id);
+        if (lockExpiresAt) {
+          const lockMsg = getLockedTimeRemainingMessage(user.id);
+          setError(lockMsg);
+          showToast(lockMsg, 'error');
+          return;
+        }
+      } catch (lockErr) {
+        console.error(lockErr);
+      }
+    }
+
     setError('');
     setAdding(true);
     debouncedAddToCart(book);

@@ -12,6 +12,7 @@ import { notifyCartUpdated } from '../../utils/cartEvents';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
 import { formatPaymentTimeLeft } from '../../utils/paymentExpiry';
 import { showToast } from '../../utils/toast';
+import { useAuth } from '../../context/AuthContext';
 import {
   clearPendingPaymentCache,
   getPendingPaymentUserMessage,
@@ -39,6 +40,7 @@ const PAGE_SIZE = 10;
 
 export default function OrdersPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -53,6 +55,7 @@ export default function OrdersPage() {
   const [cancelTarget, setCancelTarget] = useState(null);
   const [cancellingId, setCancellingId] = useState(null);
   const [resumingId, setResumingId] = useState(null);
+  const [showLockDialog, setShowLockDialog] = useState(false);
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -174,6 +177,16 @@ export default function OrdersPage() {
     setAppliedSearch(searchQuery.trim());
   };
 
+  const handleLockConfirm = async () => {
+    try {
+      const { authService } = await import('../../services/authService');
+      await authService.logout();
+    } catch (err) {
+      console.error(err);
+    }
+    navigate('/login');
+  };
+
   const handleCancelPendingOrder = async () => {
     if (!cancelTarget || cancellingId) return;
 
@@ -187,6 +200,15 @@ export default function OrdersPage() {
         setPage((current) => current - 1);
       } else {
         await loadOrders();
+      }
+
+      if (user?.id) {
+        const { checkServerOrderHistoryAndLock } = await import('../../utils/userLockGuard');
+        const lockExpiresAt = await checkServerOrderHistoryAndLock(user.id);
+        if (lockExpiresAt) {
+          setShowLockDialog(true);
+          return;
+        }
       }
     } catch (err) {
       showToast(err?.message || 'Could not cancel this order. Please try again.', 'error');
@@ -398,6 +420,16 @@ export default function OrdersPage() {
           onConfirm={handleCancelPendingOrder}
         >
           Order #{cancelTarget.id} will be cancelled and its reserved stock will be released. This action cannot be undone.
+        </ConfirmDialog>
+      )}
+
+      {showLockDialog && (
+        <ConfirmDialog
+          title="Tài khoản bị khóa"
+          onCancel={handleLockConfirm}
+          onConfirm={handleLockConfirm}
+        >
+          Tài khoản của bạn đã bị khóa tạm thời trong 15 phút do hủy liên tiếp 5 đơn hàng. Bạn sẽ bị đăng xuất khỏi hệ thống.
         </ConfirmDialog>
       )}
     </section>
