@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import AddressForm from '../../components/checkout/AddressForm';
@@ -89,6 +89,7 @@ export default function CheckoutPage() {
   const [paying, setPaying] = useState(false);
   const [pendingOrder, setPendingOrder] = useState(null);
   const [resumingPayment, setResumingPayment] = useState(false);
+  const idempotencyKeyRef = useRef(null);
 
   const selectedAddress = addresses.find((address) => address.id === Number(selectedAddressId));
   const editingAddress = addresses.find((address) => address.id === editingAddressId);
@@ -367,12 +368,19 @@ export default function CheckoutPage() {
   };
 
   const pay = async () => {
+    if (paying) return;
     if (cartItemIds.length === 0) return;
     setCheckoutError('');
     setPaying(true);
 
     try {
-      const key = uuidv4();
+      // Reuse one idempotency key across retries of the same checkout attempt so a
+      // request that succeeded server-side but failed to reach the client (timeout,
+      // dropped connection) is deduplicated instead of creating a duplicate order.
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = uuidv4();
+      }
+      const key = idempotencyKeyRef.current;
 
       if (isGuest) {
         if (!isAddressComplete(guestAddress)) {
