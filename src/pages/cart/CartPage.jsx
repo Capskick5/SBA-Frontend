@@ -9,6 +9,11 @@ import { voucherService } from '../../services/voucherService';
 import { useAuth } from '../../context/AuthContext';
 import { notifyCartUpdated } from '../../utils/cartEvents';
 import { formatCurrency } from '../../utils/formatters';
+import { showToast } from '../../utils/toast';
+import {
+  getPendingPaymentOrder,
+  PENDING_PAYMENT_MESSAGE,
+} from '../../utils/pendingOrderGuard';
 
 const selectDefaultAddress = (addresses = []) =>
   addresses.find((address) => address.isDefault) || null;
@@ -205,8 +210,18 @@ export default function CartPage() {
       .catch(() => setItemError(itemId, 'Could not remove this item. Please try again.'));
   };
 
-  const goToCheckout = () => {
+  const goToCheckout = async () => {
     if (selectedItemIds.length === 0) return;
+
+    if (isLoggedIn) {
+      const pendingOrder = await getPendingPaymentOrder({ force: true });
+      if (pendingOrder) {
+        showToast(PENDING_PAYMENT_MESSAGE, 'error');
+        navigate(`/orders/${pendingOrder.id}`);
+        return;
+      }
+    }
+
     const params = new URLSearchParams({ items: selectedItemIds.join(',') });
     if (defaultAddress?.id) params.set('address', String(defaultAddress.id));
     if (selectedVoucherId) params.set('voucher', String(selectedVoucherId));

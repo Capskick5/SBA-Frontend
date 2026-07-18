@@ -27,6 +27,7 @@ import { formatProductPrice } from '../../utils/formatters';
 import { deriveDiscountPercent, hasSalePrice } from '../../utils/pricing';
 import { notifyCartUpdated } from '../../utils/cartEvents';
 import { showToast } from '../../utils/toast';
+import { getPendingPaymentUserMessage } from '../../utils/pendingOrderGuard';
 
 const POLICIES = [
   { icon: Truck, label: 'Delivery time: 2 - 5 business days' },
@@ -383,7 +384,10 @@ export default function BookDetailPage() {
 
       showToast(`Added "${book.title}" to cart!`);
     } catch (err) {
-      showToast(err?.message || 'Failed to add book to cart.', 'error');
+      showToast(
+        getPendingPaymentUserMessage(err) || err?.message || 'Failed to add book to cart.',
+        'error',
+      );
     } finally {
       setCartLoading(false);
     }

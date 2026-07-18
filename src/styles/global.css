@@ -877,6 +877,24 @@ html[data-theme="dark"] .footer {
   gap: 24px;
 }
 
+.checkout-pending-order-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.checkout-pending-order-banner p {
+  margin: 0;
+  color: var(--danger, #b42318);
+}
+
+.checkout-pending-order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
 .filters {
   grid-template-columns: repeat(2, minmax(220px, 1fr));
   align-items: end;
@@ -5132,6 +5150,18 @@ tr:last-child td {
 .modal-close:hover {
   color: var(--text);
   background: var(--surface-alt);
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.confirm-dialog-actions .btn {
+  min-width: 110px;
 }
 
 @media (max-width: 768px) {

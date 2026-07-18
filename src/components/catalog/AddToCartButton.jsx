@@ -5,10 +5,14 @@ import { cartFacade } from '../../services/cartFacade';
 import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../utils/toast';
 import { notifyCartUpdated } from '../../utils/cartEvents';
+import { getPendingPaymentUserMessage } from '../../utils/pendingOrderGuard';
 
 function getAddToCartErrorMessage(error) {
+  const pendingMessage = getPendingPaymentUserMessage(error);
+  if (pendingMessage) return pendingMessage;
+
   if (error?.error_type) {
-    return ERROR_MESSAGES[error.error_type] || error.message || 'Could not add this book to cart.';
+    return error.message || ERROR_MESSAGES[error.error_type] || 'Could not add this book to cart.';
   }
 
   return error?.message || 'Could not add this book to cart.';

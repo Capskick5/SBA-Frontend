@@ -13,6 +13,13 @@ import { checkoutService } from '../../services/checkoutService';
 import { voucherService } from '../../services/voucherService';
 import { clearGuestCart } from '../../services/guestCartStorage';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
+import { showToast } from '../../utils/toast';
+import {
+  getPendingPaymentOrder,
+  getPendingPaymentUserMessage,
+  PENDING_PAYMENT_MESSAGE,
+} from '../../utils/pendingOrderGuard';
+import { orderService } from '../../services/orderService';
 
 function pickCartItemIds(param, cartItems) {
   const cartIds = (cartItems || []).map((item) => item.itemId);
@@ -80,6 +87,8 @@ export default function CheckoutPage() {
   const [addressToDelete, setAddressToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [pendingOrder, setPendingOrder] = useState(null);
+  const [resumingPayment, setResumingPayment] = useState(false);
 
   const selectedAddress = addresses.find((address) => address.id === Number(selectedAddressId));
   const editingAddress = addresses.find((address) => address.id === editingAddressId);
@@ -216,11 +225,25 @@ export default function CheckoutPage() {
         setVouchers([]);
         setSelectedVoucherId('');
         setShowAddAddress(true);
+        setPendingOrder(null);
         if (guestAddress && itemIds.length > 0) {
           await refreshPreview(null, itemIds, selectedItems);
         }
         return;
       }
+
+      const existingPendingOrder = await getPendingPaymentOrder({ force: true });
+      if (!active) return;
+      if (existingPendingOrder) {
+        setPendingOrder(existingPendingOrder);
+        setCheckoutError(PENDING_PAYMENT_MESSAGE);
+        setAddresses([]);
+        setVouchers([]);
+        setSelectedAddressId('');
+        setSelectedVoucherId('');
+        return;
+      }
+      setPendingOrder(null);
 
       const [addrList, voucherList] = await Promise.all([
         addressService.list(),
@@ -248,7 +271,11 @@ export default function CheckoutPage() {
     })
       .catch((err) => {
         console.error('Failed to load checkout page:', err);
-        if (active) setCheckoutError('Could not load checkout information. Please try again.');
+        if (!active) return;
+        const pendingMessage = getPendingPaymentUserMessage(err);
+        setCheckoutError(
+          pendingMessage || 'Could not load checkout information. Please try again.',
+        );
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -327,6 +354,18 @@ export default function CheckoutPage() {
     }
   };
 
+  const handleContinuePendingPayment = async () => {
+    if (!pendingOrder?.id || resumingPayment) return;
+    setResumingPayment(true);
+    try {
+      const paymentLink = await orderService.getPendingPaymentLink(pendingOrder.id);
+      window.location.assign(paymentLink.checkoutUrl);
+    } catch (err) {
+      showToast(err?.message || 'Could not continue this payment. Please try again.', 'error');
+      setResumingPayment(false);
+    }
+  };
+
   const pay = async () => {
     if (cartItemIds.length === 0) return;
     setCheckoutError('');
@@ -359,6 +398,14 @@ export default function CheckoutPage() {
         return;
       }
 
+      const existingPendingOrder = await getPendingPaymentOrder({ force: true });
+      if (existingPendingOrder) {
+        setPendingOrder(existingPendingOrder);
+        setCheckoutError(PENDING_PAYMENT_MESSAGE);
+        showToast(PENDING_PAYMENT_MESSAGE, 'error');
+        return;
+      }
+
       if (!selectedAddressId) return;
       const result = await checkoutService.checkout(
         selectedAddressId,
@@ -372,8 +419,17 @@ export default function CheckoutPage() {
         window.location.href = result.checkoutUrl;
       }
     } catch (err) {
-      const message = err?.response?.data?.message || err?.message || 'Checkout failed. Please try again.';
+      const pendingMessage = getPendingPaymentUserMessage(err);
+      const message = pendingMessage
+        || err?.response?.data?.message
+        || err?.message
+        || 'Checkout failed. Please try again.';
       setCheckoutError(message);
+      if (pendingMessage) {
+        const existingPendingOrder = await getPendingPaymentOrder({ force: true });
+        if (existingPendingOrder) setPendingOrder(existingPendingOrder);
+        showToast(pendingMessage, 'error');
+      }
     } finally {
       setPaying(false);
     }
@@ -485,12 +541,14 @@ export default function CheckoutPage() {
 
   const selectedVoucher = vouchers.find((voucher) => String(voucher.id) === String(selectedVoucherId));
 
-  const canPay = isGuest
+  const canPay = !pendingOrder && (isGuest
     ? isAddressComplete(guestAddress) && cartItemIds.length > 0
-    : Boolean(selectedAddressId) && cartItemIds.length > 0;
-  const disabledReason = isGuest
-    ? (!isAddressComplete(guestAddress) ? 'Confirm a delivery address below to continue to payment.' : '')
-    : (!selectedAddressId ? 'Add a delivery address to continue to payment.' : '');
+    : Boolean(selectedAddressId) && cartItemIds.length > 0);
+  const disabledReason = pendingOrder
+    ? PENDING_PAYMENT_MESSAGE
+    : isGuest
+      ? (!isAddressComplete(guestAddress) ? 'Confirm a delivery address below to continue to payment.' : '')
+      : (!selectedAddressId ? 'Add a delivery address to continue to payment.' : '');
 
   return (
     <div className="stack" style={{ gap: '24px' }}>
@@ -508,6 +566,23 @@ export default function CheckoutPage() {
         </p>
       )}
       {checkoutError && <p className="form-message form-message-error">{checkoutError}</p>}
+      {pendingOrder && (
+        <div className="panel checkout-pending-order-banner">
+          <p>{PENDING_PAYMENT_MESSAGE}</p>
+          <div className="checkout-pending-order-actions">
+            <Button
+              type="button"
+              loading={resumingPayment}
+              onClick={handleContinuePendingPayment}
+            >
+              Continue payment
+            </Button>
+            <Link className="btn-secondary" to={`/orders/${pendingOrder.id}`}>
+              View order #{pendingOrder.id}
+            </Link>
+          </div>
+        </div>
+      )}
       <section className="checkout-layout">
         <div className="checkout-sticky-region">
           <div className="checkout-sticky-left stack">

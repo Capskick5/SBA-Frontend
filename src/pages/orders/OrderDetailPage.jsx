@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { bookService } from '../../services/bookService';
-import { cartService } from '../../services/cartService';
+import { cartFacade } from '../../services/cartFacade';
 import { notifyCartUpdated } from '../../utils/cartEvents';
 import OrderTimeline from '../../components/orders/OrderTimeline';
 import { LoadingState, ErrorState } from '../../components/ui/State';
@@ -9,6 +9,10 @@ import { orderService } from '../../services/orderService';
 import { formatCurrency, formatDate, formatDateTime } from '../../utils/formatters';
 import { formatPaymentTimeLeft } from '../../utils/paymentExpiry';
 import { showToast } from '../../utils/toast';
+import {
+  clearPendingPaymentCache,
+  getPendingPaymentUserMessage,
+} from '../../utils/pendingOrderGuard';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useAuth } from '../../context/AuthContext';
@@ -100,12 +104,15 @@ export default function OrderDetailPage({ adminView = false }) {
   const handleRebuyItem = async (bookId, title) => {
         setRebuyingItemIds(prev => ({ ...prev, [bookId]: true }));
       try {
-      const newCart = await cartService.addItem({id: bookId }, 1);
+      const newCart = await cartFacade.addItem({id: bookId }, 1);
       notifyCartUpdated(newCart);
       navigate('/cart');
     } catch (err) {
         console.error('Failed to rebuy item:', err);
-      alert(`Could not buy "${title}" again. Please try again.`);
+      showToast(
+        getPendingPaymentUserMessage(err) || `Could not buy "${title}" again. Please try again.`,
+        'error',
+      );
     } finally {
         setRebuyingItemIds(prev => ({ ...prev, [bookId]: false }));
     }
@@ -117,6 +124,7 @@ export default function OrderDetailPage({ adminView = false }) {
     setCancelling(true);
     try {
       const cancelledOrder = await orderService.cancelPendingOrder(order.id);
+      clearPendingPaymentCache();
       setOrder((current) => ({ ...current, ...cancelledOrder }));
       setShowCancelConfirm(false);
       showToast(`Order #${cancelledOrder.id} was cancelled.`, 'success');

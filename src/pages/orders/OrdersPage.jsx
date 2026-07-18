@@ -7,11 +7,15 @@ import Pagination from '../../components/catalog/Pagination';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { orderService } from '../../services/orderService';
 import { bookService } from '../../services/bookService';
-import { cartService } from '../../services/cartService';
+import { cartFacade } from '../../services/cartFacade';
 import { notifyCartUpdated } from '../../utils/cartEvents';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
 import { formatPaymentTimeLeft } from '../../utils/paymentExpiry';
 import { showToast } from '../../utils/toast';
+import {
+  clearPendingPaymentCache,
+  getPendingPaymentUserMessage,
+} from '../../utils/pendingOrderGuard';
 
 const STATUS_MAP = {
   'PENDING_PAYMENT': { text: 'Pending payment', class: 'pending-payment' },
@@ -142,7 +146,7 @@ export default function OrdersPage() {
       let lastCart = null;
       for (const item of order.items) {
         if (item.bookId) {
-          lastCart = await cartService.addItem({ id: item.bookId }, item.quantity);
+          lastCart = await cartFacade.addItem({ id: item.bookId }, item.quantity);
         }
       }
       if (lastCart) {
@@ -151,7 +155,10 @@ export default function OrdersPage() {
       navigate('/cart');
     } catch (err) {
       console.error('Failed to rebuy order items:', err);
-      alert('Could not buy this order again. Please try again.');
+      showToast(
+        getPendingPaymentUserMessage(err) || 'Could not buy this order again. Please try again.',
+        'error',
+      );
     } finally {
       setRebuyingId(null);
     }
@@ -173,6 +180,7 @@ export default function OrdersPage() {
     setCancellingId(cancelTarget.id);
     try {
       const cancelledOrder = await orderService.cancelPendingOrder(cancelTarget.id);
+      clearPendingPaymentCache();
       setCancelTarget(null);
       showToast(`Order #${cancelledOrder.id} was cancelled.`, 'success');
       if (orders.length === 1 && page > 0) {
