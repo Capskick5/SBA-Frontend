@@ -11,7 +11,6 @@ import { formatPaymentTimeLeft } from '../../utils/paymentExpiry';
 import { showToast } from '../../utils/toast';
 import {
   clearPendingPaymentCache,
-  getPendingPaymentUserMessage,
 } from '../../utils/pendingOrderGuard';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -39,6 +38,7 @@ export default function OrderDetailPage({ adminView = false }) {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [resuming, setResuming] = useState(false);
+  const [showLockDialog, setShowLockDialog] = useState(false);
 
   useEffect(() => {
     orderService.getOrderById(id)
@@ -295,7 +295,7 @@ export default function OrderDetailPage({ adminView = false }) {
                               type="button"
                               className="btn-action"
                               disabled={rebuyingItemIds[item.bookId]}
-                              onClick={() => handleRebuyItem(item.bookId, item.title)}
+                              onClick={() => handleRebuy(item.bookId)}
                             >
                               {rebuyingItemIds[item.bookId] ? 'Adding...' : 'Buy again'}
                             </button>
