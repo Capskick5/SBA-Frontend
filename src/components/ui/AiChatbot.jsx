@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { BotMessageSquare } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -22,6 +22,7 @@ function debounce(func, delay) {
 export default function AiChatbot() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -135,6 +136,24 @@ export default function AiChatbot() {
             </button>
           </div>
 
+          {!user ? (
+            <div className="ai-chatbot-messages">
+              <div className="ai-chatbot-message is-bot">
+                <div className="message-text">
+                  <p>The AI book assistant is available for logged-in customers.</p>
+                  <p>Please log in to start chatting and get personal recommendations.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`)}
+              >
+                Log in to chat
+              </button>
+            </div>
+          ) : (
+          <>
           <div className="ai-chatbot-messages">
             {messages.map((msg) => (
               <div key={msg.id} className={`ai-chatbot-message is-${msg.sender}`}>
@@ -218,6 +237,8 @@ export default function AiChatbot() {
               Send
             </button>
           </form>
+          </>
+          )}
         </div>
       )}
     </div>
