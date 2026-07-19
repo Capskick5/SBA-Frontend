@@ -80,7 +80,15 @@ export default function AdminOrdersPage() {
             emptyText="No orders found."
             columns={[
               { key: 'id', label: 'Order ID' },
-              { key: 'userId', label: 'Customer', render: (row) => row.userId || 'N/A' },
+              {
+                key: 'userId',
+                label: 'Customer',
+                render: (row) => (
+                  row.userId
+                    ? `#${row.userId}`
+                    : (row.guestEmail ? `Guest · ${row.guestEmail}` : 'Guest')
+                ),
+              },
               {
                 key: 'createdAt',
                 label: 'Order Date',

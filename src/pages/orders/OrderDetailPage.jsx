@@ -185,7 +185,17 @@ export default function OrderDetailPage({ adminView = false }) {
           <h1>
             Order #{order.id} - <span className={`highlight ${statusConfig.class}`}>{statusConfig.text}</span>
           </h1>
-          <div className="order-detail-date">Placed on {formatDateTime(order.createdAt)}</div>
+          <div className="order-detail-date">
+            Placed on {formatDateTime(order.createdAt)}
+            {adminView && (
+              <span>
+                {' · '}
+                {order.userId
+                  ? `Placed by user #${order.userId}`
+                  : `Placed by guest${order.guestEmail ? ` (${order.guestEmail})` : ''}`}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Info Grid */}
