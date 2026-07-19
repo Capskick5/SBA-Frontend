@@ -1,5 +1,5 @@
-import { apiClient } from './apiClient';
-import { tokenStorage } from './tokenStorage';
+import { apiClient } from '../api/apiClient';
+import { tokenStorage } from '../storage/tokenStorage';
 
 export const profileService = {
   async getProfile() {

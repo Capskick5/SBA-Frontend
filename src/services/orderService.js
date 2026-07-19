@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient } from '../api/apiClient';
 
 export const orderService = {
   async getOrdersPage({ page = 0, size = 10, status, statuses, search } = {}) {

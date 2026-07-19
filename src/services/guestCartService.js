@@ -1,11 +1,11 @@
-import { apiClient } from './apiClient';
+import { apiClient } from '../api/apiClient';
 import {
   clearGuestCart,
   getGuestCartItems,
   getGuestToken,
   guestItemIdForBook,
   setGuestCartItems,
-} from './guestCartStorage';
+} from '../storage/guestCartStorage';
 
 const fallbackCover = (title) =>
   `https://placehold.co/120x170?text=${encodeURIComponent(title || 'Book')}`;

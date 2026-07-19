@@ -11,7 +11,7 @@ import { addressService } from '../../services/addressService';
 import { cartFacade } from '../../services/cartFacade';
 import { checkoutService } from '../../services/checkoutService';
 import { voucherService } from '../../services/voucherService';
-import { clearGuestCart } from '../../services/guestCartStorage';
+import { clearGuestCart } from '../../storage/guestCartStorage';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
 import { showToast } from '../../utils/toast';
 import {

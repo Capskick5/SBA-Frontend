@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import Button from '../ui/Button';
-import { ERROR_MESSAGES } from '../../services/apiError';
+import { ERROR_MESSAGES } from '../../api/apiError';
 import { cartFacade } from '../../services/cartFacade';
 import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../utils/toast';

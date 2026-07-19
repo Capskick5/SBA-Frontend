@@ -1,5 +1,5 @@
 import { createError } from './apiError';
-import { tokenStorage } from './tokenStorage';
+import { tokenStorage } from '../storage/tokenStorage';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
@@ -84,7 +84,17 @@ async function getValidAccessToken() {
 }
 
 async function request(path, { method = 'GET', body, auth = true, retry = true, headers: extraHeaders = {} } = {}) {
-  const headers = { 'Content-Type': 'application/json', ...extraHeaders };
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+  const headers = { ...extraHeaders };
+
+  // Let the browser set multipart boundary for FormData; JSON otherwise.
+  if (isFormData) {
+    delete headers['Content-Type'];
+    delete headers['content-type'];
+  } else if (!headers['Content-Type'] && !headers['content-type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   if (auth) {
     const token = await getValidAccessToken();
     if (token) headers.Authorization = `Bearer ${token}`;
@@ -93,7 +103,7 @@ async function request(path, { method = 'GET', body, auth = true, retry = true, 
   const response = await fetch(buildUrl(path), {
     method,
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
   });
 
   if ((response.status === 401 || response.status === 403) && auth && retry && tokenStorage.getRefreshToken()) {

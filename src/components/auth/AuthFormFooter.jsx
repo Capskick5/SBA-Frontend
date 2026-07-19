@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ERROR_MESSAGES } from '../../services/apiError';
+import { ERROR_MESSAGES } from '../../api/apiError';
 
 export function AuthFormMessage({ error, success }) {
   if (success) {

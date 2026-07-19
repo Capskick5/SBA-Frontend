@@ -1,5 +1,5 @@
 import { mapAddressFromApi, mapAddressToApi } from '../utils/addressMapper';
-import { apiClient } from './apiClient';
+import { apiClient } from '../api/apiClient';
 
 export const addressService = {
   async list() {
