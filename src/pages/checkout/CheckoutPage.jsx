@@ -21,6 +21,9 @@ import {
 } from '../../utils/pendingOrderGuard';
 import { orderService } from '../../services/orderService';
 
+// Local fallback for previews before an address exists. Keep in sync with backend DeliveryType.GIFT.
+const GIFT_WRAP_FEE_VND = 10000;
+
 function pickCartItemIds(param, cartItems) {
   const cartIds = (cartItems || []).map((item) => item.itemId);
   const requested = (param || '')
@@ -108,7 +111,7 @@ export default function CheckoutPage() {
     return () => window.removeEventListener('resize', updateStickyTop);
   }, []);
 
-  const buildCartPreview = (items, shippingFee = null) => {
+  const buildCartPreview = (items, shippingFee = null, mode = deliveryMode) => {
     const summaryItems = items.map((item) => ({
       bookId: item.bookId,
       title: item.title,
@@ -118,15 +121,16 @@ export default function CheckoutPage() {
     }));
     const subtotal = summaryItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
     const hasShipping = typeof shippingFee === 'number';
+    const giftWrapFee = mode === 'gift' ? GIFT_WRAP_FEE_VND : 0;
 
     return {
       items: summaryItems,
       subtotal,
       shippingFee,
-      deliveryType: 'SELF',
-      giftWrapFee: 0,
+      deliveryType: mode === 'gift' ? 'GIFT' : 'SELF',
+      giftWrapFee,
       discountAmount: 0,
-      total: subtotal + (hasShipping ? shippingFee : 0),
+      total: subtotal + (hasShipping ? shippingFee : 0) + giftWrapFee,
     };
   };
 
@@ -154,7 +158,7 @@ export default function CheckoutPage() {
   ) => {
     if (!isLoggedIn) {
       if (!guestAddressOverride) {
-        setPreview(buildCartPreview(fallbackItems, 0));
+        setPreview(buildCartPreview(fallbackItems, 0, mode));
         return;
       }
       try {
@@ -336,7 +340,11 @@ export default function CheckoutPage() {
     if (cartItemIds.length === 0) return;
 
     if (isGuest) {
-      if (!guestAddress) return;
+      if (!guestAddress) {
+        // No address yet: recompute the local preview so the gift-wrap fee shows immediately.
+        setPreview(buildCartPreview(selectedCartItems, preview.shippingFee, mode));
+        return;
+      }
       try {
         await refreshPreview(null, cartItemIds, selectedCartItems, '', mode, guestAddress);
       } catch (err) {
