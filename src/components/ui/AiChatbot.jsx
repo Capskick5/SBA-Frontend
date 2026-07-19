@@ -8,6 +8,7 @@ import { cartFacade } from '../../services/cartFacade';
 import { formatCurrency } from '../../utils/formatters';
 import { showToast } from '../../utils/toast';
 import { notifyCartUpdated } from '../../utils/cartEvents';
+import { getPendingPaymentUserMessage } from '../../utils/pendingOrderGuard';
 
 function debounce(func, delay) {
   let timeout;
@@ -40,7 +41,10 @@ export default function AiChatbot() {
         notifyCartUpdated(updatedCart);
         showToast(`Added "${book.title}" to cart!`);
       } catch (err) {
-        showToast(err.message || 'Failed to add book to cart', 'error');
+        showToast(
+          getPendingPaymentUserMessage(err) || err.message || 'Failed to add book to cart',
+          'error',
+        );
       } finally {
         setIsAddingMap((prev) => ({ ...prev, [book.id]: false }));
       }

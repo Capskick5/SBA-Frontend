@@ -4,6 +4,7 @@ import Button from '../../components/ui/Button';
 import { paymentService } from '../../services/paymentService';
 import { voucherService } from '../../services/voucherService';
 import { formatCurrency } from '../../utils/formatters';
+import { clearPendingPaymentCache } from '../../utils/pendingOrderGuard';
 import { CheckCircle, XCircle, Loader2, Home, ShoppingBag, TicketPercent } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -29,6 +30,9 @@ export default function PaymentResultPage() {
         const result = await paymentService.verifyPayment(params);
         const isPaid = result.status === 'PAID';
         setStatus(isPaid ? 'success' : 'failed');
+        if (isPaid) {
+          clearPendingPaymentCache();
+        }
         if (isPaid && isLoggedIn) {
           const vouchers = await voucherService.listMine().catch(() => []);
           setAvailableVoucher(vouchers[0] || null);

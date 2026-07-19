@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { bookService } from '../../services/bookService';
-import { cartService } from '../../services/cartService';
+import { cartFacade } from '../../services/cartFacade';
 import { notifyCartUpdated } from '../../utils/cartEvents';
 import OrderTimeline from '../../components/orders/OrderTimeline';
 import { LoadingState, ErrorState } from '../../components/ui/State';
@@ -9,6 +9,9 @@ import { orderService } from '../../services/orderService';
 import { formatCurrency, formatDate, formatDateTime } from '../../utils/formatters';
 import { formatPaymentTimeLeft } from '../../utils/paymentExpiry';
 import { showToast } from '../../utils/toast';
+import {
+  clearPendingPaymentCache,
+} from '../../utils/pendingOrderGuard';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useAuth } from '../../context/AuthContext';
@@ -35,6 +38,7 @@ export default function OrderDetailPage({ adminView = false }) {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [resuming, setResuming] = useState(false);
+  const [showLockDialog, setShowLockDialog] = useState(false);
 
   useEffect(() => {
     orderService.getOrderById(id)
@@ -89,26 +93,40 @@ export default function OrderDetailPage({ adminView = false }) {
     ? JSON.parse(order.addressSnapshot)
     : order.addressSnapshot || {};
   const calculatedSubtotal = (order.items || []).reduce((sum, item) => sum + (item.lineTotal || 0), 0);
-      const subtotal = order.subtotal ?? calculatedSubtotal;
-      const shippingFee = order.shippingFee || 0;
-      const giftWrapFee = order.giftWrapFee || 0;
-      const discount = order.discountAmount ?? Math.max(0, subtotal + shippingFee + giftWrapFee - order.total);
+  const subtotal = order.subtotal ?? calculatedSubtotal;
+  const shippingFee = order.shippingFee || 0;
+  const giftWrapFee = order.giftWrapFee || 0;
+  const discount = order.discountAmount ?? Math.max(0, subtotal + shippingFee + giftWrapFee - order.total);
 
 
-      const statusConfig = STATUS_MAP[order.status] || {text: order.status, class: 'info' };
+  const statusConfig = STATUS_MAP[order.status] || {text: order.status, class: 'info' };
 
-  const handleRebuyItem = async (bookId, title) => {
-        setRebuyingItemIds(prev => ({ ...prev, [bookId]: true }));
-      try {
-      const newCart = await cartService.addItem({id: bookId }, 1);
-      notifyCartUpdated(newCart);
-      navigate('/cart');
+  const handleRebuy = async (bookId) => {
+    if (rebuyingItemIds[bookId]) return;
+    setRebuyingItemIds(prev => ({ ...prev, [bookId]: true }));
+    try {
+      const book = await bookService.getBook(bookId);
+      const updated = await cartFacade.addItem(book, 1);
+      notifyCartUpdated(updated);
+      showToast('Added to cart successfully!');
     } catch (err) {
-        console.error('Failed to rebuy item:', err);
-      alert(`Could not buy "${title}" again. Please try again.`);
+      showToast(
+        err?.message || 'Failed to add item to cart. Please try again.',
+        'error'
+      );
     } finally {
         setRebuyingItemIds(prev => ({ ...prev, [bookId]: false }));
     }
+  };
+
+  const handleLockConfirm = async () => {
+    try {
+      const { authService } = await import('../../services/authService');
+      await authService.logout();
+    } catch (err) {
+      console.error(err);
+    }
+    navigate('/login');
   };
 
   const handleCancelPendingOrder = async () => {
@@ -117,9 +135,19 @@ export default function OrderDetailPage({ adminView = false }) {
     setCancelling(true);
     try {
       const cancelledOrder = await orderService.cancelPendingOrder(order.id);
+      clearPendingPaymentCache();
       setOrder((current) => ({ ...current, ...cancelledOrder }));
       setShowCancelConfirm(false);
       showToast(`Order #${cancelledOrder.id} was cancelled.`, 'success');
+
+      if (user?.id) {
+        const { checkServerOrderHistoryAndLock } = await import('../../utils/userLockGuard');
+        const lockExpiresAt = await checkServerOrderHistoryAndLock(user.id);
+        if (lockExpiresAt) {
+          setShowLockDialog(true);
+          return;
+        }
+      }
     } catch (err) {
       showToast(err?.message || 'Could not cancel this order. Please try again.', 'error');
     } finally {
@@ -267,7 +295,7 @@ export default function OrderDetailPage({ adminView = false }) {
                               type="button"
                               className="btn-action"
                               disabled={rebuyingItemIds[item.bookId]}
-                              onClick={() => handleRebuyItem(item.bookId, item.title)}
+                              onClick={() => handleRebuy(item.bookId)}
                             >
                               {rebuyingItemIds[item.bookId] ? 'Adding...' : 'Buy again'}
                             </button>
@@ -356,6 +384,16 @@ export default function OrderDetailPage({ adminView = false }) {
             onConfirm={handleCancelPendingOrder}
           >
             Order #{order.id} will be cancelled and its reserved stock will be released. This action cannot be undone.
+          </ConfirmDialog>
+        )}
+
+        {!adminView && showLockDialog && (
+          <ConfirmDialog
+            title="Tài khoản bị khóa"
+            onCancel={handleLockConfirm}
+            onConfirm={handleLockConfirm}
+          >
+            Tài khoản của bạn đã bị khóa tạm thời trong 15 phút do hủy liên tiếp 5 đơn hàng. Bạn sẽ bị đăng xuất khỏi hệ thống.
           </ConfirmDialog>
         )}
       </section>

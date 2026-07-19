@@ -3,6 +3,11 @@ import { cartService } from './cartService';
 import { guestCartService } from './guestCartService';
 import { clearGuestCart, getGuestCartItems } from './guestCartStorage';
 import { apiClient } from './apiClient';
+import { createError } from './apiError';
+import {
+  getPendingPaymentOrder,
+  PENDING_PAYMENT_MESSAGE,
+} from '../utils/pendingOrderGuard';
 
 function isLoggedInCustomer() {
   const user = authService.getCurrentUser();
@@ -39,7 +44,17 @@ export const cartFacade = {
     return activeCartService().getCart();
   },
 
-  addItem(book, quantity = 1) {
+  async addItem(book, quantity = 1) {
+    if (isLoggedInCustomer()) {
+      const pendingOrder = await getPendingPaymentOrder();
+      if (pendingOrder) {
+        throw createError({
+          code: 400,
+          error_type: 'VALIDATION_ERROR',
+          message: PENDING_PAYMENT_MESSAGE,
+        });
+      }
+    }
     return activeCartService().addItem(book, quantity);
   },
 

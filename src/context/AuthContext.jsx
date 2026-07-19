@@ -9,13 +9,31 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let active = true;
-    authService.syncSession()
-      .then((profile) => {
-        if (active) setUser(profile);
-      })
-      .finally(() => {
+    
+    const initSession = async () => {
+      try {
+        const profile = await authService.syncSession();
+        if (active) {
+          if (profile?.id) {
+            const { checkServerOrderHistoryAndLock } = await import('../utils/userLockGuard');
+            const lockExpiresAt = await checkServerOrderHistoryAndLock(profile.id);
+            if (lockExpiresAt) {
+              await authService.logout();
+              setUser(null);
+              return;
+            }
+          }
+          setUser(profile);
+        }
+      } catch (err) {
+        console.error('Session sync error:', err);
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    };
+    
+    initSession();
+    
     return () => {
       active = false;
     };

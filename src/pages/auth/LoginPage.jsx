@@ -9,6 +9,7 @@ import { authService } from '../../services/authService';
 import { cartFacade } from '../../services/cartFacade';
 import { notifyCartUpdated } from '../../utils/cartEvents';
 import { showToast } from '../../utils/toast';
+import { checkServerOrderHistoryAndLock, getLockedTimeRemainingMessage } from '../../utils/userLockGuard';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -44,6 +45,18 @@ export default function LoginPage() {
       }
 
       await refreshUser();
+      try {
+        const lockExpiresAt = await checkServerOrderHistoryAndLock(loggedIn.id);
+        if (lockExpiresAt) {
+          const lockMsg = getLockedTimeRemainingMessage(loggedIn.id);
+          await authService.logout();
+          setError({ message: lockMsg });
+          return;
+        }
+      } catch (lockErr) {
+        console.error('Failed to check user lock:', lockErr);
+      }
+
       try {
         const mergedCart = await cartFacade.mergeGuestCartAfterLogin();
         if (mergedCart) {

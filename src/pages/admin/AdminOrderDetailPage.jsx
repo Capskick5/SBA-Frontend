@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { ErrorState, LoadingState } from '../../components/ui/State';
 import OrderDetailPage from '../orders/OrderDetailPage';
 import OrderStatusBadge from '../../components/orders/OrderStatusBadge';
 import Button from '../../components/ui/Button';
@@ -25,12 +26,34 @@ export default function AdminOrderDetailPage() {
   const [updating, setUpdating] = useState(false);
   const [order, setOrder] = useState(null);
   const [updateError, setUpdateError] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
+    let active = true;
+
     orderService.getOrderById(id)
-      .then(setOrder)
-      .catch(err => console.error('Failed to load order detail:', err));
-  }, [id]);
+      .then(data => {
+        if (!active) return;
+        setOrder(data);
+        setLoadError('');
+      })
+      .catch(err => {
+        if (!active) return;
+        setOrder(null);
+        setLoadError(err.response?.data?.message || err.message || 'Could not load the order.');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id, retryCount]);
+
+  const retryLoadOrder = () => {
+    setOrder(null);
+    setLoadError('');
+    setRetryCount((count) => count + 1);
+  };
 
   const handleUpdateStatus = async (newStatus) => {
     if (newStatus === 'SHIPPED') {
@@ -104,6 +127,15 @@ export default function AdminOrderDetailPage() {
         </Link>
       </div>
 
+      {!order && !loadError && <LoadingState text="Loading order..." />}
+      {loadError && (
+        <ErrorState text={loadError}>
+          <button className="btn" type="button" onClick={retryLoadOrder}>
+            Retry
+          </button>
+        </ErrorState>
+      )}
+
       {order && (
         <div className={`admin-order-flow-container ${isCancelled ? 'cancelled' : ''}`}>
           <div className="admin-actions-heading" style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -176,7 +208,7 @@ export default function AdminOrderDetailPage() {
         </Modal>
       )}
 
-      <OrderDetailPage adminView />
+      {!loadError && <OrderDetailPage adminView />}
     </>
   );
 }

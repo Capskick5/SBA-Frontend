@@ -5,7 +5,6 @@ import Input from '../../components/ui/Input';
 import { AuthFormFooter, AuthFormMessage } from '../../components/auth/AuthFormFooter';
 import { captureFormError } from '../../utils/formErrorUtils';
 import { authService } from '../../services/authService';
-const MOCK_OTP = '123456';
 
 export default function VerifyEmailPage() {
   const [params] = useSearchParams();
@@ -59,7 +58,6 @@ export default function VerifyEmailPage() {
       <form className="form" onSubmit={handleSubmit}>
         <Input label="Email" name="email" type="email" defaultValue={emailDefault} error={fieldErrors.email} required />
         <Input label="OTP" name="otp" error={fieldErrors.otp} required />
-        <p className="form-hint">Demo OTP: {MOCK_OTP}</p>
         <Button type="submit" disabled={loading}>{loading ? 'Processing...' : 'Verify'}</Button>
       </form>
       <div className="actions">
