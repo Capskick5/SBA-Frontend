@@ -80,61 +80,77 @@ export default function AdminBooksPage() {
     }
   };
 
+  const toolbarControlStyle = {
+    padding: '12px 16px',
+    borderRadius: 'var(--radius-md)',
+    border: '1px solid var(--border)',
+    background: 'var(--surface)',
+    color: 'var(--text)',
+    height: '46px',
+    boxSizing: 'border-box',
+  };
+
   return (
     <section className="stack">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '16px', flexWrap: 'wrap' }}>
-        <h1>Book Inventory</h1>
+      <h1>Book Inventory</h1>
 
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ minWidth: '240px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '16px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', maxWidth: '500px', flex: '1 1 320px' }}>
+          <div style={{ flex: 1 }}>
             <Input
-              label="Search"
+              aria-label="Search books"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Title, author, or ISBN"
+              style={{ height: '46px' }}
             />
           </div>
-          <Button variant="primary" onClick={() => navigate('/admin/books/new')}>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => navigate('/admin/books/new')}
+            style={{ height: '46px', flexShrink: 0 }}
+          >
             + Add Book
           </Button>
+        </div>
 
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <div>
-              <label htmlFor="statusSelect" style={{ marginRight: '8px', fontWeight: 'bold' }}>Status:</label>
-              <select
-                id="statusSelect"
-                value={statusFilter}
-                onChange={(event) => {
-                  setStatusFilter(event.target.value);
-                  setCurrentPage(0);
-                }}
-                style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
-              >
-                <option value="all">All</option>
-                <option value="active">Active</option>
-                <option value="hidden">Hidden</option>
-              </select>
-            </div>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <label htmlFor="statusSelect" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', margin: 0 }}>
+            Status:
+            <select
+              id="statusSelect"
+              value={statusFilter}
+              onChange={(event) => {
+                setStatusFilter(event.target.value);
+                setCurrentPage(0);
+              }}
+              style={toolbarControlStyle}
+            >
+              <option value="all">All</option>
+              <option value="active">Active</option>
+              <option value="hidden">Hidden</option>
+            </select>
+          </label>
 
-            <div>
-              <label htmlFor="sortSelect" style={{ marginRight: '8px', fontWeight: 'bold' }}>Sort:</label>
-              <select
-                id="sortSelect"
-                value={sortBy}
-                onChange={(event) => {
-                  setSortBy(event.target.value);
-                  setCurrentPage(0);
-                }}
-                style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
-              >
-                <option value="id,desc">ID: Newest first</option>
-                <option value="id,asc">ID: Oldest first</option>
-                <option value="price,asc">Price: Low to high</option>
-                <option value="price,desc">Price: High to low</option>
-                <option value="soldCount,desc">Best selling</option>
-              </select>
-            </div>
-          </div>
+          <label htmlFor="sortSelect" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', margin: 0 }}>
+            Sort:
+            <select
+              id="sortSelect"
+              value={sortBy}
+              onChange={(event) => {
+                setSortBy(event.target.value);
+                setCurrentPage(0);
+              }}
+              style={toolbarControlStyle}
+            >
+              <option value="id,desc">ID: Newest first</option>
+              <option value="id,asc">ID: Oldest first</option>
+              <option value="price,asc">Price: Low to high</option>
+              <option value="price,desc">Price: High to low</option>
+              <option value="soldCount,desc">Best selling</option>
+            </select>
+          </label>
         </div>
       </div>
 
