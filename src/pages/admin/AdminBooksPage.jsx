@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 import { formatCurrency } from '../../utils/formatters';
@@ -14,12 +15,28 @@ export default function AdminBooksPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [sortBy, setSortBy] = useState('id,desc');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [error, setError] = useState('');
 
-  const loadBooks = useCallback((pageIndex, currentSort, currentStatus) => {
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [debouncedSearch]);
+
+  const loadBooks = useCallback((pageIndex, currentSort, currentStatus, query) => {
     setLoading(true);
     setError('');
     const params = { page: pageIndex, size: 10, sort: currentSort };
+    if (query) {
+      params.query = query;
+    }
     if (currentStatus === 'active') {
       params.active = true;
     } else if (currentStatus === 'hidden') {
@@ -50,14 +67,14 @@ export default function AdminBooksPage() {
   }, []);
 
   useEffect(() => {
-    Promise.resolve().then(() => loadBooks(currentPage, sortBy, statusFilter));
-  }, [currentPage, sortBy, statusFilter, loadBooks]);
+    Promise.resolve().then(() => loadBooks(currentPage, sortBy, statusFilter, debouncedSearch));
+  }, [currentPage, sortBy, statusFilter, debouncedSearch, loadBooks]);
 
   const handleToggleActive = async (row) => {
     try {
       await adminService.toggleBookActive(row.id, !row.active);
       alert(`Book ${row.active ? 'hidden' : 'shown'} successfully.`);
-      loadBooks(currentPage, sortBy, statusFilter);
+      loadBooks(currentPage, sortBy, statusFilter, debouncedSearch);
     } catch (err) {
       alert('Failed to update book status: ' + (err.response?.data?.message || err.message));
     }
@@ -65,10 +82,18 @@ export default function AdminBooksPage() {
 
   return (
     <section className="stack">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '16px', flexWrap: 'wrap' }}>
         <h1>Book Inventory</h1>
 
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ minWidth: '240px' }}>
+            <Input
+              label="Search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Title, author, or ISBN"
+            />
+          </div>
           <Button variant="primary" onClick={() => navigate('/admin/books/new')}>
             + Add Book
           </Button>
@@ -117,7 +142,7 @@ export default function AdminBooksPage() {
         <LoadingState text="Loading books..." />
       ) : error ? (
         <ErrorState text={error}>
-          <Button onClick={() => loadBooks(currentPage, sortBy, statusFilter)}>Try again</Button>
+          <Button onClick={() => loadBooks(currentPage, sortBy, statusFilter, debouncedSearch)}>Try again</Button>
         </ErrorState>
       ) : (
         <>
