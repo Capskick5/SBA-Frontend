@@ -35,4 +35,13 @@ export const orderService = {
   getPendingPaymentLink(id) {
     return apiClient.get(`/orders/${id}/payment-link`);
   },
+
+  trackGuestOrder({ email, code, token }) {
+    const params = new URLSearchParams({
+      email: email.trim(),
+      code: code.trim(),
+      token: token.trim(),
+    });
+    return apiClient.get(`/orders/guest/track?${params}`);
+  },
 };
