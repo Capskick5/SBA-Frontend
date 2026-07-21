@@ -34,8 +34,21 @@ export function setGiftWrapFee(amount) {
   return setGiftWrapFeeVnd(amount);
 }
 
-export function isGiftWrapFeeMockMode() {
+/** Checkout totals use the backend fee; admin save is local-only until config API ships. */
+export function isGiftWrapFeeLocalOnly() {
   return true;
+}
+
+/** @deprecated Use isGiftWrapFeeLocalOnly */
+export function isGiftWrapFeeMockMode() {
+  return isGiftWrapFeeLocalOnly();
+}
+
+export function getCheckoutGiftWrapFee(preview) {
+  const amount = Number(preview?.giftWrapFee);
+  // SELF preview returns 0; gift-option label should still show the BE gift fee.
+  if (Number.isFinite(amount) && amount > 0) return amount;
+  return DEFAULT_GIFT_WRAP_FEE_VND;
 }
 
 export function isBannersMockMode() {

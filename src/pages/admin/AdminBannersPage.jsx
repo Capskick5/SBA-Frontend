@@ -9,14 +9,16 @@ import { adminService } from '../../services/adminService';
 import {
   createBanner,
   deleteBanner,
+  DEFAULT_GIFT_WRAP_FEE_VND,
   getGiftWrapFee,
+  isGiftWrapFeeLocalOnly,
   isBannersMockMode,
-  isGiftWrapFeeMockMode,
   listBannersAdmin,
   setBannerActive,
   setGiftWrapFee,
   updateBanner,
 } from '../../services/adminConfigService';
+import { formatCurrency } from '../../utils/formatters';
 import { showToast } from '../../utils/toast';
 
 const EMPTY_FORM = {
@@ -91,7 +93,7 @@ export default function AdminBannersPage() {
     try {
       const saved = setGiftWrapFee(amount);
       setGiftWrapFeeInput(String(saved));
-      showToast('Gift wrap fee saved locally.');
+      showToast('Gift wrap fee saved for local admin preview.');
     } finally {
       setSavingGiftFee(false);
     }
@@ -273,10 +275,13 @@ export default function AdminBannersPage() {
         <div className="admin-settings-panel-header">
           <div>
             <h2>Gift wrap fee</h2>
-            <p>Used for local checkout preview until Bình ships the admin config API.</p>
+            <p>
+              Checkout uses the backend fee ({formatCurrency(DEFAULT_GIFT_WRAP_FEE_VND)}).
+              Save a local preview value here until the admin config API is available.
+            </p>
           </div>
-          {isGiftWrapFeeMockMode() && (
-            <span className="status-badge unknown">Mock until Bình API</span>
+          {isGiftWrapFeeLocalOnly() && (
+            <span className="status-badge unknown">Local preview only</span>
           )}
         </div>
         <form className="admin-gift-fee-form" onSubmit={saveGiftWrapFee}>
@@ -297,7 +302,7 @@ export default function AdminBannersPage() {
       <div className="admin-banners-subheader">
         <h2>Homepage banners</h2>
         {usingMockBanners && (
-          <span className="status-badge unknown">Mock until Bình API</span>
+          <span className="status-badge unknown">Offline mock fallback</span>
         )}
       </div>
 

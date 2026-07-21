@@ -27,7 +27,11 @@ import {
 } from '../../utils/codCheckoutMock';
 import { orderService } from '../../services/orderService';
 
-import { getGiftWrapFee } from '../../services/adminConfigService';
+import {
+  DEFAULT_GIFT_WRAP_FEE_VND,
+  getCheckoutGiftWrapFee,
+} from '../../services/adminConfigService';
+import { isMockCodOrderResult } from '../../utils/codCheckoutMock';
 
 function pickCartItemIds(param, cartItems) {
   const cartIds = (cartItems || []).map((item) => item.itemId);
@@ -129,7 +133,7 @@ export default function CheckoutPage() {
     }));
     const subtotal = summaryItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
     const hasShipping = typeof shippingFee === 'number';
-    const giftWrapFee = mode === 'gift' ? getGiftWrapFee() : 0;
+    const giftWrapFee = mode === 'gift' ? DEFAULT_GIFT_WRAP_FEE_VND : 0;
 
     return {
       items: summaryItems,
@@ -392,13 +396,13 @@ export default function CheckoutPage() {
       notifyCartUpdated(updatedCart);
     }
 
-    if (usedMock) {
-      showToast('Order saved in COD preview mode until backend is ready.', 'info');
-      setCodOrderResult(result);
+    if (usedMock || isMockCodOrderResult(result)) {
+      showToast('Could not confirm COD checkout with the server. Showing a local preview only.', 'info');
+      setCodOrderResult({ ...result, mock: true });
       return;
     }
 
-    showToast('Order placed successfully! Pay with cash when it arrives.', 'success');
+    showToast('Order placed successfully. Pay with cash when it arrives.', 'success');
     if (guestCheckout) {
       setCodOrderResult(result);
       return;
@@ -616,14 +620,25 @@ export default function CheckoutPage() {
       ? (!isAddressComplete(guestAddress) ? 'Confirm a delivery address below to continue to payment.' : '')
       : (!selectedAddressId ? 'Add a delivery address to continue to payment.' : '');
 
+  const codPreviewOnly = isMockCodOrderResult(codOrderResult);
+
   if (codOrderResult) {
     return (
       <section className="center-panel checkout-cod-success">
         <CheckCircle2 size={64} color="var(--success, #10b981)" />
-        <h1>Order placed!</h1>
+        <h1>{codPreviewOnly ? 'COD preview' : 'Order placed!'}</h1>
         <p>
-          Order #{codOrderResult.orderId} has been placed for {formatCurrency(codOrderResult.total)}.
-          Pay with cash when it arrives.
+          {codPreviewOnly ? (
+            <>
+              Could not confirm this cash-on-delivery order with the server.
+              Reference <strong>{codOrderResult.orderId}</strong> for {formatCurrency(codOrderResult.total)}.
+            </>
+          ) : (
+            <>
+              Order #{codOrderResult.orderId} has been placed for {formatCurrency(codOrderResult.total)}.
+              Pay with cash when it arrives.
+            </>
+          )}
         </p>
         <div className="actions">
           <Link to="/">
@@ -695,7 +710,7 @@ export default function CheckoutPage() {
                 >
                   <strong>Gift to someone</strong>
                   <span>Ship to another receiver with gift wrapping.</span>
-                  <small>Gift wrap fee: {formatCurrency(getGiftWrapFee())}</small>
+                  <small>Gift wrap fee: {formatCurrency(getCheckoutGiftWrapFee(preview))}</small>
                 </button>
               </div>
             </div>

@@ -3,7 +3,13 @@ export function isCodPayment(paymentMethod) {
 }
 
 export function isCodCheckoutSuccess(result) {
-  return Boolean(result?.orderId && !result?.checkoutUrl);
+  if (!result?.orderId || result?.checkoutUrl) return false;
+  return !isMockCodOrderResult(result);
+}
+
+export function isMockCodOrderResult(result) {
+  if (result?.mock) return true;
+  return String(result?.orderId || '').startsWith('cod-mock-');
 }
 
 export function shouldUseCodMock(paymentMethod, result, error) {
