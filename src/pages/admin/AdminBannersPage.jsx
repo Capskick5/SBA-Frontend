@@ -6,6 +6,17 @@ import Modal from '../../components/ui/Modal';
 import Table from '../../components/ui/Table';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
+import {
+  createBanner,
+  deleteBanner,
+  getGiftWrapFee,
+  isBannersMockMode,
+  isGiftWrapFeeMockMode,
+  listBannersAdmin,
+  setBannerActive,
+  setGiftWrapFee,
+  updateBanner,
+} from '../../services/adminConfigService';
 import { showToast } from '../../utils/toast';
 
 const EMPTY_FORM = {
@@ -37,13 +48,18 @@ export default function AdminBannersPage() {
 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [giftWrapFee, setGiftWrapFeeInput] = useState(String(getGiftWrapFee()));
+  const [savingGiftFee, setSavingGiftFee] = useState(false);
+  const [usingMockBanners, setUsingMockBanners] = useState(false);
 
   useEffect(() => {
     let active = true;
-    adminService.getBannersAdmin()
-      .then((list) => {
+    listBannersAdmin()
+      .then(({ items, usingMock }) => {
         if (!active) return;
-        setBanners(Array.isArray(list) ? list : []);
+        setBanners(Array.isArray(items) ? items : []);
+        setUsingMockBanners(usingMock || isBannersMockMode());
+        if (usingMock) setError('');
       })
       .catch((err) => {
         if (!active) return;
@@ -62,6 +78,23 @@ export default function AdminBannersPage() {
     setLoading(true);
     setError('');
     setReloadKey((key) => key + 1);
+  };
+
+  const saveGiftWrapFee = async (event) => {
+    event.preventDefault();
+    const amount = Number(giftWrapFee);
+    if (!Number.isFinite(amount) || amount < 0) {
+      showToast('Gift wrap fee must be a non-negative number.', 'error');
+      return;
+    }
+    setSavingGiftFee(true);
+    try {
+      const saved = setGiftWrapFee(amount);
+      setGiftWrapFeeInput(String(saved));
+      showToast('Gift wrap fee saved locally.');
+    } finally {
+      setSavingGiftFee(false);
+    }
   };
 
   const setField = (name, value) => {
@@ -139,10 +172,10 @@ export default function AdminBannersPage() {
 
     try {
       if (editingId) {
-        await adminService.updateBanner(editingId, payload);
+        await updateBanner(editingId, payload, { imageUrl: imagePreviewUrl });
         showToast('Banner updated.');
       } else {
-        await adminService.createBanner(payload);
+        await createBanner(payload, { imageUrl: imagePreviewUrl });
         showToast('Banner created.');
       }
       setFormOpen(false);
@@ -156,7 +189,7 @@ export default function AdminBannersPage() {
 
   const toggleActive = async (banner) => {
     try {
-      await adminService.setBannerActive(banner.id, !banner.active);
+      await setBannerActive(banner.id, !banner.active);
       showToast(banner.active ? 'Banner deactivated.' : 'Banner activated.');
       reloadBanners();
     } catch (err) {
@@ -168,7 +201,7 @@ export default function AdminBannersPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await adminService.deleteBanner(deleteTarget.id);
+      await deleteBanner(deleteTarget.id);
       showToast('Banner deleted.');
       setDeleteTarget(null);
       reloadBanners();
@@ -228,13 +261,45 @@ export default function AdminBannersPage() {
     <section className="stack">
       <header className="admin-banners-header">
         <div>
-          <h1>Homepage Banners</h1>
-          <p>Manage the promotional banners shown at the top of the storefront homepage.</p>
+          <h1>Storefront settings</h1>
+          <p>Configure homepage banners and the gift wrap fee shown during checkout.</p>
         </div>
         <Button type="button" onClick={openCreate}>
           <Plus size={17} /> Add banner
         </Button>
       </header>
+
+      <section className="panel admin-settings-panel">
+        <div className="admin-settings-panel-header">
+          <div>
+            <h2>Gift wrap fee</h2>
+            <p>Used for local checkout preview until Bình ships the admin config API.</p>
+          </div>
+          {isGiftWrapFeeMockMode() && (
+            <span className="status-badge unknown">Mock until Bình API</span>
+          )}
+        </div>
+        <form className="admin-gift-fee-form" onSubmit={saveGiftWrapFee}>
+          <Input
+            label="Gift wrap fee (VND)"
+            type="number"
+            min="0"
+            step="1000"
+            value={giftWrapFee}
+            onChange={(event) => setGiftWrapFeeInput(event.target.value)}
+          />
+          <Button type="submit" loading={savingGiftFee}>
+            Save gift fee
+          </Button>
+        </form>
+      </section>
+
+      <div className="admin-banners-subheader">
+        <h2>Homepage banners</h2>
+        {usingMockBanners && (
+          <span className="status-badge unknown">Mock until Bình API</span>
+        )}
+      </div>
 
       {loading ? (
         <LoadingState text="Loading banners..." />

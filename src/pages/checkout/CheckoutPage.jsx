@@ -21,10 +21,13 @@ import {
   getPendingPaymentUserMessage,
   PENDING_PAYMENT_MESSAGE,
 } from '../../utils/pendingOrderGuard';
+import {
+  checkoutWithCodFallback,
+  isCodCheckoutSuccess,
+} from '../../utils/codCheckoutMock';
 import { orderService } from '../../services/orderService';
 
-// Local fallback for previews before an address exists. Keep in sync with backend DeliveryType.GIFT.
-const GIFT_WRAP_FEE_VND = 10000;
+import { getGiftWrapFee } from '../../services/adminConfigService';
 
 function pickCartItemIds(param, cartItems) {
   const cartIds = (cartItems || []).map((item) => item.itemId);
@@ -126,7 +129,7 @@ export default function CheckoutPage() {
     }));
     const subtotal = summaryItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
     const hasShipping = typeof shippingFee === 'number';
-    const giftWrapFee = mode === 'gift' ? GIFT_WRAP_FEE_VND : 0;
+    const giftWrapFee = mode === 'gift' ? getGiftWrapFee() : 0;
 
     return {
       items: summaryItems,
@@ -380,6 +383,29 @@ export default function CheckoutPage() {
     }
   };
 
+  const handleCodSuccess = async (result, { guestCheckout = false, usedMock = false } = {}) => {
+    if (guestCheckout) {
+      clearGuestCart();
+      notifyCartUpdated();
+    } else {
+      const updatedCart = await cartFacade.getCart().catch(() => null);
+      notifyCartUpdated(updatedCart);
+    }
+
+    if (usedMock) {
+      showToast('Order saved in COD preview mode until backend is ready.', 'info');
+      setCodOrderResult(result);
+      return;
+    }
+
+    showToast('Order placed successfully! Pay with cash when it arrives.', 'success');
+    if (guestCheckout) {
+      setCodOrderResult(result);
+      return;
+    }
+    navigate(`/orders/${result.orderId}`);
+  };
+
   const pay = async () => {
     if (paying) return;
     if (cartItemIds.length === 0) return;
@@ -401,25 +427,28 @@ export default function CheckoutPage() {
           setPaying(false);
           return;
         }
-        const result = await checkoutService.checkoutGuest({
-          email: guestEmail || null,
-          ...guestAddress,
-          items: selectedCartItems.map((item) => ({
-            bookId: item.bookId,
-            quantity: item.quantity,
-          })),
-          deliveryType,
+        const { result, usedMock } = await checkoutWithCodFallback({
           paymentMethod,
-        }, key);
-        if (result?.checkoutUrl) {
+          preview,
+          checkoutCall: () => checkoutService.checkoutGuest({
+            email: guestEmail || null,
+            ...guestAddress,
+            items: selectedCartItems.map((item) => ({
+              bookId: item.bookId,
+              quantity: item.quantity,
+            })),
+            deliveryType,
+            paymentMethod,
+          }, key),
+        });
+
+        if (paymentMethod !== 'COD' && result?.checkoutUrl) {
           clearGuestCart();
           window.location.href = result.checkoutUrl;
           return;
         }
-        if (result?.orderId) {
-          clearGuestCart();
-          notifyCartUpdated();
-          setCodOrderResult(result);
+        if (isCodCheckoutSuccess(result) || (paymentMethod === 'COD' && usedMock)) {
+          await handleCodSuccess(result, { guestCheckout: true, usedMock });
           return;
         }
         setCheckoutError('Guest checkout is not available yet. Please try again later or sign in.');
@@ -435,24 +464,25 @@ export default function CheckoutPage() {
       }
 
       if (!selectedAddressId) return;
-      const result = await checkoutService.checkout(
-        selectedAddressId,
-        cartItemIds,
-        key,
-        selectedVoucherId || undefined,
-        deliveryType,
+      const { result, usedMock } = await checkoutWithCodFallback({
         paymentMethod,
-      );
+        preview,
+        checkoutCall: () => checkoutService.checkout(
+          selectedAddressId,
+          cartItemIds,
+          key,
+          selectedVoucherId || undefined,
+          deliveryType,
+          paymentMethod,
+        ),
+      });
 
-      if (result.checkoutUrl) {
+      if (paymentMethod !== 'COD' && result.checkoutUrl) {
         window.location.href = result.checkoutUrl;
         return;
       }
-      if (result?.orderId) {
-        const updatedCart = await cartFacade.getCart().catch(() => null);
-        notifyCartUpdated(updatedCart);
-        showToast('Order placed successfully! Pay with cash when it arrives.', 'success');
-        navigate(`/orders/${result.orderId}`);
+      if (isCodCheckoutSuccess(result) || (paymentMethod === 'COD' && usedMock)) {
+        await handleCodSuccess(result, { usedMock });
       }
     } catch (err) {
       const pendingMessage = getPendingPaymentUserMessage(err);
@@ -665,7 +695,7 @@ export default function CheckoutPage() {
                 >
                   <strong>Gift to someone</strong>
                   <span>Ship to another receiver with gift wrapping.</span>
-                  <small>Gift wrap fee: 10,000 VND</small>
+                  <small>Gift wrap fee: {formatCurrency(getGiftWrapFee())}</small>
                 </button>
               </div>
             </div>

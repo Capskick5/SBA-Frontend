@@ -6,6 +6,7 @@ import OrderStatusBadge from '../../components/orders/OrderStatusBadge';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { adminService } from '../../services/adminService';
 import { orderService } from '../../services/orderService';
 import { ShoppingCart, Warehouse, Truck, CircleDollarSign, User } from 'lucide-react';
@@ -28,6 +29,7 @@ export default function AdminOrderDetailPage() {
   const [updateError, setUpdateError] = useState('');
   const [loadError, setLoadError] = useState('');
   const [retryCount, setRetryCount] = useState(0);
+  const [pendingStatusChange, setPendingStatusChange] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -61,7 +63,12 @@ export default function AdminOrderDetailPage() {
       setShowShipModal(true);
       return;
     }
-    
+
+    if (newStatus === 'PROCESSING' || newStatus === 'DELIVERED') {
+      setPendingStatusChange(newStatus);
+      return;
+    }
+
     await submitStatus(newStatus);
   };
 
@@ -70,12 +77,29 @@ export default function AdminOrderDetailPage() {
     setUpdateError('');
     try {
       await adminService.updateOrderStatus(id, status, provider, tracking);
-      window.location.reload();
+      setShowShipModal(false);
+      setPendingStatusChange(null);
+      retryLoadOrder();
     } catch (err) {
       setUpdateError(err.response?.data?.message || err.message || 'Could not update the order.');
     } finally {
       setUpdating(false);
     }
+  };
+
+  const confirmPendingStatusChange = () => {
+    if (!pendingStatusChange) return;
+    submitStatus(pendingStatusChange);
+  };
+
+  const getPendingStatusMessage = () => {
+    if (pendingStatusChange === 'PROCESSING') {
+      return `Mark order #${id} as packed? The customer will see that packaging has started.`;
+    }
+    if (pendingStatusChange === 'DELIVERED') {
+      return `Mark order #${id} as delivered? This will complete the order.`;
+    }
+    return 'Confirm this status change?';
   };
 
   const handleShipSubmit = (e) => {
@@ -206,6 +230,16 @@ export default function AdminOrderDetailPage() {
             </div>
           </form>
         </Modal>
+      )}
+
+      {pendingStatusChange && (
+        <ConfirmDialog
+          title="Confirm status update"
+          onCancel={() => setPendingStatusChange(null)}
+          onConfirm={confirmPendingStatusChange}
+        >
+          {getPendingStatusMessage()}
+        </ConfirmDialog>
       )}
 
       {!loadError && <OrderDetailPage adminView />}

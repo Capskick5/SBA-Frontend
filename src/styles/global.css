@@ -1729,6 +1729,41 @@ html[data-theme="dark"] .footer {
   color: var(--muted);
 }
 
+.admin-settings-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-settings-panel-header,
+.admin-banners-subheader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-settings-panel-header h2,
+.admin-banners-subheader h2 {
+  margin: 0 0 4px;
+}
+
+.admin-settings-panel-header p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.admin-gift-fee-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.admin-gift-fee-form .field {
+  flex: 1 1 240px;
+  margin: 0;
+}
+
 .banner-thumb-cell {
   width: 96px;
   height: 54px;
