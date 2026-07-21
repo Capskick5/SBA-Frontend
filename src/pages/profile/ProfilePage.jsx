@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { AuthFormMessage } from '../../components/auth/AuthFormFooter';
 import { captureFormError } from '../../utils/formErrorUtils';
 import { LoadingState, ErrorState } from '../../components/ui/State';
@@ -43,6 +44,8 @@ export default function ProfilePage() {
   const [pwdSuccess, setPwdSuccess] = useState(null);
   const [pwdFieldErrors, setPwdFieldErrors] = useState({});
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [pendingPasswordChange, setPendingPasswordChange] = useState(null);
   const activeTab = searchParams.get('tab') || 'account';
   const [addressTitle, setAddressTitle] = useState('Address book');
 
@@ -72,9 +75,8 @@ export default function ProfilePage() {
     }
   };
 
-  const handleChangePassword = async (event) => {
+  const handleChangePassword = (event) => {
     event.preventDefault();
-    setPwdLoading(true);
     setPwdError(null);
     setPwdSuccess(null);
     setPwdFieldErrors({});
@@ -83,20 +85,31 @@ export default function ProfilePage() {
     const confirmPassword = form.get('confirmPassword');
     if (newPassword !== confirmPassword) {
       setPwdFieldErrors({ confirmPassword: 'Password confirmation does not match.' });
-      setPwdLoading(false);
       return;
     }
+    setPendingPasswordChange({
+      currentPassword: form.get('currentPassword'),
+      newPassword,
+    });
+    setShowPasswordConfirm(true);
+  };
+
+  const applyPasswordChange = async () => {
+    if (!pendingPasswordChange) return;
+    setPwdLoading(true);
+    setPwdError(null);
+    setPwdFieldErrors({});
     try {
-      await profileService.changePassword({
-        currentPassword: form.get('currentPassword'),
-        newPassword,
-      });
+      await profileService.changePassword(pendingPasswordChange);
+      setShowPasswordConfirm(false);
+      setPendingPasswordChange(null);
       await logout();
       navigate('/login', {
         replace: true,
         state: { message: 'Password changed successfully. Please log in again.' },
       });
     } catch (err) {
+      setShowPasswordConfirm(false);
       captureFormError(err, setPwdError, setPwdFieldErrors);
     } finally {
       setPwdLoading(false);
@@ -304,7 +317,7 @@ export default function ProfilePage() {
                     required
                   />
                   <Button type="submit" disabled={pwdLoading} className="profile-password-btn">
-                    {pwdLoading ? 'Processing...' : 'Save password'}
+                    {pwdLoading ? 'Processing...' : 'Confirm'}
                   </Button>
                 </form>
               )}
@@ -317,7 +330,22 @@ export default function ProfilePage() {
   };
 
   return (
-    <section className="profile-page">
+    <>
+      {showPasswordConfirm && (
+        <ConfirmDialog
+          title="Change password?"
+          onCancel={() => {
+            if (pwdLoading) return;
+            setShowPasswordConfirm(false);
+            setPendingPasswordChange(null);
+          }}
+          onConfirm={applyPasswordChange}
+        >
+          Change your password? You will be signed out.
+        </ConfirmDialog>
+      )}
+
+      <section className="profile-page">
       <nav className="profile-breadcrumb" aria-label="Breadcrumb">
         <Link to="/">Home</Link>
         <span>/</span>
@@ -352,5 +380,6 @@ export default function ProfilePage() {
         {renderProfilePanel()}
       </div>
     </section>
+    </>
   );
 }
