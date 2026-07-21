@@ -68,6 +68,12 @@ export const adminService = {
   getCategories: () => api.get('/categories').then(res => res.data),
   addCategory: (catData) => api.post('/categories', catData).then(res => res.data),
 
+  getBannersAdmin: () => api.get('/banners/admin').then(res => res.data?.data || res.data),
+  createBanner: (bannerData) => api.post('/banners', bannerData).then(res => res.data?.data || res.data),
+  updateBanner: (id, bannerData) => api.put(`/banners/${id}`, bannerData).then(res => res.data?.data || res.data),
+  setBannerActive: (id, active) => api.put(`/banners/${id}/active`, { active }).then(res => res.data?.data || res.data),
+  deleteBanner: (id) => api.delete(`/banners/${id}`).then(res => res.data?.data || res.data),
+
   getOrders: (params) => api.get('/orders', { params }).then(res => res.data),
   updateOrderStatus: (id, status, shippingProvider, trackingCode) =>
     api.put(`/orders/${id}/status`, { status, shippingProvider, trackingCode }).then(res => res.data),

@@ -1,24 +1,26 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { 
-  LayoutDashboard, 
-  BookOpen, 
-  FolderOpen, 
-  ShoppingBag, 
-  Ticket, 
-  Users, 
-  MessageSquare, 
-  ClipboardList, 
+import {
+  LayoutDashboard,
+  BookOpen,
+  FolderOpen,
+  ShoppingBag,
+  Ticket,
+  Users,
+  MessageSquare,
+  ClipboardList,
   Database,
+  Image,
   Menu,
-  LogOut 
+  LogOut
 } from 'lucide-react';
 
 const links = [
   ['/admin', 'Dashboard', LayoutDashboard],
   ['/admin/books', 'Books', BookOpen],
   ['/admin/categories', 'Categories', FolderOpen],
+  ['/admin/banners', 'Banners', Image],
   ['/admin/orders', 'Orders', ShoppingBag],
   ['/admin/vouchers', 'Voucher Rules', Ticket],
   ['/admin/users', 'Users', Users],
@@ -44,7 +46,7 @@ export default function AdminLayout({ children }) {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/admin/login');
   };
 
   return (
