@@ -1,4 +1,4 @@
-import { apiGet } from './apiClient';
+import { apiGet } from '../api/apiClient';
 
 export const paymentService = {
   verifyPayment(params) {

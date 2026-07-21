@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient } from '../api/apiClient';
 
 export const aiChatService = {
   async recommend(query, history = [], topK = 5) {

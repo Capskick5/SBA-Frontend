@@ -1,4 +1,4 @@
-import { apiGet } from './apiClient';
+import { apiGet } from '../api/apiClient';
 
 const coverFor = (book) => `https://placehold.co/240x340?text=${encodeURIComponent(book.title || 'Book')}`;
 

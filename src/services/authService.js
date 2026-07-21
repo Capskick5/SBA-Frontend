@@ -1,5 +1,5 @@
-import { apiClient, refreshAccessToken } from './apiClient';
-import { tokenStorage } from './tokenStorage';
+import { apiClient, refreshAccessToken } from '../api/apiClient';
+import { tokenStorage } from '../storage/tokenStorage';
 
 function normalizeEmail(email) {
   return email?.trim().toLowerCase();

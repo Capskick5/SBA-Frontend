@@ -1,16 +1,19 @@
-// src/services/fileService.js
-import api from './apiClient';
+import { apiClient } from '../api/apiClient';
+
+function toFormData(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return formData;
+}
 
 export const fileService = {
-    uploadFile: async (file) => {
-        const formData = new FormData();
-        formData.append('file', file);
+  /** Upload book cover to MinIO (`coverKey`). */
+  async uploadThumbnail(file) {
+    return apiClient.post('/admin/uploads/thumbnail', toFormData(file));
+  },
 
-        const res = await api.post('/files/upload', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
-        return res.data?.data || res.data;
-    }
+  /** Upload PDF/EPUB book file to MinIO (`fileKey`). */
+  async uploadBookFile(file) {
+    return apiClient.post('/admin/uploads/book-file', toFormData(file));
+  },
 };

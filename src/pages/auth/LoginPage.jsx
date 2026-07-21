@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -9,7 +9,7 @@ import { authService } from '../../services/authService';
 import { cartFacade } from '../../services/cartFacade';
 import { notifyCartUpdated } from '../../utils/cartEvents';
 import { showToast } from '../../utils/toast';
-import { checkServerOrderHistoryAndLock, getLockedTimeRemainingMessage } from '../../utils/userLockGuard';
+import { checkServerOrderHistoryAndLock, getLockedTimeRemainingMessage, getLockExpiration } from '../../utils/userLockGuard';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -24,6 +24,20 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
   const [unverifiedEmail, setUnverifiedEmail] = useState(null);
+
+  useEffect(() => {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith('locked_until_')) {
+        const userId = key.replace('locked_until_', '');
+        const expiration = getLockExpiration(userId);
+        if (expiration) {
+          setError({ message: getLockedTimeRemainingMessage(userId) });
+          break;
+        }
+      }
+    }
+  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();

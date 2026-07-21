@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient } from '../api/apiClient';
 
 export const reviewService = {
   async getReviewsByBookId(bookId, { page = 0, size = 5 } = {}) {

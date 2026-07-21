@@ -1,5 +1,5 @@
-import { apiClient } from './apiClient';
-import { tokenStorage } from './tokenStorage';
+import { apiClient } from '../api/apiClient';
+import { tokenStorage } from '../storage/tokenStorage';
 import { bookService } from './bookService';
 
 const fallbackCover = (title) => `https://placehold.co/120x170?text=${encodeURIComponent(title || 'Book')}`;

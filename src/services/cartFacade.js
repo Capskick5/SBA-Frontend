@@ -1,9 +1,9 @@
 import { authService } from './authService';
 import { cartService } from './cartService';
 import { guestCartService } from './guestCartService';
-import { clearGuestCart, getGuestCartItems } from './guestCartStorage';
-import { apiClient } from './apiClient';
-import { createError } from './apiError';
+import { clearGuestCart, getGuestCartItems } from '../storage/guestCartStorage';
+import { apiClient } from '../api/apiClient';
+import { createError } from '../api/apiError';
 import {
   getPendingPaymentOrder,
   PENDING_PAYMENT_MESSAGE,
