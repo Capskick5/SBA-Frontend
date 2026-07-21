@@ -27,8 +27,7 @@ import {
 } from '../../utils/codCheckoutMock';
 import { orderService } from '../../services/orderService';
 
-// Local fallback for previews before an address exists. Keep in sync with backend DeliveryType.GIFT.
-const GIFT_WRAP_FEE_VND = 10000;
+import { getGiftWrapFee } from '../../services/adminConfigService';
 
 function pickCartItemIds(param, cartItems) {
   const cartIds = (cartItems || []).map((item) => item.itemId);
@@ -130,7 +129,7 @@ export default function CheckoutPage() {
     }));
     const subtotal = summaryItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
     const hasShipping = typeof shippingFee === 'number';
-    const giftWrapFee = mode === 'gift' ? GIFT_WRAP_FEE_VND : 0;
+    const giftWrapFee = mode === 'gift' ? getGiftWrapFee() : 0;
 
     return {
       items: summaryItems,
@@ -696,7 +695,7 @@ export default function CheckoutPage() {
                 >
                   <strong>Gift to someone</strong>
                   <span>Ship to another receiver with gift wrapping.</span>
-                  <small>Gift wrap fee: 10,000 VND</small>
+                  <small>Gift wrap fee: {formatCurrency(getGiftWrapFee())}</small>
                 </button>
               </div>
             </div>

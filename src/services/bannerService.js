@@ -1,7 +1,7 @@
-import { apiClient } from '../api/apiClient';
+import { listActiveBanners } from './adminConfigService';
 
 export const bannerService = {
   list() {
-    return apiClient.get('/banners');
+    return listActiveBanners();
   },
 };
