@@ -20,6 +20,8 @@ export default function CheckoutSummary({
   const hasGiftWrapFee = giftWrapFee > 0;
   const hasDiscount = Number(preview.discountAmount || 0) > 0;
 
+  const payLabel = paymentMethod === 'COD' ? 'Place order' : 'Proceed to payment';
+
   return (
     <aside className="summary checkout-summary-card">
       <div>
@@ -97,7 +99,7 @@ export default function CheckoutSummary({
       </div>
 
       <Button onClick={onPay} disabled={!canPay || loading || !preview.items.length}>
-        Proceed to payment
+        {payLabel}
       </Button>
       {disabledReason && !canPay && <p className="form-hint">{disabledReason}</p>}
     </aside>
