@@ -1,10 +1,21 @@
-export default function Modal({ title, children, onClose, hideClose }) {
+export default function Modal({ title, children, onClose, hideClose, maxWidth, isOpen = true }) {
+  if (!isOpen) return null;
+
+  const handleBackdropClick = () => {
+    if (!hideClose && onClose) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="modal-backdrop">
-      <div className="modal">
+    <div className="modal-backdrop" onClick={handleBackdropClick}>
+      <div 
+        className="modal" 
+        style={maxWidth ? { maxWidth } : {}}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
           <h3>{title}</h3>
-          {!hideClose && <button type="button" onClick={onClose}>Close</button>}
         </div>
         {children}
       </div>

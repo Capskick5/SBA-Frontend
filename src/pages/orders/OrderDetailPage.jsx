@@ -6,6 +6,8 @@ import { notifyCartUpdated } from '../../utils/cartEvents';
 import OrderTimeline from '../../components/orders/OrderTimeline';
 import { LoadingState, ErrorState } from '../../components/ui/State';
 import { orderService } from '../../services/orderService';
+import { refundService } from '../../services/refundService';
+import RefundRequestModal from '../../components/orders/RefundRequestModal';
 import { formatCurrency, formatDate, formatDateTime } from '../../utils/formatters';
 import { formatPaymentTimeLeft } from '../../utils/paymentExpiry';
 import { showToast } from '../../utils/toast';
@@ -39,6 +41,19 @@ export default function OrderDetailPage({ adminView = false }) {
   const [cancelling, setCancelling] = useState(false);
   const [resuming, setResuming] = useState(false);
   const [showLockDialog, setShowLockDialog] = useState(false);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refundRequest, setRefundRequest] = useState(null);
+
+  const fetchRefundInfo = async () => {
+    if (id) {
+      const existing = await refundService.getRefundByOrderId(id);
+      setRefundRequest(existing);
+    }
+  };
+
+  useEffect(() => {
+    fetchRefundInfo();
+  }, [id]);
 
   useEffect(() => {
     orderService.getOrderById(id)
@@ -182,9 +197,24 @@ export default function OrderDetailPage({ adminView = false }) {
       <section className="stack" style={{ gap: '16px' }}>
         {/* Title Header */}
         <div className="order-detail-header">
-          <h1>
-            Order #{order.id} - <span className={`highlight ${statusConfig.class}`}>{statusConfig.text}</span>
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+            <h1>
+              Order #{order.id} - <span className={`highlight ${statusConfig.class}`}>{statusConfig.text}</span>
+            </h1>
+            {!adminView && (['DELIVERED', 'PAID', 'PROCESSING', 'SHIPPED'].includes(order.status) || refundRequest) && (
+              <div>
+                {!refundRequest ? (
+                  <Button variant="outline" style={{ borderColor: '#e11d48', color: '#e11d48' }} onClick={() => setShowRefundModal(true)}>
+                    Trả hàng / Hoàn tiền
+                  </Button>
+                ) : (
+                  <span className={`status-badge ${refundRequest.status === 'APPROVED' ? 'refunded' : refundRequest.status === 'REJECTED' ? 'cancelled' : 'refund-requested'}`}>
+                    Yêu cầu hoàn tiền: {refundRequest.status === 'APPROVED' ? 'ĐÃ CHẤP NHẬN' : refundRequest.status === 'REJECTED' ? 'TỪ CHỐI' : 'ĐANG XEM XÉT'}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
           <div className="order-detail-date">
             Placed on {formatDateTime(order.createdAt)}
             {adminView && (
@@ -197,6 +227,28 @@ export default function OrderDetailPage({ adminView = false }) {
             )}
           </div>
         </div>
+
+        {/* Refund Status Info Banner */}
+        {refundRequest && (
+          <div style={{
+            padding: '16px',
+            borderRadius: '8px',
+            background: refundRequest.status === 'APPROVED' ? 'rgba(16, 185, 129, 0.08)' : refundRequest.status === 'REJECTED' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+            border: `1px solid ${refundRequest.status === 'APPROVED' ? 'rgba(16, 185, 129, 0.2)' : refundRequest.status === 'REJECTED' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`,
+          }}>
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '15px' }}>
+              {refundRequest.status === 'APPROVED' ? '✅ Yêu cầu hoàn tiền đã được chấp nhận' : refundRequest.status === 'REJECTED' ? '❌ Yêu cầu hoàn tiền bị từ chối' : '⏳ Yêu cầu hoàn tiền đang chờ Admin xử lý'}
+            </h4>
+            <p style={{ margin: '0', fontSize: '13px', color: 'var(--muted)' }}>
+              Lý do hoàn: <strong>{refundRequest.reason}</strong> · Tài khoản nhận tiền: <strong>{refundRequest.bankName} - {refundRequest.accountNumber} ({refundRequest.accountOwner})</strong>
+            </p>
+            {refundRequest.status === 'REJECTED' && refundRequest.rejectReason && (
+              <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: '#ef4444' }}>
+                Lý do từ chối từ Admin: {refundRequest.rejectReason}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Info Grid */}
         <div className="order-detail-info-grid">
@@ -412,6 +464,13 @@ export default function OrderDetailPage({ adminView = false }) {
             Tài khoản của bạn đã bị khóa tạm thời trong 15 phút do hủy liên tiếp 5 đơn hàng. Bạn sẽ bị đăng xuất khỏi hệ thống.
           </ConfirmDialog>
         )}
+
+        <RefundRequestModal
+          order={order}
+          isOpen={showRefundModal}
+          onClose={() => setShowRefundModal(false)}
+          onSubmitSuccess={fetchRefundInfo}
+        />
       </section>
       );
 }

@@ -41,6 +41,7 @@ export default function AdminVouchersPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState('');
+  const [editingRuleId, setEditingRuleId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [disableTarget, setDisableTarget] = useState(null);
   const [disabling, setDisabling] = useState(false);
@@ -89,6 +90,7 @@ export default function AdminVouchersPage() {
 
   const openCreate = () => {
     setForm(EMPTY_FORM);
+    setEditingRuleId(null);
     setFormError('');
     setFormOpen(true);
   };
@@ -102,6 +104,21 @@ export default function AdminVouchersPage() {
       tierMinAmount: String(rule.tierMinAmount ?? ''),
       active: true,
     });
+    setEditingRuleId(null);
+    setFormError('');
+    setFormOpen(true);
+  };
+
+  const openEdit = (rule) => {
+    setForm({
+      name: rule.name,
+      codePrefix: rule.codePrefix || '',
+      discountType: rule.discountType || 'FIXED',
+      discountValue: String(rule.discountValue ?? ''),
+      tierMinAmount: String(rule.tierMinAmount ?? ''),
+      active: rule.active,
+    });
+    setEditingRuleId(rule.id);
     setFormError('');
     setFormOpen(true);
   };
@@ -131,16 +148,23 @@ export default function AdminVouchersPage() {
     setSubmitting(true);
     setFormError('');
     try {
-      await adminService.createVoucherRule({
+      const payload = {
         name: form.name.trim(),
         codePrefix: form.codePrefix.trim() || null,
         discountType: form.discountType,
         discountValue,
         tierMinAmount,
         active: form.active,
-      });
+      };
+
+      if (editingRuleId) {
+        await adminService.updateVoucherRule(editingRuleId, payload);
+        showToast('Voucher reward rule updated.');
+      } else {
+        await adminService.createVoucherRule(payload);
+        showToast('Voucher reward rule created.');
+      }
       setFormOpen(false);
-      showToast('Voucher reward rule created.');
       if (currentPage === 0) {
         reloadRules();
       } else {
@@ -168,6 +192,19 @@ export default function AdminVouchersPage() {
     }
   };
 
+  const enableRule = async (rule) => {
+    try {
+      await adminService.updateVoucherRule(rule.id, {
+        ...rule,
+        active: true,
+      });
+      showToast('Voucher reward rule enabled.');
+      reloadRules();
+    } catch (err) {
+      showToast(getErrorMessage(err, 'Could not enable voucher rule.'), 'error');
+    }
+  };
+
   const columns = [
     { key: 'name', label: 'Rule Name' },
     { key: 'reward', label: 'Reward', render: formatReward },
@@ -192,12 +229,19 @@ export default function AdminVouchersPage() {
       label: 'Actions',
       render: (rule) => (
         <div className={styles.rowActions}>
+          <Button type="button" className="btn-secondary" onClick={() => openEdit(rule)}>
+            Edit
+          </Button>
           <Button type="button" className="btn-secondary" onClick={() => openClone(rule)}>
             <Copy size={15} /> Clone
           </Button>
-          {rule.active && (
+          {rule.active ? (
             <Button type="button" className={styles.disableButton} onClick={() => setDisableTarget(rule)}>
               <Ban size={15} /> Disable
+            </Button>
+          ) : (
+            <Button type="button" className="btn-secondary" onClick={() => enableRule(rule)}>
+              Enable
             </Button>
           )}
         </div>
@@ -275,9 +319,13 @@ export default function AdminVouchersPage() {
       )}
 
       {formOpen && (
-        <Modal title="Create voucher reward rule" onClose={() => setFormOpen(false)}>
-          <form className={styles.form} onSubmit={submitRule}>
-            {formError && <p className="form-message form-message-error">{formError}</p>}
+        <Modal 
+          title={editingRuleId ? 'Edit voucher rule' : 'Create voucher rule'} 
+          onClose={() => setFormOpen(false)}
+          maxWidth="500px"
+        >
+          <form onSubmit={submitRule} className="stack">
+            {formError && <div className={styles.formError}>{formError}</div>}
             <Input
               label="Rule name"
               value={form.name}
@@ -330,7 +378,9 @@ export default function AdminVouchersPage() {
               <Button type="button" className="btn-secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
                 Cancel
               </Button>
-              <Button type="submit" loading={submitting}>Create rule</Button>
+              <Button type="submit" loading={submitting}>
+                {editingRuleId ? 'Save Changes' : 'Create rule'}
+              </Button>
             </div>
           </form>
         </Modal>

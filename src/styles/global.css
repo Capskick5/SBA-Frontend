@@ -6730,13 +6730,15 @@ html[data-theme="dark"] .navbar-alert-bar {
   border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
-.status-badge.processing {
+.status-badge.processing,
+.status-badge.packed {
   background: rgba(59, 130, 246, 0.08);
   color: #2563eb;
   border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
-.status-badge.shipping {
+.status-badge.shipping,
+.status-badge.re-delivery {
   background: rgba(139, 92, 246, 0.08);
   color: #7c3aed;
   border: 1px solid rgba(139, 92, 246, 0.2);
@@ -6752,6 +6754,24 @@ html[data-theme="dark"] .navbar-alert-bar {
   background: rgba(239, 68, 68, 0.08);
   color: #dc2626;
   border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.status-badge.payment-failed {
+  background: rgba(225, 29, 72, 0.1);
+  color: #e11d48;
+  border: 1px solid rgba(225, 29, 72, 0.3);
+}
+
+.status-badge.refund-requested {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.status-badge.refunded {
+  background: rgba(147, 51, 234, 0.1);
+  color: #9333ea;
+  border: 1px solid rgba(147, 51, 234, 0.3);
 }
 
 .status-badge.unknown {
@@ -6873,12 +6893,14 @@ html[data-theme="dark"] .status-badge.pending-payment {
   color: #fbbf24;
 }
 
-html[data-theme="dark"] .status-badge.processing {
+html[data-theme="dark"] .status-badge.processing,
+html[data-theme="dark"] .status-badge.packed {
   background: rgba(59, 130, 246, 0.15);
   color: #60a5fa;
 }
 
-html[data-theme="dark"] .status-badge.shipping {
+html[data-theme="dark"] .status-badge.shipping,
+html[data-theme="dark"] .status-badge.re-delivery {
   background: rgba(139, 92, 246, 0.15);
   color: #a78bfa;
 }
@@ -6891,6 +6913,27 @@ html[data-theme="dark"] .status-badge.delivered {
 html[data-theme="dark"] .status-badge.cancelled {
   background: rgba(239, 68, 68, 0.15);
   color: #f87171;
+}
+
+html[data-theme="dark"] .status-badge.payment-failed {
+  background: rgba(225, 29, 72, 0.2);
+  color: #fb7185;
+}
+
+.admin-nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 9999px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: auto;
+  line-height: 1;
 }
 
 @media (max-width: 576px) {

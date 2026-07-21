@@ -5,6 +5,7 @@ import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Pagination from '../../components/catalog/Pagination';
 import { ErrorState, LoadingState } from '../../components/ui/State';
+import OrderStatusBadge from '../../components/orders/OrderStatusBadge';
 import { orderService } from '../../services/orderService';
 import { bookService } from '../../services/bookService';
 import { cartFacade } from '../../services/cartFacade';
@@ -22,9 +23,13 @@ const STATUS_MAP = {
   'PENDING_PAYMENT': { text: 'Pending payment', class: 'pending-payment' },
   'PAID': { text: 'Processing', class: 'processing' },
   'PROCESSING': { text: 'Processing', class: 'processing' },
+  'PACKED': { text: 'Packed', class: 'processing' },
   'SHIPPED': { text: 'Shipping', class: 'shipping' },
+  'RE_DELIVERY': { text: 'Re-delivery', class: 'shipping' },
   'DELIVERED': { text: 'Delivered', class: 'delivered' },
   'CANCELLED': { text: 'Cancelled', class: 'cancelled' },
+  'REFUND_REQUESTED': { text: 'Refund requested', class: 'refund-requested' },
+  'REFUNDED': { text: 'Refunded', class: 'refunded' },
 };
 
 const TABS = [
@@ -34,6 +39,7 @@ const TABS = [
   { id: 'SHIPPED', label: 'Shipping' },
   { id: 'DELIVERED', label: 'Delivered' },
   { id: 'CANCELLED', label: 'Cancelled' },
+  { id: 'REFUND_REQUESTED', label: 'Refund requests' },
 ];
 
 const PAGE_SIZE = 10;
@@ -64,7 +70,9 @@ export default function OrdersPage() {
       const filter = activeTab === 'ALL'
         ? {}
         : activeTab === 'PROCESSING'
-          ? { statuses: ['PAID', 'PROCESSING'] }
+          ? { statuses: ['PAID', 'PROCESSING', 'PACKED'] }
+        : activeTab === 'SHIPPED'
+          ? { statuses: ['SHIPPED', 'RE_DELIVERY'] }
           : { status: activeTab };
       const result = await orderService.getOrdersPage({
         page,
@@ -312,9 +320,7 @@ export default function OrdersPage() {
                       <span className="order-card-gift-badge">Gift order · Wrapped</span>
                     )}
                   </div>
-                  <span className={`status-badge ${statusConfig.class}`}>
-                    {statusConfig.text}
-                  </span>
+                  <OrderStatusBadge status={order.status} />
                 </div>
 
                 {/* Body: Product List */}

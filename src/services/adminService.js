@@ -74,7 +74,7 @@ export const adminService = {
   setBannerActive: (id, active) => api.put(`/banners/${id}/active`, { active }).then(res => res.data?.data || res.data),
   deleteBanner: (id) => api.delete(`/banners/${id}`).then(res => res.data?.data || res.data),
 
-  getOrders: (params) => api.get('/orders', { params }).then(res => res.data),
+  getOrders: (params) => api.get('/orders', { params }).then(res => res.data?.data || res.data),
   updateOrderStatus: (id, status, shippingProvider, trackingCode) =>
     api.put(`/orders/${id}/status`, { status, shippingProvider, trackingCode }).then(res => res.data),
 
@@ -88,6 +88,7 @@ export const adminService = {
 
   getVoucherRules: (params) => api.get('/vouchers', { params }).then(res => res.data?.data || res.data),
   createVoucherRule: (body) => api.post('/vouchers', body).then(res => res.data?.data || res.data),
+  updateVoucherRule: (id, body) => api.put(`/vouchers/${id}`, body).then(res => res.data?.data || res.data),
   disableVoucherRule: (id) => api.delete(`/vouchers/${id}`),
 
   toggleBookActive: (id, isActive) => {

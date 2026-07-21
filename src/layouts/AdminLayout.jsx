@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { adminService } from '../services/adminService';
+import { refundService } from '../services/refundService';
 import {
   LayoutDashboard,
   BookOpen,
@@ -10,6 +12,7 @@ import {
   Users,
   MessageSquare,
   ClipboardList,
+  RotateCcw,
   Database,
   Image,
   Menu,
@@ -21,7 +24,8 @@ const links = [
   ['/admin/books', 'Books', BookOpen],
   ['/admin/categories', 'Categories', FolderOpen],
   ['/admin/banners', 'Banners', Image],
-  ['/admin/orders', 'Orders', ShoppingBag],
+  ['/admin/orders', 'Orders', ShoppingBag, 'orders'],
+  ['/admin/refunds', 'Refund Requests', RotateCcw, 'refunds'],
   ['/admin/vouchers', 'Voucher Rules', Ticket],
   ['/admin/users', 'Users', Users],
   ['/admin/reviews', 'Reviews', MessageSquare],
@@ -35,6 +39,40 @@ export default function AdminLayout({ children }) {
   const [collapsed, setCollapsed] = useState(() => {
     return localStorage.getItem('admin_sidebar_collapsed') === 'true';
   });
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const [pendingRefundsCount, setPendingRefundsCount] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPendingCount = async () => {
+      try {
+        const res = await adminService.getOrders({ page: 0, size: 100 });
+        if (isMounted && res) {
+          const items = res?.items || res?.content || res?.data?.items || [];
+          const pendingCount = items.filter(o => o.status === 'PENDING' || o.status === 'PENDING_PAYMENT').length;
+          setPendingOrdersCount(res?.totalItems || pendingCount);
+        }
+      } catch (err) {
+        // Fallback silently if filter param not supported
+      }
+
+      try {
+        const refunds = await refundService.getRefundRequests();
+        const pendingRef = refunds.filter(r => r.status === 'PENDING').length;
+        if (isMounted) {
+          setPendingRefundsCount(pendingRef);
+        }
+      } catch (err) {
+        // Ignore
+      }
+    };
+    fetchPendingCount();
+    const interval = setInterval(fetchPendingCount, 30000); // refresh every 30s
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   const toggleSidebar = () => {
     setCollapsed((prev) => {
@@ -75,7 +113,7 @@ export default function AdminLayout({ children }) {
           </button>
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {links.map(([to, label, Icon]) => (
+          {links.map(([to, label, Icon, key]) => (
             <NavLink 
               key={to} 
               to={to} 
@@ -86,11 +124,30 @@ export default function AdminLayout({ children }) {
                 alignItems: 'center',
                 gap: collapsed ? '0' : '12px',
                 justifyContent: collapsed ? 'center' : 'flex-start',
-                padding: collapsed ? '12px' : '10px 16px'
+                padding: collapsed ? '12px' : '10px 16px',
+                position: 'relative'
               }}
             >
               <Icon size={20} />
               {!collapsed && <span>{label}</span>}
+              {key === 'orders' && pendingOrdersCount > 0 && (
+                <span 
+                  className="admin-nav-badge"
+                  style={collapsed ? { position: 'absolute', top: '4px', right: '4px', margin: 0 } : {}}
+                  title={`${pendingOrdersCount} đơn mới cần xử lý`}
+                >
+                  {pendingOrdersCount > 99 ? '99+' : pendingOrdersCount}
+                </span>
+              )}
+              {key === 'refunds' && pendingRefundsCount > 0 && (
+                <span 
+                  className="admin-nav-badge"
+                  style={collapsed ? { position: 'absolute', top: '4px', right: '4px', margin: 0, background: '#f59e0b' } : { background: '#f59e0b' }}
+                  title={`${pendingRefundsCount} yêu cầu hoàn tiền cần xử lý`}
+                >
+                  {pendingRefundsCount > 99 ? '99+' : pendingRefundsCount}
+                </span>
+              )}
             </NavLink>
           ))}
         </div>
