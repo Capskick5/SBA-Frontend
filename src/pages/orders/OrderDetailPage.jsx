@@ -234,9 +234,15 @@ export default function OrderDetailPage({ adminView = false }) {
           <div className="order-detail-info-card">
             <h3>Payment method</h3>
             <div className="card-content">
-              <p>Payment through VNPay</p>
+              <p>{order.paymentMethod === 'COD' ? 'Cash on delivery' : 'Payment through VNPay'}</p>
               <p style={{ marginTop: '10px' }} className={`highlight ${statusConfig.class}`}>
-                {order.status === 'PENDING_PAYMENT' ? 'Waiting for payment.' : order.status === 'CANCELLED' ? 'This order has been cancelled.' : 'Payment completed.'}
+                {order.status === 'PENDING_PAYMENT'
+                  ? 'Waiting for payment.'
+                  : order.status === 'CANCELLED'
+                    ? 'This order has been cancelled.'
+                    : order.paymentMethod === 'COD'
+                      ? 'Pay with cash when your order arrives.'
+                      : 'Payment completed.'}
               </p>
               {!adminView && order.status === 'PENDING_PAYMENT' && (
                 <div className="order-detail-pending-payment">

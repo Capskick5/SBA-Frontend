@@ -1,10 +1,11 @@
 import { apiClient } from '../api/apiClient';
 
-const payloadFor = (addressId, cartItemIds, userVoucherId, deliveryType) => ({
+const payloadFor = (addressId, cartItemIds, userVoucherId, deliveryType, paymentMethod) => ({
   addressId,
   cartItemIds,
   deliveryType,
   ...(userVoucherId ? { userVoucherId } : {}),
+  ...(paymentMethod ? { paymentMethod } : {}),
 });
 
 export const checkoutService = {
@@ -12,8 +13,8 @@ export const checkoutService = {
     return apiClient.post('/orders/preview', payloadFor(addressId, cartItemIds, userVoucherId, deliveryType));
   },
 
-  checkout(addressId, cartItemIds, idempotencyKey, userVoucherId, deliveryType = 'SELF') {
-    return apiClient.post('/orders', payloadFor(addressId, cartItemIds, userVoucherId, deliveryType), {
+  checkout(addressId, cartItemIds, idempotencyKey, userVoucherId, deliveryType = 'SELF', paymentMethod = 'VNPAY') {
+    return apiClient.post('/orders', payloadFor(addressId, cartItemIds, userVoucherId, deliveryType, paymentMethod), {
       headers: { 'Idempotency-Key': idempotencyKey },
     });
   },

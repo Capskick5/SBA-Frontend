@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import AddressForm from '../../components/checkout/AddressForm';
 import CheckoutSummary from '../../components/checkout/CheckoutSummary';
 import { AuthFormMessage } from '../../components/auth/AuthFormFooter';
 import Button from '../../components/ui/Button';
+import { CheckCircle2, Home, ShoppingBag } from 'lucide-react';
 import { captureFormError } from '../../utils/formErrorUtils';
 import { useAuth } from '../../context/AuthContext';
 import { addressService } from '../../services/addressService';
@@ -12,6 +13,7 @@ import { cartFacade } from '../../services/cartFacade';
 import { checkoutService } from '../../services/checkoutService';
 import { voucherService } from '../../services/voucherService';
 import { clearGuestCart } from '../../storage/guestCartStorage';
+import { notifyCartUpdated } from '../../utils/cartEvents';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
 import { showToast } from '../../utils/toast';
 import {
@@ -59,6 +61,7 @@ function formatVoucherDate(value) {
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isLoggedIn = !!user;
   const isGuest = !user;
@@ -74,6 +77,8 @@ export default function CheckoutPage() {
   const [selectedVoucherId, setSelectedVoucherId] = useState('');
   const [voucherError, setVoucherError] = useState('');
   const [deliveryMode, setDeliveryMode] = useState('self');
+  const [paymentMethod, setPaymentMethod] = useState('VNPAY');
+  const [codOrderResult, setCodOrderResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [checkoutError, setCheckoutError] = useState('');
   const [formKey, setFormKey] = useState(0);
@@ -404,10 +409,17 @@ export default function CheckoutPage() {
             quantity: item.quantity,
           })),
           deliveryType,
+          paymentMethod,
         }, key);
         if (result?.checkoutUrl) {
           clearGuestCart();
           window.location.href = result.checkoutUrl;
+          return;
+        }
+        if (result?.orderId) {
+          clearGuestCart();
+          notifyCartUpdated();
+          setCodOrderResult(result);
           return;
         }
         setCheckoutError('Guest checkout is not available yet. Please try again later or sign in.');
@@ -429,10 +441,18 @@ export default function CheckoutPage() {
         key,
         selectedVoucherId || undefined,
         deliveryType,
+        paymentMethod,
       );
 
       if (result.checkoutUrl) {
         window.location.href = result.checkoutUrl;
+        return;
+      }
+      if (result?.orderId) {
+        const updatedCart = await cartFacade.getCart().catch(() => null);
+        notifyCartUpdated(updatedCart);
+        showToast('Order placed successfully! Pay with cash when it arrives.', 'success');
+        navigate(`/orders/${result.orderId}`);
       }
     } catch (err) {
       const pendingMessage = getPendingPaymentUserMessage(err);
@@ -565,6 +585,31 @@ export default function CheckoutPage() {
     : isGuest
       ? (!isAddressComplete(guestAddress) ? 'Confirm a delivery address below to continue to payment.' : '')
       : (!selectedAddressId ? 'Add a delivery address to continue to payment.' : '');
+
+  if (codOrderResult) {
+    return (
+      <section className="center-panel checkout-cod-success">
+        <CheckCircle2 size={64} color="var(--success, #10b981)" />
+        <h1>Order placed!</h1>
+        <p>
+          Order #{codOrderResult.orderId} has been placed for {formatCurrency(codOrderResult.total)}.
+          Pay with cash when it arrives.
+        </p>
+        <div className="actions">
+          <Link to="/">
+            <Button className="btn-secondary">
+              <Home size={18} /> Home
+            </Button>
+          </Link>
+          <Link to="/">
+            <Button>
+              <ShoppingBag size={18} /> Continue shopping
+            </Button>
+          </Link>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <div className="stack" style={{ gap: '24px' }}>
@@ -927,6 +972,8 @@ export default function CheckoutPage() {
             canPay={canPay}
             disabledReason={disabledReason}
             onPay={pay}
+            paymentMethod={paymentMethod}
+            onChangePaymentMethod={setPaymentMethod}
           />
         </div>
       </section>
