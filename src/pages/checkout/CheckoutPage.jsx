@@ -104,12 +104,29 @@ export default function CheckoutPage() {
   const [paying, setPaying] = useState(false);
   const [pendingOrder, setPendingOrder] = useState(null);
   const [resumingPayment, setResumingPayment] = useState(false);
+  const [defaultGiftWrapFee, setDefaultGiftWrapFee] = useState(DEFAULT_GIFT_WRAP_FEE_VND);
   const idempotencyKeyRef = useRef(null);
 
   const selectedAddress = addresses.find((address) => address.id === Number(selectedAddressId));
   const editingAddress = addresses.find((address) => address.id === editingAddressId);
   const deliveryType = deliveryMode === 'gift' ? 'GIFT' : 'SELF';
   const loginRedirect = `${location.pathname}${location.search || ''}`;
+
+  useEffect(() => {
+    let active = true;
+    checkoutService.getGiftWrapFee()
+      .then((data) => {
+        if (!active) return;
+        const feeVnd = Number(data?.feeVnd);
+        if (Number.isFinite(feeVnd)) setDefaultGiftWrapFee(feeVnd);
+      })
+      .catch(() => {
+        // Keep the hardcoded fallback if the fee lookup fails.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     const updateStickyTop = () => {
@@ -133,7 +150,7 @@ export default function CheckoutPage() {
     }));
     const subtotal = summaryItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
     const hasShipping = typeof shippingFee === 'number';
-    const giftWrapFee = mode === 'gift' ? DEFAULT_GIFT_WRAP_FEE_VND : 0;
+    const giftWrapFee = mode === 'gift' ? defaultGiftWrapFee : 0;
 
     return {
       items: summaryItems,
@@ -710,7 +727,7 @@ export default function CheckoutPage() {
                 >
                   <strong>Gift to someone</strong>
                   <span>Ship to another receiver with gift wrapping.</span>
-                  <small>Gift wrap fee: {formatCurrency(getCheckoutGiftWrapFee(preview))}</small>
+                  <small>Gift wrap fee: {formatCurrency(getCheckoutGiftWrapFee(preview, defaultGiftWrapFee))}</small>
                 </button>
               </div>
             </div>

@@ -74,6 +74,9 @@ export const adminService = {
   setBannerActive: (id, active) => api.put(`/banners/${id}/active`, { active }).then(res => res.data?.data || res.data),
   deleteBanner: (id) => api.delete(`/banners/${id}`).then(res => res.data?.data || res.data),
 
+  getGiftWrapFee: () => api.get('/gift-wrap-fee').then(res => res.data?.data || res.data),
+  updateGiftWrapFee: (feeVnd) => api.put('/gift-wrap-fee', { feeVnd }).then(res => res.data?.data || res.data),
+
   getOrders: (params) => api.get('/orders', { params }).then(res => res.data?.data || res.data),
   updateOrderStatus: (id, status, shippingProvider, trackingCode) =>
     api.put(`/orders/${id}/status`, { status, shippingProvider, trackingCode }).then(res => res.data),

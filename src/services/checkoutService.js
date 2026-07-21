@@ -9,6 +9,10 @@ const payloadFor = (addressId, cartItemIds, userVoucherId, deliveryType, payment
 });
 
 export const checkoutService = {
+  getGiftWrapFee() {
+    return apiClient.get('/gift-wrap-fee', { auth: false });
+  },
+
   preview(addressId, cartItemIds, userVoucherId, deliveryType = 'SELF') {
     return apiClient.post('/orders/preview', payloadFor(addressId, cartItemIds, userVoucherId, deliveryType));
   },

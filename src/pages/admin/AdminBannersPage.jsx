@@ -9,16 +9,11 @@ import { adminService } from '../../services/adminService';
 import {
   createBanner,
   deleteBanner,
-  DEFAULT_GIFT_WRAP_FEE_VND,
-  getGiftWrapFee,
-  isGiftWrapFeeLocalOnly,
   isBannersMockMode,
   listBannersAdmin,
   setBannerActive,
-  setGiftWrapFee,
   updateBanner,
 } from '../../services/adminConfigService';
-import { formatCurrency } from '../../utils/formatters';
 import { showToast } from '../../utils/toast';
 
 const EMPTY_FORM = {
@@ -50,8 +45,6 @@ export default function AdminBannersPage() {
 
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
-  const [giftWrapFee, setGiftWrapFeeInput] = useState(String(getGiftWrapFee()));
-  const [savingGiftFee, setSavingGiftFee] = useState(false);
   const [usingMockBanners, setUsingMockBanners] = useState(false);
 
   useEffect(() => {
@@ -80,23 +73,6 @@ export default function AdminBannersPage() {
     setLoading(true);
     setError('');
     setReloadKey((key) => key + 1);
-  };
-
-  const saveGiftWrapFee = async (event) => {
-    event.preventDefault();
-    const amount = Number(giftWrapFee);
-    if (!Number.isFinite(amount) || amount < 0) {
-      showToast('Gift wrap fee must be a non-negative number.', 'error');
-      return;
-    }
-    setSavingGiftFee(true);
-    try {
-      const saved = setGiftWrapFee(amount);
-      setGiftWrapFeeInput(String(saved));
-      showToast('Gift wrap fee saved for local admin preview.');
-    } finally {
-      setSavingGiftFee(false);
-    }
   };
 
   const setField = (name, value) => {
@@ -263,41 +239,13 @@ export default function AdminBannersPage() {
     <section className="stack">
       <header className="admin-banners-header">
         <div>
-          <h1>Storefront settings</h1>
-          <p>Configure homepage banners and the gift wrap fee shown during checkout.</p>
+          <h1>Banners</h1>
+          <p>Configure homepage banners.</p>
         </div>
         <Button type="button" onClick={openCreate}>
           <Plus size={17} /> Add banner
         </Button>
       </header>
-
-      <section className="panel admin-settings-panel">
-        <div className="admin-settings-panel-header">
-          <div>
-            <h2>Gift wrap fee</h2>
-            <p>
-              Checkout uses the backend fee ({formatCurrency(DEFAULT_GIFT_WRAP_FEE_VND)}).
-              Save a local preview value here until the admin config API is available.
-            </p>
-          </div>
-          {isGiftWrapFeeLocalOnly() && (
-            <span className="status-badge unknown">Local preview only</span>
-          )}
-        </div>
-        <form className="admin-gift-fee-form" onSubmit={saveGiftWrapFee}>
-          <Input
-            label="Gift wrap fee (VND)"
-            type="number"
-            min="0"
-            step="1000"
-            value={giftWrapFee}
-            onChange={(event) => setGiftWrapFeeInput(event.target.value)}
-          />
-          <Button type="submit" loading={savingGiftFee}>
-            Save gift fee
-          </Button>
-        </form>
-      </section>
 
       <div className="admin-banners-subheader">
         <h2>Homepage banners</h2>

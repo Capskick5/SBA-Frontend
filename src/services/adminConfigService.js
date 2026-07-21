@@ -10,6 +10,7 @@ import {
 } from '../storage/adminConfigStorage';
 
 let bannersUsingMock = false;
+let giftWrapFeeUsingMock = false;
 
 function sortBanners(banners) {
   return [...banners].sort((a, b) => {
@@ -26,29 +27,39 @@ function normalizeBannerRecord(banner, { imageUrl } = {}) {
   };
 }
 
-export function getGiftWrapFee() {
-  return getGiftWrapFeeVnd();
-}
-
-export function setGiftWrapFee(amount) {
-  return setGiftWrapFeeVnd(amount);
-}
-
-/** Checkout totals use the backend fee; admin save is local-only until config API ships. */
-export function isGiftWrapFeeLocalOnly() {
-  return true;
-}
-
-/** @deprecated Use isGiftWrapFeeLocalOnly */
 export function isGiftWrapFeeMockMode() {
-  return isGiftWrapFeeLocalOnly();
+  return giftWrapFeeUsingMock;
 }
 
-export function getCheckoutGiftWrapFee(preview) {
+export async function getGiftWrapFeeAdmin() {
+  try {
+    const data = await adminService.getGiftWrapFee();
+    giftWrapFeeUsingMock = false;
+    const feeVnd = Number(data?.feeVnd);
+    return Number.isFinite(feeVnd) ? feeVnd : DEFAULT_GIFT_WRAP_FEE_VND;
+  } catch {
+    giftWrapFeeUsingMock = true;
+    return getGiftWrapFeeVnd();
+  }
+}
+
+export async function setGiftWrapFeeAdmin(amount) {
+  try {
+    const data = await adminService.updateGiftWrapFee(amount);
+    giftWrapFeeUsingMock = false;
+    const feeVnd = Number(data?.feeVnd);
+    return Number.isFinite(feeVnd) ? feeVnd : amount;
+  } catch {
+    giftWrapFeeUsingMock = true;
+    return setGiftWrapFeeVnd(amount);
+  }
+}
+
+export function getCheckoutGiftWrapFee(preview, fallback = DEFAULT_GIFT_WRAP_FEE_VND) {
   const amount = Number(preview?.giftWrapFee);
   // SELF preview returns 0; gift-option label should still show the BE gift fee.
   if (Number.isFinite(amount) && amount > 0) return amount;
-  return DEFAULT_GIFT_WRAP_FEE_VND;
+  return fallback;
 }
 
 export function isBannersMockMode() {
