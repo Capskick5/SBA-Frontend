@@ -74,8 +74,11 @@ export const adminService = {
   setBannerActive: (id, active) => api.put(`/banners/${id}/active`, { active }).then(res => res.data?.data || res.data),
   deleteBanner: (id) => api.delete(`/banners/${id}`).then(res => res.data?.data || res.data),
 
-  getGiftWrapFee: () => api.get('/gift-wrap-fee').then(res => res.data?.data || res.data),
-  updateGiftWrapFee: (feeVnd) => api.put('/gift-wrap-fee', { feeVnd }).then(res => res.data?.data || res.data),
+  getGiftWrapsAdmin: () => api.get('/gift-wraps/admin').then(res => res.data?.data || res.data),
+  createGiftWrap: (giftWrapData) => api.post('/gift-wraps', giftWrapData).then(res => res.data?.data || res.data),
+  updateGiftWrap: (id, giftWrapData) => api.put(`/gift-wraps/${id}`, giftWrapData).then(res => res.data?.data || res.data),
+  setGiftWrapActive: (id, active) => api.put(`/gift-wraps/${id}/active`, { active }).then(res => res.data?.data || res.data),
+  deleteGiftWrap: (id) => api.delete(`/gift-wraps/${id}`).then(res => res.data?.data || res.data),
 
   getOrders: (params) => api.get('/orders', { params }).then(res => res.data?.data || res.data),
   updateOrderStatus: (id, status, shippingProvider, trackingCode) =>

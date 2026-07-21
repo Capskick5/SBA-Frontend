@@ -394,7 +394,7 @@ export default function OrderDetailPage({ adminView = false }) {
               </div>
               {giftWrapFee > 0 && (
                 <div className="order-detail-summary-row">
-                  <span>Gift wrap fee</span>
+                  <span>Gift wrap fee{order.giftWrapName ? ` (${order.giftWrapName})` : ''}</span>
                   <strong>{formatCurrency(giftWrapFee)}</strong>
                 </div>
               )}

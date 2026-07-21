@@ -1,24 +1,21 @@
 import { apiClient } from '../api/apiClient';
 
-const payloadFor = (addressId, cartItemIds, userVoucherId, deliveryType, paymentMethod) => ({
+const payloadFor = (addressId, cartItemIds, userVoucherId, deliveryType, giftWrapId, paymentMethod) => ({
   addressId,
   cartItemIds,
   deliveryType,
   ...(userVoucherId ? { userVoucherId } : {}),
+  ...(giftWrapId ? { giftWrapId } : {}),
   ...(paymentMethod ? { paymentMethod } : {}),
 });
 
 export const checkoutService = {
-  getGiftWrapFee() {
-    return apiClient.get('/gift-wrap-fee', { auth: false });
+  preview(addressId, cartItemIds, userVoucherId, deliveryType = 'SELF', giftWrapId = null) {
+    return apiClient.post('/orders/preview', payloadFor(addressId, cartItemIds, userVoucherId, deliveryType, giftWrapId));
   },
 
-  preview(addressId, cartItemIds, userVoucherId, deliveryType = 'SELF') {
-    return apiClient.post('/orders/preview', payloadFor(addressId, cartItemIds, userVoucherId, deliveryType));
-  },
-
-  checkout(addressId, cartItemIds, idempotencyKey, userVoucherId, deliveryType = 'SELF', paymentMethod = 'VNPAY') {
-    return apiClient.post('/orders', payloadFor(addressId, cartItemIds, userVoucherId, deliveryType, paymentMethod), {
+  checkout(addressId, cartItemIds, idempotencyKey, userVoucherId, deliveryType = 'SELF', giftWrapId = null, paymentMethod = 'VNPAY') {
+    return apiClient.post('/orders', payloadFor(addressId, cartItemIds, userVoucherId, deliveryType, giftWrapId, paymentMethod), {
       headers: { 'Idempotency-Key': idempotencyKey },
     });
   },

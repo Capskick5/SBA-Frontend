@@ -1,7 +1,5 @@
-const GIFT_WRAP_FEE_KEY = 'bookverse:giftWrapFeeVnd';
 const MOCK_BANNERS_KEY = 'bookverse:mockBanners';
-
-export const DEFAULT_GIFT_WRAP_FEE_VND = 10000;
+const MOCK_GIFT_WRAPS_KEY = 'bookverse:mockGiftWraps';
 
 function readJson(key, fallback) {
   try {
@@ -13,16 +11,12 @@ function readJson(key, fallback) {
   }
 }
 
-export function getGiftWrapFeeVnd() {
-  const raw = localStorage.getItem(GIFT_WRAP_FEE_KEY);
-  const amount = Number(raw);
-  return Number.isFinite(amount) && amount >= 0 ? amount : DEFAULT_GIFT_WRAP_FEE_VND;
-}
-
-export function setGiftWrapFeeVnd(amount) {
-  const normalized = Math.max(0, Math.round(Number(amount) || 0));
-  localStorage.setItem(GIFT_WRAP_FEE_KEY, String(normalized));
-  return normalized;
+function nextMockId(items) {
+  const numericIds = (items || [])
+    .map((item) => Number(item.id))
+    .filter((id) => Number.isFinite(id));
+  const maxId = numericIds.length ? Math.max(...numericIds) : 0;
+  return maxId + 1;
 }
 
 export function getMockBanners() {
@@ -35,9 +29,18 @@ export function setMockBanners(banners) {
 }
 
 export function nextMockBannerId(banners) {
-  const numericIds = (banners || [])
-    .map((banner) => Number(banner.id))
-    .filter((id) => Number.isFinite(id));
-  const maxId = numericIds.length ? Math.max(...numericIds) : 0;
-  return maxId + 1;
+  return nextMockId(banners);
+}
+
+export function getMockGiftWraps() {
+  const items = readJson(MOCK_GIFT_WRAPS_KEY, []);
+  return Array.isArray(items) ? items : [];
+}
+
+export function setMockGiftWraps(giftWraps) {
+  localStorage.setItem(MOCK_GIFT_WRAPS_KEY, JSON.stringify(giftWraps || []));
+}
+
+export function nextMockGiftWrapId(giftWraps) {
+  return nextMockId(giftWraps);
 }

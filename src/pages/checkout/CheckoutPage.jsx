@@ -26,11 +26,7 @@ import {
   isCodCheckoutSuccess,
 } from '../../utils/codCheckoutMock';
 import { orderService } from '../../services/orderService';
-
-import {
-  DEFAULT_GIFT_WRAP_FEE_VND,
-  getCheckoutGiftWrapFee,
-} from '../../services/adminConfigService';
+import { giftWrapService } from '../../services/giftWrapService';
 import { isMockCodOrderResult } from '../../utils/codCheckoutMock';
 
 function pickCartItemIds(param, cartItems) {
@@ -104,7 +100,9 @@ export default function CheckoutPage() {
   const [paying, setPaying] = useState(false);
   const [pendingOrder, setPendingOrder] = useState(null);
   const [resumingPayment, setResumingPayment] = useState(false);
-  const [defaultGiftWrapFee, setDefaultGiftWrapFee] = useState(DEFAULT_GIFT_WRAP_FEE_VND);
+  const [giftWraps, setGiftWraps] = useState([]);
+  const [giftWrapsLoading, setGiftWrapsLoading] = useState(true);
+  const [selectedGiftWrapId, setSelectedGiftWrapId] = useState(null);
   const idempotencyKeyRef = useRef(null);
 
   const selectedAddress = addresses.find((address) => address.id === Number(selectedAddressId));
@@ -114,14 +112,16 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     let active = true;
-    checkoutService.getGiftWrapFee()
-      .then((data) => {
+    giftWrapService.list()
+      .then((list) => {
         if (!active) return;
-        const feeVnd = Number(data?.feeVnd);
-        if (Number.isFinite(feeVnd)) setDefaultGiftWrapFee(feeVnd);
+        setGiftWraps(Array.isArray(list) ? list : []);
       })
       .catch(() => {
-        // Keep the hardcoded fallback if the fee lookup fails.
+        if (active) setGiftWraps([]);
+      })
+      .finally(() => {
+        if (active) setGiftWrapsLoading(false);
       });
     return () => {
       active = false;
@@ -140,7 +140,7 @@ export default function CheckoutPage() {
     return () => window.removeEventListener('resize', updateStickyTop);
   }, []);
 
-  const buildCartPreview = (items, shippingFee = null, mode = deliveryMode) => {
+  const buildCartPreview = (items, shippingFee = null, mode = deliveryMode, giftWrapId = selectedGiftWrapId) => {
     const summaryItems = items.map((item) => ({
       bookId: item.bookId,
       title: item.title,
@@ -150,7 +150,8 @@ export default function CheckoutPage() {
     }));
     const subtotal = summaryItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
     const hasShipping = typeof shippingFee === 'number';
-    const giftWrapFee = mode === 'gift' ? defaultGiftWrapFee : 0;
+    const selectedGiftWrap = mode === 'gift' ? giftWraps.find((gw) => gw.id === giftWrapId) : null;
+    const giftWrapFee = selectedGiftWrap ? Number(selectedGiftWrap.feeVnd || 0) : 0;
 
     return {
       items: summaryItems,
@@ -158,6 +159,8 @@ export default function CheckoutPage() {
       shippingFee,
       deliveryType: mode === 'gift' ? 'GIFT' : 'SELF',
       giftWrapFee,
+      giftWrapId: selectedGiftWrap?.id ?? null,
+      giftWrapName: selectedGiftWrap?.name ?? null,
       discountAmount: 0,
       total: subtotal + (hasShipping ? shippingFee : 0) + giftWrapFee,
     };
@@ -184,10 +187,12 @@ export default function CheckoutPage() {
     voucherId = selectedVoucherId,
     mode = deliveryMode,
     guestAddressOverride = guestAddress,
+    giftWrapId = selectedGiftWrapId,
   ) => {
+    const requestedGiftWrapId = mode === 'gift' ? giftWrapId : null;
     if (!isLoggedIn) {
       if (!guestAddressOverride) {
-        setPreview(buildCartPreview(fallbackItems, 0, mode));
+        setPreview(buildCartPreview(fallbackItems, 0, mode, requestedGiftWrapId));
         return;
       }
       try {
@@ -204,6 +209,7 @@ export default function CheckoutPage() {
             quantity: item.quantity,
           })),
           deliveryType: mode === 'gift' ? 'GIFT' : 'SELF',
+          giftWrapId: requestedGiftWrapId,
         };
         const previewData = await checkoutService.previewGuest(payload);
         setPreview({
@@ -226,6 +232,7 @@ export default function CheckoutPage() {
       itemIds,
       voucherId || undefined,
       requestedDeliveryType,
+      requestedGiftWrapId,
     );
     setPreview({
       ...previewData,
@@ -366,16 +373,24 @@ export default function CheckoutPage() {
   const handleDeliveryModeChange = async (mode) => {
     setDeliveryMode(mode);
     setCheckoutError('');
+
+    const giftWrapId = mode === 'gift'
+      ? (selectedGiftWrapId ?? giftWraps[0]?.id ?? null)
+      : selectedGiftWrapId;
+    if (mode === 'gift' && giftWrapId !== selectedGiftWrapId) {
+      setSelectedGiftWrapId(giftWrapId);
+    }
+
     if (cartItemIds.length === 0) return;
 
     if (isGuest) {
       if (!guestAddress) {
         // No address yet: recompute the local preview so the gift-wrap fee shows immediately.
-        setPreview(buildCartPreview(selectedCartItems, preview.shippingFee, mode));
+        setPreview(buildCartPreview(selectedCartItems, preview.shippingFee, mode, giftWrapId));
         return;
       }
       try {
-        await refreshPreview(null, cartItemIds, selectedCartItems, '', mode, guestAddress);
+        await refreshPreview(null, cartItemIds, selectedCartItems, '', mode, guestAddress, giftWrapId);
       } catch (err) {
         console.error('Failed to update guest delivery type:', err);
         setCheckoutError(err.message || 'Could not update the delivery type.');
@@ -385,10 +400,38 @@ export default function CheckoutPage() {
 
     try {
       if (!selectedAddressId) return;
-      await refreshPreview(selectedAddressId, cartItemIds, selectedCartItems, selectedVoucherId, mode);
+      await refreshPreview(selectedAddressId, cartItemIds, selectedCartItems, selectedVoucherId, mode, guestAddress, giftWrapId);
     } catch (err) {
       console.error('Failed to update delivery type:', err);
       setCheckoutError(err.message || 'Could not update the delivery type.');
+    }
+  };
+
+  const handleGiftWrapSelect = async (giftWrapId) => {
+    setSelectedGiftWrapId(giftWrapId);
+    setCheckoutError('');
+    if (cartItemIds.length === 0) return;
+
+    if (isGuest) {
+      if (!guestAddress) {
+        setPreview(buildCartPreview(selectedCartItems, preview.shippingFee, 'gift', giftWrapId));
+        return;
+      }
+      try {
+        await refreshPreview(null, cartItemIds, selectedCartItems, '', 'gift', guestAddress, giftWrapId);
+      } catch (err) {
+        console.error('Failed to update gift wrap selection:', err);
+        setCheckoutError(err.message || 'Could not update the gift wrap selection.');
+      }
+      return;
+    }
+
+    try {
+      if (!selectedAddressId) return;
+      await refreshPreview(selectedAddressId, cartItemIds, selectedCartItems, selectedVoucherId, 'gift', guestAddress, giftWrapId);
+    } catch (err) {
+      console.error('Failed to update gift wrap selection:', err);
+      setCheckoutError(err.message || 'Could not update the gift wrap selection.');
     }
   };
 
@@ -459,6 +502,7 @@ export default function CheckoutPage() {
               quantity: item.quantity,
             })),
             deliveryType,
+            giftWrapId: deliveryType === 'GIFT' ? selectedGiftWrapId : null,
             paymentMethod,
           }, key),
         });
@@ -494,6 +538,7 @@ export default function CheckoutPage() {
           key,
           selectedVoucherId || undefined,
           deliveryType,
+          deliveryType === 'GIFT' ? selectedGiftWrapId : null,
           paymentMethod,
         ),
       });
@@ -628,14 +673,17 @@ export default function CheckoutPage() {
 
   const selectedVoucher = vouchers.find((voucher) => String(voucher.id) === String(selectedVoucherId));
 
-  const canPay = !pendingOrder && (isGuest
+  const giftWrapMissing = deliveryMode === 'gift' && !selectedGiftWrapId;
+  const canPay = !pendingOrder && !giftWrapMissing && (isGuest
     ? isAddressComplete(guestAddress) && cartItemIds.length > 0
     : Boolean(selectedAddressId) && cartItemIds.length > 0);
   const disabledReason = pendingOrder
     ? PENDING_PAYMENT_MESSAGE
-    : isGuest
-      ? (!isAddressComplete(guestAddress) ? 'Confirm a delivery address below to continue to payment.' : '')
-      : (!selectedAddressId ? 'Add a delivery address to continue to payment.' : '');
+    : giftWrapMissing
+      ? 'Select a gift wrap design to continue.'
+      : isGuest
+        ? (!isAddressComplete(guestAddress) ? 'Confirm a delivery address below to continue to payment.' : '')
+        : (!selectedAddressId ? 'Add a delivery address to continue to payment.' : '');
 
   const codPreviewOnly = isMockCodOrderResult(codOrderResult);
 
@@ -727,9 +775,41 @@ export default function CheckoutPage() {
                 >
                   <strong>Gift to someone</strong>
                   <span>Ship to another receiver with gift wrapping.</span>
-                  <small>Gift wrap fee: {formatCurrency(getCheckoutGiftWrapFee(preview, defaultGiftWrapFee))}</small>
                 </button>
               </div>
+
+              {deliveryMode === 'gift' && (
+                <div className="gift-wrap-picker">
+                  {giftWrapsLoading ? (
+                    <p className="muted">Loading gift wrap options...</p>
+                  ) : giftWraps.length > 0 ? (
+                    <div className="gift-wrap-options" role="radiogroup" aria-label="Gift wrap design">
+                      {giftWraps.map((giftWrap) => (
+                        <button
+                          type="button"
+                          key={giftWrap.id}
+                          role="radio"
+                          aria-checked={selectedGiftWrapId === giftWrap.id}
+                          className={`gift-wrap-option${selectedGiftWrapId === giftWrap.id ? ' is-selected' : ''}`}
+                          onClick={() => handleGiftWrapSelect(giftWrap.id)}
+                        >
+                          {giftWrap.imageUrl ? (
+                            <img src={giftWrap.imageUrl} alt={giftWrap.name} />
+                          ) : (
+                            <span className="gift-wrap-option-noimage">No image</span>
+                          )}
+                          <strong>{giftWrap.name}</strong>
+                          <span>{formatCurrency(giftWrap.feeVnd)}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="form-message form-message-error">
+                      No gift wrap options are available right now. Please choose "For myself" or try again later.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             {isGuest && (

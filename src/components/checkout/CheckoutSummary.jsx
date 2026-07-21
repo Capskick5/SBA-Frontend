@@ -70,7 +70,7 @@ export default function CheckoutSummary({
         )}
         {hasGiftWrapFee && (
           <p>
-            <span>Gift wrap fee</span>
+            <span>Gift wrap fee{preview.giftWrapName ? ` (${preview.giftWrapName})` : ''}</span>
             <strong>{formatCurrency(giftWrapFee)}</strong>
           </p>
         )}

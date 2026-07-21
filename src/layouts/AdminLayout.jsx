@@ -25,7 +25,7 @@ const links = [
   ['/admin/books', 'Books', BookOpen],
   ['/admin/categories', 'Categories', FolderOpen],
   ['/admin/banners', 'Banners', Image],
-  ['/admin/gift-wrap-fee', 'Gift Wrap Fee', Gift],
+  ['/admin/gift-wraps', 'Gift Wraps', Gift],
   ['/admin/orders', 'Orders', ShoppingBag, 'orders'],
   ['/admin/refunds', 'Refund Requests', RotateCcw, 'refunds'],
   ['/admin/vouchers', 'Voucher Rules', Ticket],
