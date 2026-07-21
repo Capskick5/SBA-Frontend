@@ -33,6 +33,7 @@ const AdminAddBookPage = lazy(() => import('../pages/admin/AdminAddBookPage'));
 const AdminRagPage = lazy(() => import('../pages/admin/AdminRagPage'));
 const AdminInventoryPage = lazy(() => import('../pages/admin/AdminInventoryPage'));
 const AdminVouchersPage = lazy(() => import('../pages/admin/AdminVouchersPage'));
+const AdminBannersPage = lazy(() => import('../pages/admin/AdminBannersPage'));
 
 const main = (page) => (
   <StorefrontRoute>
@@ -78,6 +79,7 @@ export default function AppRoutes() {
         <Route path="/admin/orders" element={admin(<AdminOrdersPage />)} />
         <Route path="/admin/orders/:id" element={admin(<AdminOrderDetailPage />)} />
         <Route path="/admin/vouchers" element={admin(<AdminVouchersPage />)} />
+        <Route path="/admin/banners" element={admin(<AdminBannersPage />)} />
         <Route path="/admin/users" element={admin(<AdminUsersPage />)} />
         <Route path="/admin/reviews" element={admin(<AdminReviewsPage />)} />
         <Route path="/admin/inventory" element={admin(<AdminInventoryPage />)} />

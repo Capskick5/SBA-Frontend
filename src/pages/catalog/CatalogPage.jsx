@@ -1,26 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { bookService } from '../../services/bookService';
+import { bannerService } from '../../services/bannerService';
 import CatalogFilters from '../../components/catalog/CatalogFilters';
 import BookGrid from '../../components/catalog/BookGrid';
 import Pagination from '../../components/catalog/Pagination';
 import { ErrorState, LoadingState } from '../../components/ui/State';
-
-import banner1 from '../../assets/banner1.jpg';
-import banner2 from '../../assets/banner2.jpg';
-
-const BANNERS = [
-  {
-    image: banner1,
-    title: "Explore BookVerse",
-    subtitle: "Discover your next favorite read from our curated digital library, assisted by AI."
-  },
-  {
-    image: banner2,
-    title: "AI-Powered Bookstore",
-    subtitle: "Chat with our AI assistant to find the perfect book customized just for you."
-  }
-];
 
 const PAGE_SIZE = 20;
 const DEFAULT_SORT = 'relevance';
@@ -40,14 +25,20 @@ export default function CatalogPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [retryCount, setRetryCount] = useState(0);
+  const [banners, setBanners] = useState([]);
   const [activeBanner, setActiveBanner] = useState(0);
 
   useEffect(() => {
+    bannerService.list().then(setBanners).catch(() => setBanners([]));
+  }, []);
+
+  useEffect(() => {
+    if (banners.length < 2) return undefined;
     const interval = setInterval(() => {
-      setActiveBanner((prev) => (prev + 1) % BANNERS.length);
+      setActiveBanner((prev) => (prev + 1) % banners.length);
     }, 6000);
     return () => clearInterval(interval);
-  }, []);
+  }, [banners.length]);
 
   const query = searchParams.get('query') || '';
   const category = searchParams.get('category') || DEFAULT_CATEGORY;
@@ -127,27 +118,51 @@ export default function CatalogPage() {
 
   return (
     <div className="catalog-container">
-      <div className="hero-banner-slider">
-        {BANNERS.map((b, index) => (
-          <div
-            key={index}
-            className={`hero-banner ${index === activeBanner ? 'active' : ''}`}
-            style={{
-              backgroundImage: `url(${b.image})`
-            }}
-          />
-        ))}
-        <div className="banner-dots">
-          {BANNERS.map((_, index) => (
-            <button
-              key={index}
-              className={`banner-dot ${index === activeBanner ? 'active' : ''}`}
-              onClick={() => setActiveBanner(index)}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
+      {banners.length > 0 && (
+        <div className="hero-banner-slider">
+          {banners.map((banner, index) => {
+            const slideClassName = `hero-banner ${index === activeBanner ? 'active' : ''}`;
+            const slideStyle = { backgroundImage: `url(${banner.imageUrl})` };
+
+            if (!banner.linkUrl) {
+              return (
+                <div key={banner.id} className={slideClassName} style={slideStyle} title={banner.title} />
+              );
+            }
+            return banner.linkUrl.startsWith('/') ? (
+              <Link
+                key={banner.id}
+                to={banner.linkUrl}
+                className={slideClassName}
+                style={slideStyle}
+                aria-label={banner.title}
+              />
+            ) : (
+              <a
+                key={banner.id}
+                href={banner.linkUrl}
+                className={slideClassName}
+                style={slideStyle}
+                aria-label={banner.title}
+                target="_blank"
+                rel="noreferrer"
+              />
+            );
+          })}
+          {banners.length > 1 && (
+            <div className="banner-dots">
+              {banners.map((banner, index) => (
+                <button
+                  key={banner.id}
+                  className={`banner-dot ${index === activeBanner ? 'active' : ''}`}
+                  onClick={() => setActiveBanner(index)}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      )}
       <section className="stack">
         <CatalogFilters
           query={query}
