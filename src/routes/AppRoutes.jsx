@@ -19,6 +19,7 @@ const CheckoutPage = lazy(() => import('../pages/checkout/CheckoutPage'));
 const PaymentResultPage = lazy(() => import('../pages/payment/PaymentResultPage'));
 const OrdersPage = lazy(() => import('../pages/orders/OrdersPage'));
 const OrderDetailPage = lazy(() => import('../pages/orders/OrderDetailPage'));
+const OrderTrackPage = lazy(() => import('../pages/orders/OrderTrackPage'));
 const ProfilePage = lazy(() => import('../pages/profile/ProfilePage'));
 const AddressesPage = lazy(() => import('../pages/profile/AddressesPage'));
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'));
@@ -68,6 +69,7 @@ export default function AppRoutes() {
         <Route path="/payment/result" element={guestOrCustomerPage(<PaymentResultPage />)} />
         <Route path="/payment/success" element={guestOrCustomerPage(<PaymentResultPage />)} />
         <Route path="/payment/cancel" element={guestOrCustomerPage(<PaymentResultPage />)} />
+        <Route path="/orders/track" element={main(<OrderTrackPage />)} />
         <Route path="/orders" element={customerPage(<OrdersPage />)} />
         <Route path="/orders/:id" element={main(<OrderDetailPage />)} />
         <Route path="/books/chat" element={customerPage(<BookChatPage />)} />

@@ -5,7 +5,7 @@ import AddressForm from '../../components/checkout/AddressForm';
 import CheckoutSummary from '../../components/checkout/CheckoutSummary';
 import { AuthFormMessage } from '../../components/auth/AuthFormFooter';
 import Button from '../../components/ui/Button';
-import { CheckCircle2, Home, ShoppingBag } from 'lucide-react';
+import { CheckCircle2, Home, ShoppingBag, PackageSearch } from 'lucide-react';
 import { captureFormError } from '../../utils/formErrorUtils';
 import { useAuth } from '../../context/AuthContext';
 import { addressService } from '../../services/addressService';
@@ -657,6 +657,21 @@ export default function CheckoutPage() {
             </>
           )}
         </p>
+        {codOrderResult.orderCode && codOrderResult.guestToken && (
+          <div className="checkout-cod-tracking">
+            <p>
+              Your order code is <strong>{codOrderResult.orderCode}</strong>. Use the button below to
+              track your order any time — we have also emailed this link to you.
+            </p>
+            <Link
+              to={`/orders/track?code=${encodeURIComponent(codOrderResult.orderCode)}&token=${encodeURIComponent(codOrderResult.guestToken)}`}
+            >
+              <Button className="btn-secondary">
+                <PackageSearch size={18} /> Track your order
+              </Button>
+            </Link>
+          </div>
+        )}
         <div className="actions">
           <Link to="/">
             <Button className="btn-secondary">
