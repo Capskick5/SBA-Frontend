@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import AdminPageHeader from '../../components/ui/AdminPageHeader';
 import AdminPagination from '../../components/ui/AdminPagination';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
@@ -8,7 +9,7 @@ import { ErrorState, LoadingState } from '../../components/ui/State';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
 import { showToast } from '../../utils/toast';
 import { adminService } from '../../services/adminService';
-import { RotateCcw, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { CheckCircle, XCircle, Eye } from 'lucide-react';
 
 const PAGE_SIZE = 10;
 
@@ -29,9 +30,9 @@ function EvidenceThumbnail({ url }) {
 }
 
 const RESOLUTION_LABELS = {
-  RESHIP: 'Gửi lại sách thiếu (RESHIP)',
-  EXCHANGE: 'Đổi sách mới (EXCHANGE)',
-  REFUND: 'Hoàn tiền (REFUND)',
+  RESHIP: 'Gửi lại sách thiếu',
+  EXCHANGE: 'Đổi sách mới',
+  REFUND: 'Hoàn tiền',
 };
 
 const RESOLUTION_ELIGIBILITY = {
@@ -226,19 +227,12 @@ export default function AdminRefundsPage() {
   ];
 
   return (
-    <section className="stack" style={{ gap: '20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <h1 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <RotateCcw size={28} color="var(--accent)" /> Quản Lý Yêu Cầu Trả Hàng / Hoàn Tiền
-          </h1>
-          <p style={{ margin: '4px 0 0 0', color: 'var(--muted)', fontSize: '14px' }}>
-            Xem xét và xử lý các yêu cầu trả hàng / hoàn tiền từ khách hàng ({totalItems} yêu cầu)
-          </p>
-        </div>
-      </div>
+    <section className="stack">
+      <AdminPageHeader
+        title="Yêu cầu hoàn hàng / hoàn tiền"
+        subtitle={`${totalItems} yêu cầu · Duyệt và xử lý trả hàng / hoàn tiền từ khách.`}
+      />
 
-      {/* Tabs Filter */}
       <div className="admin-filter-tabs">
         {STATUS_TABS.map((tab) => (
           <button
@@ -275,21 +269,21 @@ export default function AdminRefundsPage() {
       {selectedRefund && (
         <Modal isOpen={!!selectedRefund} onClose={() => setSelectedRefund(null)} title={`Chi tiết yêu cầu trả hàng - Đơn #${selectedRefund.orderId}`}>
           <div className="stack" style={{ gap: '16px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: 'var(--surface-alt)', padding: '12px', borderRadius: '8px' }}>
+            <div className="admin-info-grid">
               <div>
-                <span style={{ fontSize: '12px', color: 'var(--muted)' }}>Lý do trả hàng:</span>
-                <p style={{ margin: '2px 0 0 0', fontWeight: 'bold' }}>{REASON_LABELS[selectedRefund.reason] || selectedRefund.reason}</p>
+                <span className="admin-info-label">Lý do trả hàng:</span>
+                <p className="admin-info-value">{REASON_LABELS[selectedRefund.reason] || selectedRefund.reason}</p>
               </div>
               <div>
-                <span style={{ fontSize: '12px', color: 'var(--muted)' }}>Số tiền yêu cầu hoàn:</span>
-                <p style={{ margin: '2px 0 0 0', fontWeight: 'bold', color: '#ef4444' }}>{formatCurrency(selectedRefund.requestedAmount)}</p>
+                <span className="admin-info-label">Số tiền yêu cầu hoàn:</span>
+                <p className="admin-info-value is-danger">{formatCurrency(selectedRefund.requestedAmount)}</p>
               </div>
             </div>
 
             {selectedRefund.items?.length > 0 && (
               <div>
-                <span style={{ fontSize: '12px', color: 'var(--muted)', display: 'block', marginBottom: '4px' }}>Sản phẩm yêu cầu trả:</span>
-                <div style={{ background: 'var(--surface)', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                <span className="admin-info-label">Sản phẩm yêu cầu trả:</span>
+                <div className="admin-panel-box" style={{ padding: 0 }}>
                   {selectedRefund.items.map((item) => (
                     <div key={item.orderItemId} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 10px', fontSize: '13px', borderBottom: '1px solid var(--border)' }}>
                       <span>{item.title} <span style={{ color: 'var(--muted)' }}>x{item.quantity}</span></span>
@@ -301,15 +295,15 @@ export default function AdminRefundsPage() {
             )}
 
             <div>
-              <span style={{ fontSize: '12px', color: 'var(--muted)', display: 'block', marginBottom: '4px' }}>Mô tả từ khách hàng:</span>
-              <p style={{ margin: 0, background: 'var(--surface)', padding: '10px', borderRadius: '6px', border: '1px solid var(--border)' }}>
+              <span className="admin-info-label">Mô tả từ khách hàng:</span>
+              <p className="admin-panel-box" style={{ margin: 0 }}>
                 {selectedRefund.description || 'Không có mô tả thêm.'}
               </p>
             </div>
 
             {selectedRefund.evidence?.length > 0 && (
               <div>
-                <span style={{ fontSize: '12px', color: 'var(--muted)', display: 'block', marginBottom: '6px' }}>Bằng chứng đã nộp:</span>
+                <span className="admin-info-label">Bằng chứng đã nộp:</span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                   {selectedRefund.evidence.map((ev) => (
                     <a key={ev.id} href={ev.url} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
@@ -320,7 +314,7 @@ export default function AdminRefundsPage() {
               </div>
             )}
 
-            <div style={{ borderTop: '1px dashed var(--border)', paddingTop: '12px' }}>
+            <div className="admin-panel-box">
               <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>Thông tin tài khoản nhận tiền hoàn</h4>
               <p style={{ margin: '2px 0', fontSize: '13px' }}>Ngân hàng: <strong>{selectedRefund.bankName}</strong></p>
               <p style={{ margin: '2px 0', fontSize: '13px' }}>Số tài khoản: <strong>{selectedRefund.bankAccountNumber}</strong></p>
@@ -328,7 +322,7 @@ export default function AdminRefundsPage() {
             </div>
 
             {selectedRefund.decidedByUserId && (
-              <div style={{ borderTop: '1px dashed var(--border)', paddingTop: '12px' }}>
+              <div className="admin-panel-box">
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>Quyết định xét duyệt</h4>
                 <p style={{ margin: '2px 0', fontSize: '13px' }}>
                   Xử lý bởi: <strong>{selectedRefund.decidedByName || `Admin #${selectedRefund.decidedByUserId}`}</strong> vào lúc <strong>{formatDateTime(selectedRefund.decidedAt)}</strong>
@@ -337,7 +331,7 @@ export default function AdminRefundsPage() {
                   <p style={{ margin: '2px 0', fontSize: '13px' }}>Hướng xử lý: <strong>{RESOLUTION_LABELS[selectedRefund.resolutionType] || selectedRefund.resolutionType}</strong></p>
                 )}
                 {selectedRefund.decisionNote && (
-                  <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: selectedRefund.status === 'REJECTED' ? '#ef4444' : 'var(--muted)' }}>
+                  <p style={{ margin: '6px 0 0 0', fontSize: '13px' }} className={selectedRefund.status === 'REJECTED' ? 'admin-status-bad' : 'admin-status-muted'}>
                     Ghi chú: {selectedRefund.decisionNote}
                   </p>
                 )}
@@ -345,7 +339,7 @@ export default function AdminRefundsPage() {
             )}
 
             {selectedRefund.returnTrackingCode && (
-              <div style={{ borderTop: '1px dashed var(--border)', paddingTop: '12px' }}>
+              <div className="admin-panel-box">
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>Vận chuyển trả hàng (khách gửi về)</h4>
                 <p style={{ margin: '2px 0', fontSize: '13px' }}>Nhà vận chuyển: <strong>{selectedRefund.returnShippingProvider}</strong></p>
                 <p style={{ margin: '2px 0', fontSize: '13px' }}>Mã vận đơn: <strong>{selectedRefund.returnTrackingCode}</strong></p>
@@ -354,7 +348,7 @@ export default function AdminRefundsPage() {
             )}
 
             {selectedRefund.receivedByUserId && (
-              <div style={{ borderTop: '1px dashed var(--border)', paddingTop: '12px' }}>
+              <div className="admin-panel-box">
                 <p style={{ margin: '2px 0', fontSize: '13px' }}>
                   Đã nhận hàng bởi: <strong>{selectedRefund.receivedByName || `Admin #${selectedRefund.receivedByUserId}`}</strong> vào lúc <strong>{formatDateTime(selectedRefund.receivedAt)}</strong>
                 </p>
@@ -362,14 +356,17 @@ export default function AdminRefundsPage() {
             )}
 
             {selectedRefund.inspectedByUserId && (
-              <div style={{ borderTop: '1px dashed var(--border)', paddingTop: '12px' }}>
+              <div className="admin-panel-box">
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>Kiểm tra kho</h4>
                 <p style={{ margin: '2px 0', fontSize: '13px' }}>
                   Người kiểm tra: <strong>{selectedRefund.inspectedByName || `Admin #${selectedRefund.inspectedByUserId}`}</strong> lúc <strong>{formatDateTime(selectedRefund.inspectionStartedAt)}</strong>
                 </p>
                 {selectedRefund.inspectionPassed !== null && selectedRefund.inspectionPassed !== undefined && (
                   <p style={{ margin: '2px 0', fontSize: '13px' }}>
-                    Kết quả: <strong style={{ color: selectedRefund.inspectionPassed ? '#10b981' : '#ef4444' }}>{selectedRefund.inspectionPassed ? 'Đạt' : 'Không đạt'}</strong>
+                    Kết quả:{' '}
+                    <strong className={selectedRefund.inspectionPassed ? 'admin-status-ok' : 'admin-status-bad'}>
+                      {selectedRefund.inspectionPassed ? 'Đạt' : 'Không đạt'}
+                    </strong>
                   </p>
                 )}
                 {selectedRefund.inspectionNote && (
@@ -379,7 +376,7 @@ export default function AdminRefundsPage() {
             )}
 
             {selectedRefund.replacementTrackingCode && (
-              <div style={{ borderTop: '1px dashed var(--border)', paddingTop: '12px' }}>
+              <div className="admin-panel-box">
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>Vận chuyển hàng thay thế</h4>
                 <p style={{ margin: '2px 0', fontSize: '13px' }}>Nhà vận chuyển: <strong>{selectedRefund.replacementShippingProvider}</strong></p>
                 <p style={{ margin: '2px 0', fontSize: '13px' }}>Mã vận đơn: <strong>{selectedRefund.replacementTrackingCode}</strong></p>
@@ -387,7 +384,7 @@ export default function AdminRefundsPage() {
             )}
 
             {selectedRefund.refundProcessedByUserId && (
-              <div style={{ borderTop: '1px dashed var(--border)', paddingTop: '12px' }}>
+              <div className="admin-panel-box">
                 <p style={{ margin: '2px 0', fontSize: '13px' }}>
                   Đã xử lý hoàn tiền bởi: <strong>{selectedRefund.refundProcessedByName || `Admin #${selectedRefund.refundProcessedByUserId}`}</strong> vào lúc <strong>{formatDateTime(selectedRefund.refundProcessedAt)}</strong>
                 </p>
@@ -427,7 +424,7 @@ export default function AdminRefundsPage() {
                       rows={2}
                     />
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                      <Button className="btn-secondary" style={{ background: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#dc2626', fontWeight: 600 }} onClick={() => setShowRejectInput(true)} disabled={processing}>
+                      <Button variant="secondary" style={{ background: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#dc2626', fontWeight: 600 }} onClick={() => setShowRejectInput(true)} disabled={processing}>
                         <XCircle size={16} style={{ marginRight: '4px' }} /> Từ chối
                       </Button>
                       <Button
@@ -449,7 +446,7 @@ export default function AdminRefundsPage() {
                       rows={2}
                     />
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                      <Button className="btn-secondary" onClick={() => setShowRejectInput(false)} disabled={processing}>Hủy</Button>
+                      <Button variant="secondary" onClick={() => setShowRejectInput(false)} disabled={processing}>Hủy</Button>
                       <Button style={{ background: '#dc2626', borderColor: '#dc2626', color: '#ffffff', fontWeight: 600 }} onClick={() => handleReject(selectedRefund.id)} disabled={processing}>
                         Xác nhận từ chối
                       </Button>
@@ -484,7 +481,7 @@ export default function AdminRefundsPage() {
                   rows={2}
                 />
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                  <Button className="btn-secondary" style={{ background: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#dc2626', fontWeight: 600 }} onClick={() => handleCompleteInspection(selectedRefund.id, false)} disabled={processing}>
+                  <Button variant="secondary" style={{ background: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#dc2626', fontWeight: 600 }} onClick={() => handleCompleteInspection(selectedRefund.id, false)} disabled={processing}>
                     Không đạt
                   </Button>
                   <Button style={{ background: '#10b981', borderColor: '#10b981', color: '#ffffff', fontWeight: 600 }} onClick={() => handleCompleteInspection(selectedRefund.id, true)} disabled={processing}>

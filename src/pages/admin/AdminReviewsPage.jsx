@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import AdminPageHeader from '../../components/ui/AdminPageHeader';
 import AdminPagination from '../../components/ui/AdminPagination';
+import AdminToolbar, { AdminFilterField } from '../../components/ui/AdminToolbar';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import Table from '../../components/ui/Table';
@@ -127,17 +129,13 @@ export default function AdminReviewsPage() {
 
   return (
     <section className="stack admin-reviews-page">
-      <div className="admin-review-heading">
-        <div>
-          <h1>Quản lý đánh giá</h1>
-          <p className="muted">Theo dõi phản hồi từ mua hàng đã xác minh và ẩn nội dung không phù hợp mà không xóa bằng chứng.</p>
-        </div>
-        <span className="admin-review-count">{totalItems} đánh giá</span>
-      </div>
+      <AdminPageHeader
+        title="Đánh giá sản phẩm"
+        subtitle={`${totalItems} đánh giá · Theo dõi phản hồi từ mua hàng đã xác minh và ẩn nội dung không phù hợp mà không xóa bằng chứng.`}
+      />
 
-      <div className="admin-review-filters">
-        <label>
-          <span>Trạng thái</span>
+      <AdminToolbar>
+        <AdminFilterField label="Trạng thái">
           <select
             value={status}
             onChange={(event) => {
@@ -149,8 +147,8 @@ export default function AdminReviewsPage() {
             <option value="PUBLISHED">Đang hiển thị</option>
             <option value="HIDDEN">Đã ẩn</option>
           </select>
-        </label>
-      </div>
+        </AdminFilterField>
+      </AdminToolbar>
 
       {loading ? (
         <LoadingState text="Đang tải đánh giá..." />

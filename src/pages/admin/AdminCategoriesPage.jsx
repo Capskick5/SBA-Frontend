@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
 import AdminPagination from '../../components/ui/AdminPagination';
-import Input from '../../components/ui/Input';
+import AdminPageHeader from '../../components/ui/AdminPageHeader';
+import AdminToolbar, { AdminFilterField } from '../../components/ui/AdminToolbar';
 import { adminService } from '../../services/adminService';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 
@@ -71,25 +72,34 @@ export default function AdminCategoriesPage() {
 
   return (
     <section className="stack">
-      <h1>Quản lý danh mục</h1>
-      
-      <form onSubmit={handleAddCategory} style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', marginBottom: '20px', maxWidth: '500px' }}>
-        <div style={{ flex: 1 }}>
-          <Input 
-            label="Tên danh mục mới" 
-            placeholder="Nhập tên danh mục"
-            value={newCatName}
-            onChange={(e) => setNewCatName(e.target.value)}
-            required
-          />
-        </div>
-        <Button type="submit" variant="primary" loading={submitting}>
-          Thêm
-        </Button>
+      <AdminPageHeader title="Quản lý danh mục" />
+
+      <form onSubmit={handleAddCategory}>
+        <AdminToolbar
+          end={(
+            <Button type="submit" variant="primary" loading={submitting}>
+              Thêm
+            </Button>
+          )}
+        >
+          <AdminFilterField label="Tên danh mục mới" className="admin-filter-field-grow">
+            <input
+              type="text"
+              placeholder="Nhập tên danh mục"
+              value={newCatName}
+              onChange={(e) => setNewCatName(e.target.value)}
+              required
+            />
+          </AdminFilterField>
+        </AdminToolbar>
       </form>
 
-      {loading ? <LoadingState text="Đang tải danh mục..." /> : error ? (
-        <ErrorState text={error}><Button onClick={fetchCategories}>Thử lại</Button></ErrorState>
+      {loading ? (
+        <LoadingState text="Đang tải danh mục..." />
+      ) : error ? (
+        <ErrorState text={error}>
+          <Button onClick={fetchCategories}>Thử lại</Button>
+        </ErrorState>
       ) : (
         <>
           <Table
@@ -97,7 +107,7 @@ export default function AdminCategoriesPage() {
             columns={[
               { key: 'id', label: 'ID' },
               { key: 'name', label: 'Tên danh mục' },
-              { key: 'slug', label: 'Slug' },
+              { key: 'slug', label: 'Đường dẫn' },
             ]}
             rows={paginatedCategories}
           />

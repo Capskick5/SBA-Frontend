@@ -4,6 +4,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import Table from '../../components/ui/Table';
+import AdminPageHeader from '../../components/ui/AdminPageHeader';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 import {
@@ -240,22 +241,19 @@ export default function AdminGiftWrapsPage() {
 
   return (
     <section className="stack">
-      <header className="admin-banners-header">
-        <div>
-          <h1>Giấy gói quà</h1>
-          <p>Cấu hình tùy chọn giấy gói quà và phí hiển thị khi thanh toán.</p>
-        </div>
-        <Button type="button" onClick={openCreate}>
-          <Plus size={17} /> Thêm giấy gói quà
-        </Button>
-      </header>
-
-      <div className="admin-banners-subheader">
-        <h2>Tùy chọn giấy gói quà</h2>
-        {usingMockGiftWraps && (
-          <span className="status-badge unknown">Dữ liệu mẫu ngoại tuyến</span>
+      <AdminPageHeader
+        title="Quản lý gói quà"
+        subtitle="Cấu hình tùy chọn giấy gói quà và phí hiển thị khi thanh toán."
+        actions={(
+          <Button type="button" onClick={openCreate}>
+            <Plus size={17} /> Thêm giấy gói quà
+          </Button>
         )}
-      </div>
+      >
+        {usingMockGiftWraps ? (
+          <span className="status-badge unknown">Dữ liệu mẫu ngoại tuyến</span>
+        ) : null}
+      </AdminPageHeader>
 
       {loading ? (
         <LoadingState text="Đang tải giấy gói quà..." />

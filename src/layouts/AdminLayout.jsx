@@ -18,23 +18,23 @@ import {
   Gift,
   Megaphone,
   Menu,
-  LogOut
+  LogOut,
 } from 'lucide-react';
 
 const links = [
-  ['/admin', 'Dashboard', LayoutDashboard],
-  ['/admin/books', 'Books', BookOpen],
-  ['/admin/categories', 'Categories', FolderOpen],
-  ['/admin/banners', 'Banners', Image],
-  ['/admin/gift-wraps', 'Gift Wraps', Gift],
-  ['/admin/orders', 'Orders', ShoppingBag, 'orders'],
-  ['/admin/refunds', 'Refund Requests', RotateCcw, 'refunds'],
-  ['/admin/campaigns', 'Campaigns', Megaphone],
-  ['/admin/vouchers', 'Vouchers', Ticket],
-  ['/admin/users', 'Users', Users],
-  ['/admin/reviews', 'Reviews', MessageSquare],
-  ['/admin/inventory', 'Inventory Management', ClipboardList],
-  ['/admin/rag', 'RAG Catalog', Database],
+  ['/admin', 'Bảng điều khiển', LayoutDashboard],
+  ['/admin/books', 'Kho sách', BookOpen],
+  ['/admin/categories', 'Danh mục', FolderOpen],
+  ['/admin/banners', 'Banner', Image],
+  ['/admin/gift-wraps', 'Gói quà', Gift],
+  ['/admin/orders', 'Đơn hàng', ShoppingBag, 'orders'],
+  ['/admin/refunds', 'Yêu cầu hoàn', RotateCcw, 'refunds'],
+  ['/admin/campaigns', 'Chiến dịch', Megaphone],
+  ['/admin/vouchers', 'Mã giảm giá', Ticket],
+  ['/admin/users', 'Người dùng', Users],
+  ['/admin/reviews', 'Đánh giá', MessageSquare],
+  ['/admin/inventory', 'Quản lý kho', ClipboardList],
+  ['/admin/rag', 'Danh mục RAG', Database],
 ];
 
 export default function AdminLayout({ children }) {
@@ -53,25 +53,23 @@ export default function AdminLayout({ children }) {
         const res = await adminService.getOrders({ page: 0, size: 100 });
         if (isMounted && res) {
           const items = res?.items || res?.content || res?.data?.items || [];
-          const pendingCount = items.filter(o => o.status === 'PENDING' || o.status === 'PENDING_PAYMENT').length;
+          const pendingCount = items.filter((o) => o.status === 'PENDING' || o.status === 'PENDING_PAYMENT').length;
           setPendingOrdersCount(res?.totalItems || pendingCount);
         }
       } catch {
-        // Fallback silently if filter param not supported
+        // ignore
       }
 
       try {
         const refunds = await refundService.getRefundRequests();
-        const pendingRef = refunds.filter(r => r.status === 'PENDING').length;
-        if (isMounted) {
-          setPendingRefundsCount(pendingRef);
-        }
+        const pendingRef = refunds.filter((r) => r.status === 'PENDING').length;
+        if (isMounted) setPendingRefundsCount(pendingRef);
       } catch {
-        // Ignore
+        // ignore
       }
     };
     fetchPendingCount();
-    const interval = setInterval(fetchPendingCount, 30000); // refresh every 30s
+    const interval = setInterval(fetchPendingCount, 30000);
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -94,81 +92,55 @@ export default function AdminLayout({ children }) {
   return (
     <div className={`admin-shell ${collapsed ? 'sidebar-collapsed' : ''}`}>
       <aside className="admin-sidebar">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', marginBottom: '20px' }}>
-          {!collapsed && <h2 style={{ margin: 0 }}>Quản trị</h2>}
-          <button 
-            onClick={toggleSidebar} 
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--muted)',
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background 0.2s'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface-alt)'}
-            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+        <div className="admin-sidebar-header">
+          {!collapsed && <h2>Quản trị</h2>}
+          <button
+            type="button"
+            className="admin-sidebar-icon-btn"
+            onClick={toggleSidebar}
+            aria-label={collapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
           >
             <Menu size={20} />
           </button>
         </div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+
+        <nav className="admin-sidebar-nav" aria-label="Menu quản trị">
           {links.map(([to, label, Icon, key]) => (
-            <NavLink 
-              key={to} 
-              to={to} 
+            <NavLink
+              key={to}
+              to={to}
               end={to === '/admin'}
               title={collapsed ? label : undefined}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: collapsed ? '0' : '12px',
-                justifyContent: collapsed ? 'center' : 'flex-start',
-                padding: collapsed ? '12px' : '10px 16px',
-                position: 'relative'
-              }}
+              className={({ isActive }) => `admin-sidebar-link${isActive ? ' active' : ''}`}
             >
               <Icon size={20} />
               {!collapsed && <span>{label}</span>}
               {key === 'orders' && pendingOrdersCount > 0 && (
-                <span 
-                  className="admin-nav-badge"
-                  style={collapsed ? { position: 'absolute', top: '4px', right: '4px', margin: 0 } : {}}
+                <span
+                  className={`admin-nav-badge${collapsed ? ' admin-nav-badge-collapsed' : ''}`}
                   title={`${pendingOrdersCount} đơn mới cần xử lý`}
                 >
                   {pendingOrdersCount > 99 ? '99+' : pendingOrdersCount}
                 </span>
               )}
               {key === 'refunds' && pendingRefundsCount > 0 && (
-                <span 
-                  className="admin-nav-badge"
-                  style={collapsed ? { position: 'absolute', top: '4px', right: '4px', margin: 0, background: '#f59e0b' } : { background: '#f59e0b' }}
-                  title={`${pendingRefundsCount} yêu cầu hoàn tiền cần xử lý`}
+                <span
+                  className={`admin-nav-badge admin-nav-badge-warn${collapsed ? ' admin-nav-badge-collapsed' : ''}`}
+                  title={`${pendingRefundsCount} yêu cầu hoàn cần xử lý`}
                 >
                   {pendingRefundsCount > 99 ? '99+' : pendingRefundsCount}
                 </span>
               )}
             </NavLink>
           ))}
-        </div>
-        <div style={{ padding: '20px 0', borderTop: '1px solid var(--border)' }}>
-          <button 
+        </nav>
+
+        <div className="admin-sidebar-footer">
+          <button
+            type="button"
+            className="admin-sidebar-logout"
             onClick={handleLogout}
             title={collapsed ? 'Đăng xuất' : undefined}
-            style={{
-              display: 'flex', alignItems: 'center', gap: collapsed ? '0' : '8px', 
-              justifyContent: collapsed ? 'center' : 'flex-start',
-              background: 'transparent', border: 'none', 
-              color: '#f87171', cursor: 'pointer',
-              padding: collapsed ? '12px' : '8px', width: '100%',
-              fontSize: '1rem', textAlign: 'left', borderRadius: '4px'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)'}
-            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
           >
             <LogOut size={18} />
             {!collapsed && <span>Đăng xuất</span>}

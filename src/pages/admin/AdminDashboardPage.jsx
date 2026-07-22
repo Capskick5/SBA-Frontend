@@ -12,6 +12,7 @@ import {
   YAxis,
 } from 'recharts';
 import OrderStatusBadge from '../../components/orders/OrderStatusBadge';
+import AdminPageHeader from '../../components/ui/AdminPageHeader';
 import Button from '../../components/ui/Button';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
@@ -143,16 +144,18 @@ export default function AdminDashboardPage() {
 
   return (
     <section className="stack admin-dashboard">
-      <div className="admin-dashboard-header">
-        <h1>Bảng điều khiển quản trị</h1>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => setReloadKey((value) => value + 1)}
-        >
-          Làm mới
-        </Button>
-      </div>
+      <AdminPageHeader
+        title="Bảng điều khiển"
+        actions={(
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setReloadKey((value) => value + 1)}
+          >
+            Làm mới
+          </Button>
+        )}
+      />
 
       <div className="admin-dashboard-kpis">
         <KpiCard

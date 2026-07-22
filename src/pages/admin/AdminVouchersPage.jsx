@@ -4,6 +4,9 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import Table from '../../components/ui/Table';
+import AdminPageHeader from '../../components/ui/AdminPageHeader';
+import AdminToolbar, { AdminFilterField } from '../../components/ui/AdminToolbar';
+import AdminPagination from '../../components/ui/AdminPagination';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
@@ -11,6 +14,12 @@ import { showToast } from '../../utils/toast';
 import styles from './AdminVouchersPage.module.css';
 
 const PAGE_SIZE = 10;
+
+const STATUS_LABELS = {
+  ACTIVE: 'Đang hiệu lực',
+  INACTIVE: 'Ngừng',
+  EXPIRED: 'Hết hạn',
+};
 
 const EMPTY_FORM = {
   campaignId: '',
@@ -98,7 +107,7 @@ export default function AdminVouchersPage() {
         if (!activeRequest) return;
         setVouchers([]);
         setTotalPages(1);
-        setError(getErrorMessage(err, 'Không thể tải danh sách voucher.'));
+        setError(getErrorMessage(err, 'Không thể tải danh sách mã giảm giá.'));
       })
       .finally(() => {
         if (activeRequest) setLoading(false);
@@ -120,7 +129,7 @@ export default function AdminVouchersPage() {
     setCurrentPage(nextPage);
   };
 
-  const campaignName = (id) => campaigns.find((c) => String(c.id) === String(id))?.name || 'Mã tự do (Không campaign)';
+  const campaignName = (id) => campaigns.find((c) => String(c.id) === String(id))?.name || 'Mã tự do (Không chiến dịch)';
 
   const openCreate = () => {
     setForm(EMPTY_FORM);
@@ -157,7 +166,7 @@ export default function AdminVouchersPage() {
     const totalQuantity = Number(form.totalQuantity);
 
     if (!form.code.trim() || !form.name.trim()) {
-      setFormError('Vui lòng nhập Mã voucher và Tên hiển thị.');
+      setFormError('Vui lòng nhập Mã giảm giá và Tên hiển thị.');
       return;
     }
     if (!Number.isFinite(discountValue) || discountValue <= 0) {
@@ -213,16 +222,16 @@ export default function AdminVouchersPage() {
     try {
       if (editingId) {
         await adminService.updateVoucher(editingId, payload);
-        showToast('Cập nhật mã voucher thành công.');
+        showToast('Cập nhật mã giảm giá thành công.');
       } else {
         await adminService.createVoucher(payload);
-        showToast('Tạo mã voucher mới thành công.');
+        showToast('Tạo mã giảm giá mới thành công.');
       }
       setFormOpen(false);
       if (currentPage === 0) reload();
       else changePage(0);
     } catch (err) {
-      setFormError(getErrorMessage(err, 'Không thể lưu thông tin mã voucher.'));
+      setFormError(getErrorMessage(err, 'Không thể lưu thông tin mã giảm giá.'));
     } finally {
       setSubmitting(false);
     }
@@ -234,17 +243,17 @@ export default function AdminVouchersPage() {
     try {
       await adminService.deleteVoucher(deleteTarget.id);
       setDeleteTarget(null);
-      showToast('Đã xóa mã voucher.');
+      showToast('Đã xóa mã giảm giá.');
       reload();
     } catch (err) {
-      showToast(getErrorMessage(err, 'Không thể xóa mã voucher này.'), 'error');
+      showToast(getErrorMessage(err, 'Không thể xóa mã giảm giá này.'), 'error');
     } finally {
       setDeleting(false);
     }
   };
 
   const columns = [
-    { key: 'code', label: 'Mã Voucher', render: (v) => <strong>{v.code}</strong> },
+    { key: 'code', label: 'Mã giảm giá', render: (v) => <strong>{v.code}</strong> },
     { key: 'name', label: 'Tên hiển thị' },
     { key: 'reward', label: 'Mức giảm giá', render: formatReward },
     { key: 'minOrderValue', label: 'Đơn tối thiểu', render: (v) => formatCurrency(v.minOrderValue) },
@@ -253,7 +262,7 @@ export default function AdminVouchersPage() {
       label: 'Đã nhận / Tổng số',
       render: (v) => `${v.claimedQuantity ?? 0} / ${v.totalQuantity ?? 0}`,
     },
-    { key: 'campaign', label: 'Thuộc Campaign', render: (v) => campaignName(v.campaignId) },
+    { key: 'campaign', label: 'Thuộc chiến dịch', render: (v) => campaignName(v.campaignId) },
     {
       key: 'period',
       label: 'Thời gian hiệu lực',
@@ -269,7 +278,7 @@ export default function AdminVouchersPage() {
       label: 'Trạng thái',
       render: (v) => (
         <span className={`${styles.status} ${v.status === 'ACTIVE' ? styles.active : styles.disabled}`}>
-          {v.status === 'ACTIVE' ? 'Đang mở' : v.status === 'INACTIVE' ? 'Tắt' : 'Đã hết hạn'}
+          {STATUS_LABELS[v.status] || v.status}
         </span>
       ),
     },
@@ -277,9 +286,17 @@ export default function AdminVouchersPage() {
       key: 'actions',
       label: 'Thao tác',
       render: (v) => (
-        <div className={styles.rowActions}>
-          <Button type="button" className="btn-secondary" onClick={() => openEdit(v)}>Sửa</Button>
-          <Button type="button" className={styles.disableButton} onClick={() => setDeleteTarget(v)}>
+        <div className="admin-row-actions">
+          <Button type="button" variant="secondary" size="sm" onClick={() => openEdit(v)}>
+            Sửa
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="danger-action"
+            onClick={() => setDeleteTarget(v)}
+          >
             <Trash2 size={15} /> Xóa
           </Button>
         </div>
@@ -291,20 +308,26 @@ export default function AdminVouchersPage() {
 
   return (
     <section className={`${styles.page} stack`}>
-      <header className={styles.header}>
-        <div>
-          <span className={styles.kicker}>Khuyến mãi</span>
-          <h1>Quản lý Mã Voucher</h1>
-          <p>Tạo và quản lý các mã giảm giá cho phép khách hàng thu thập và sử dụng khi thanh toán.</p>
-        </div>
-        <Button type="button" onClick={openCreate}>
-          <Plus size={17} /> Tạo voucher mới
-        </Button>
-      </header>
+      <AdminPageHeader
+        kicker="Khuyến mãi"
+        title="Quản lý mã giảm giá"
+        subtitle="Tạo và quản lý các mã giảm giá cho phép khách hàng thu thập và sử dụng khi thanh toán."
+        actions={(
+          <Button type="button" onClick={openCreate}>
+            <Plus size={17} /> Tạo mã giảm giá
+          </Button>
+        )}
+      />
 
-      <div className={styles.toolbar}>
-        <label className={styles.filterField}>
-          <span>Lọc theo trạng thái</span>
+      <AdminToolbar
+        end={(
+          <div className={styles.rulePolicy}>
+            <TicketPercent size={18} />
+            <span>Gắn mã giảm giá vào chiến dịch tương ứng để tự động hiển thị trong kho ưu đãi của khách hàng.</span>
+          </div>
+        )}
+      >
+        <AdminFilterField label="Lọc theo trạng thái">
           <select
             value={statusFilter}
             onChange={(event) => {
@@ -315,43 +338,35 @@ export default function AdminVouchersPage() {
             }}
           >
             <option value="all">Tất cả trạng thái</option>
-            <option value="ACTIVE">Đang mở (Active)</option>
-            <option value="INACTIVE">Tắt (Inactive)</option>
-            <option value="EXPIRED">Đã hết hạn (Expired)</option>
+            <option value="ACTIVE">Đang hiệu lực</option>
+            <option value="INACTIVE">Ngừng</option>
+            <option value="EXPIRED">Hết hạn</option>
           </select>
-        </label>
-        <div className={styles.rulePolicy}>
-          <TicketPercent size={18} />
-          <span>Gắn voucher vào Campaign tương ứng để voucher tự động hiển thị trong kho ưu đãi của khách hàng.</span>
-        </div>
-      </div>
+        </AdminFilterField>
+      </AdminToolbar>
 
       {loading ? (
-        <LoadingState text="Đang tải danh sách mã voucher..." />
+        <LoadingState text="Đang tải danh sách mã giảm giá..." />
       ) : error ? (
         <ErrorState text={error}>
           <Button type="button" onClick={reload}>Thử lại</Button>
         </ErrorState>
       ) : (
         <>
-          <Table columns={columns} rows={vouchers} emptyText="Chưa có mã voucher nào." />
+          <Table columns={columns} rows={vouchers} emptyText="Chưa có mã giảm giá nào." />
           {vouchers.length > 0 && (
-            <div className={styles.pagination}>
-              <Button type="button" className="btn-secondary" disabled={currentPage === 0} onClick={() => changePage(currentPage - 1)}>
-                Trang trước
-              </Button>
-              <span>Trang {currentPage + 1} / {totalPages}</span>
-              <Button type="button" className="btn-secondary" disabled={currentPage >= totalPages - 1} onClick={() => changePage(currentPage + 1)}>
-                Trang sau
-              </Button>
-            </div>
+            <AdminPagination
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={changePage}
+            />
           )}
         </>
       )}
 
       {formOpen && (
         <Modal
-          title={editingId ? 'Chỉnh sửa mã voucher' : 'Tạo mã voucher mới'}
+          title={editingId ? 'Chỉnh sửa mã giảm giá' : 'Tạo mã giảm giá mới'}
           onClose={() => setFormOpen(false)}
           maxWidth="560px"
         >
@@ -359,7 +374,7 @@ export default function AdminVouchersPage() {
             {formError && <div className={styles.formError}>{formError}</div>}
             <div className={styles.formGrid}>
               <Input
-                label="Mã voucher (Ví dụ: WELCOME20)"
+                label="Mã giảm giá (Ví dụ: WELCOME20)"
                 value={form.code}
                 onChange={(event) => setField('code', event.target.value.toUpperCase())}
                 placeholder="VD: WELCOME20"
@@ -375,9 +390,9 @@ export default function AdminVouchersPage() {
             </div>
 
             <label className="field">
-              <span>Thuộc Campaign (Tùy chọn)</span>
+              <span>Thuộc chiến dịch (Tùy chọn)</span>
               <select value={form.campaignId} onChange={(event) => setField('campaignId', event.target.value)}>
-                <option value="">Không thuộc Campaign nào (Mã tự do)</option>
+                <option value="">Không thuộc chiến dịch nào (Mã tự do)</option>
                 {campaigns.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -452,20 +467,20 @@ export default function AdminVouchersPage() {
             </div>
 
             <label className="field">
-              <span>Trạng thái mở/tắt</span>
+              <span>Trạng thái</span>
               <select value={form.status} onChange={(event) => setField('status', event.target.value)}>
-                <option value="ACTIVE">Mở (Active)</option>
-                <option value="INACTIVE">Tắt (Inactive)</option>
-                <option value="EXPIRED">Hết hạn (Expired)</option>
+                <option value="ACTIVE">Đang hiệu lực</option>
+                <option value="INACTIVE">Ngừng</option>
+                <option value="EXPIRED">Hết hạn</option>
               </select>
             </label>
 
             <div className={styles.modalActions}>
-              <Button type="button" className="btn-secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
+              <Button type="button" variant="secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
                 Hủy
               </Button>
               <Button type="submit" loading={submitting}>
-                {editingId ? 'Lưu thay đổi' : 'Tạo mã voucher'}
+                {editingId ? 'Lưu thay đổi' : 'Tạo mã giảm giá'}
               </Button>
             </div>
           </form>
@@ -473,16 +488,16 @@ export default function AdminVouchersPage() {
       )}
 
       {deleteTarget && (
-        <Modal title="Xác nhận xóa mã voucher?" onClose={() => setDeleteTarget(null)} hideClose={deleting}>
+        <Modal title="Xác nhận xóa mã giảm giá?" onClose={() => setDeleteTarget(null)} hideClose={deleting}>
           <div className={styles.confirmBody}>
             <p>
-              Mã voucher <strong>{deleteTarget.code}</strong> sẽ bị xóa khỏi hệ thống. Khách hàng chưa thu thập sẽ không thể nhận mã này nữa.
+              Mã giảm giá <strong>{deleteTarget.code}</strong> sẽ bị xóa khỏi hệ thống. Khách hàng chưa thu thập sẽ không thể nhận mã này nữa.
             </p>
             <div className={styles.modalActions}>
-              <Button type="button" className="btn-secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+              <Button type="button" variant="secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
                 Hủy
               </Button>
-              <Button type="button" className={styles.disableButton} onClick={confirmDelete} loading={deleting}>
+              <Button type="button" variant="secondary" className="danger-action" onClick={confirmDelete} loading={deleting}>
                 Xác nhận xóa
               </Button>
             </div>

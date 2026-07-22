@@ -4,6 +4,9 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import Table from '../../components/ui/Table';
+import AdminPageHeader from '../../components/ui/AdminPageHeader';
+import AdminToolbar from '../../components/ui/AdminToolbar';
+import AdminPagination from '../../components/ui/AdminPagination';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 import { formatDateTime } from '../../utils/formatters';
@@ -22,8 +25,14 @@ const EMPTY_FORM = {
 };
 
 const TYPE_LABELS = {
-  FLASH_SALE: 'Flash sale',
+  FLASH_SALE: 'Giờ vàng',
   WELCOME_GIFT: 'Thành viên mới',
+};
+
+const STATUS_LABELS = {
+  ACTIVE: 'Đang hiệu lực',
+  INACTIVE: 'Ngừng',
+  COMPLETED: 'Đã kết thúc',
 };
 
 function toLocalInput(iso) {
@@ -77,7 +86,7 @@ export default function AdminCampaignsPage() {
         if (!activeRequest) return;
         setCampaigns([]);
         setTotalPages(1);
-        setError(getErrorMessage(err, 'Không thể tải danh sách campaign.'));
+        setError(getErrorMessage(err, 'Không thể tải danh sách chiến dịch.'));
       })
       .finally(() => {
         if (activeRequest) setLoading(false);
@@ -125,7 +134,7 @@ export default function AdminCampaignsPage() {
   const submit = async (event) => {
     event.preventDefault();
     if (!form.name.trim()) {
-      setFormError('Vui lòng nhập tên campaign.');
+      setFormError('Vui lòng nhập tên chiến dịch.');
       return;
     }
     const startTime = toInstant(form.startTime);
@@ -160,16 +169,16 @@ export default function AdminCampaignsPage() {
     try {
       if (editingId) {
         await adminService.updateCampaign(editingId, payload);
-        showToast('Cập nhật campaign thành công.');
+        showToast('Cập nhật chiến dịch thành công.');
       } else {
         await adminService.createCampaign(payload);
-        showToast('Tạo campaign thành công.');
+        showToast('Tạo chiến dịch thành công.');
       }
       setFormOpen(false);
       if (currentPage === 0) reload();
       else changePage(0);
     } catch (err) {
-      setFormError(getErrorMessage(err, 'Không thể lưu thông tin campaign.'));
+      setFormError(getErrorMessage(err, 'Không thể lưu thông tin chiến dịch.'));
     } finally {
       setSubmitting(false);
     }
@@ -181,17 +190,17 @@ export default function AdminCampaignsPage() {
     try {
       await adminService.deleteCampaign(deleteTarget.id);
       setDeleteTarget(null);
-      showToast('Đã xóa campaign.');
+      showToast('Đã xóa chiến dịch.');
       reload();
     } catch (err) {
-      showToast(getErrorMessage(err, 'Không thể xóa campaign này.'), 'error');
+      showToast(getErrorMessage(err, 'Không thể xóa chiến dịch này.'), 'error');
     } finally {
       setDeleting(false);
     }
   };
 
   const columns = [
-    { key: 'name', label: 'Tên Campaign', render: (c) => <strong>{c.name}</strong> },
+    { key: 'name', label: 'Tên chiến dịch', render: (c) => <strong>{c.name}</strong> },
     { key: 'campaignType', label: 'Phân loại', render: (c) => TYPE_LABELS[c.campaignType] || c.campaignType },
     {
       key: 'isAutoDistributed',
@@ -213,7 +222,7 @@ export default function AdminCampaignsPage() {
       label: 'Trạng thái',
       render: (c) => (
         <span className={`${styles.status} ${c.status === 'ACTIVE' ? styles.active : styles.disabled}`}>
-          {c.status === 'ACTIVE' ? 'Đang chạy' : c.status === 'INACTIVE' ? 'Ngừng chạy' : 'Đã kết thúc'}
+          {STATUS_LABELS[c.status] || c.status}
         </span>
       ),
     },
@@ -221,9 +230,17 @@ export default function AdminCampaignsPage() {
       key: 'actions',
       label: 'Thao tác',
       render: (c) => (
-        <div className={styles.rowActions}>
-          <Button type="button" className="btn-secondary" onClick={() => openEdit(c)}>Sửa</Button>
-          <Button type="button" className={styles.disableButton} onClick={() => setDeleteTarget(c)}>
+        <div className="admin-row-actions">
+          <Button type="button" variant="secondary" size="sm" onClick={() => openEdit(c)}>
+            Sửa
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="danger-action"
+            onClick={() => setDeleteTarget(c)}
+          >
             <Trash2 size={15} /> Xóa
           </Button>
         </div>
@@ -235,66 +252,62 @@ export default function AdminCampaignsPage() {
 
   return (
     <section className={`${styles.page} stack`}>
-      <header className={styles.header}>
-        <div>
-          <span className={styles.kicker}>Khuyến mãi</span>
-          <h1>Quản lý Campaign</h1>
-          <p>Tạo và quản lý các chiến dịch khuyến mãi như Flash Sale hoặc Chào mừng thành viên mới.</p>
-        </div>
-        <Button type="button" onClick={openCreate}>
-          <Plus size={17} /> Tạo campaign mới
-        </Button>
-      </header>
+      <AdminPageHeader
+        kicker="Khuyến mãi"
+        title="Quản lý chiến dịch"
+        subtitle="Tạo và quản lý các chiến dịch khuyến mãi như Giờ vàng hoặc Chào mừng thành viên mới."
+        actions={(
+          <Button type="button" onClick={openCreate}>
+            <Plus size={17} /> Tạo chiến dịch mới
+          </Button>
+        )}
+      />
 
-      <div className={styles.toolbar}>
+      <AdminToolbar>
         <div className={styles.rulePolicy}>
           <Megaphone size={18} />
-          <span>Gắn các mã Voucher vào Campaign tương ứng. Khách hàng sẽ thấy các Campaign này tại Trang chủ.</span>
+          <span>Gắn các mã giảm giá vào chiến dịch tương ứng. Khách hàng sẽ thấy các chiến dịch này tại Trang chủ.</span>
         </div>
-      </div>
+      </AdminToolbar>
 
       {loading ? (
-        <LoadingState text="Đang tải danh sách campaign..." />
+        <LoadingState text="Đang tải danh sách chiến dịch..." />
       ) : error ? (
         <ErrorState text={error}>
           <Button type="button" onClick={reload}>Thử lại</Button>
         </ErrorState>
       ) : (
         <>
-          <Table columns={columns} rows={campaigns} emptyText="Chưa có campaign nào." />
+          <Table columns={columns} rows={campaigns} emptyText="Chưa có chiến dịch nào." />
           {campaigns.length > 0 && (
-            <div className={styles.pagination}>
-              <Button type="button" className="btn-secondary" disabled={currentPage === 0} onClick={() => changePage(currentPage - 1)}>
-                Trang trước
-              </Button>
-              <span>Trang {currentPage + 1} / {totalPages}</span>
-              <Button type="button" className="btn-secondary" disabled={currentPage >= totalPages - 1} onClick={() => changePage(currentPage + 1)}>
-                Trang sau
-              </Button>
-            </div>
+            <AdminPagination
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={changePage}
+            />
           )}
         </>
       )}
 
       {formOpen && (
         <Modal
-          title={editingId ? 'Chỉnh sửa campaign' : 'Tạo campaign mới'}
+          title={editingId ? 'Chỉnh sửa chiến dịch' : 'Tạo chiến dịch mới'}
           onClose={() => setFormOpen(false)}
           maxWidth="540px"
         >
           <form onSubmit={submit} className="stack">
             {formError && <div className={styles.formError}>{formError}</div>}
             <Input
-              label="Tên campaign"
+              label="Tên chiến dịch"
               value={form.name}
               onChange={(event) => setField('name', event.target.value)}
-              placeholder="VD: Flash Sale Giờ Vàng Hè 2026"
+              placeholder="VD: Giờ vàng hè 2026"
               required
             />
             <label className="field">
-              <span>Loại campaign</span>
+              <span>Loại chiến dịch</span>
               <select value={form.campaignType} onChange={(event) => setField('campaignType', event.target.value)}>
-                <option value="FLASH_SALE">Flash sale</option>
+                <option value="FLASH_SALE">Giờ vàng</option>
                 <option value="WELCOME_GIFT">Thành viên mới</option>
               </select>
             </label>
@@ -321,9 +334,9 @@ export default function AdminCampaignsPage() {
             <label className="field">
               <span>Trạng thái</span>
               <select value={form.status} onChange={(event) => setField('status', event.target.value)}>
-                <option value="ACTIVE">Đang chạy (Active)</option>
-                <option value="INACTIVE">Ngừng chạy (Inactive)</option>
-                <option value="COMPLETED">Đã hoàn thành (Completed)</option>
+                <option value="ACTIVE">Đang hiệu lực</option>
+                <option value="INACTIVE">Ngừng</option>
+                <option value="COMPLETED">Đã kết thúc</option>
               </select>
             </label>
             <label className={styles.activeCheck}>
@@ -332,14 +345,14 @@ export default function AdminCampaignsPage() {
                 checked={form.isAutoDistributed}
                 onChange={(event) => setField('isAutoDistributed', event.target.checked)}
               />
-              <span>Tự động tặng mã voucher cho khách hàng đủ điều kiện</span>
+              <span>Tự động tặng mã giảm giá cho khách hàng đủ điều kiện</span>
             </label>
             <div className={styles.modalActions}>
-              <Button type="button" className="btn-secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
+              <Button type="button" variant="secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
                 Hủy
               </Button>
               <Button type="submit" loading={submitting}>
-                {editingId ? 'Lưu thay đổi' : 'Tạo campaign'}
+                {editingId ? 'Lưu thay đổi' : 'Tạo chiến dịch'}
               </Button>
             </div>
           </form>
@@ -347,16 +360,16 @@ export default function AdminCampaignsPage() {
       )}
 
       {deleteTarget && (
-        <Modal title="Xác nhận xóa campaign?" onClose={() => setDeleteTarget(null)} hideClose={deleting}>
+        <Modal title="Xác nhận xóa chiến dịch?" onClose={() => setDeleteTarget(null)} hideClose={deleting}>
           <div className={styles.confirmBody}>
             <p>
-              Campaign <strong>{deleteTarget.name}</strong> sẽ bị xóa. Các mã voucher liên kết sẽ trở thành mã tự do.
+              Chiến dịch <strong>{deleteTarget.name}</strong> sẽ bị xóa. Các mã giảm giá liên kết sẽ trở thành mã tự do.
             </p>
             <div className={styles.modalActions}>
-              <Button type="button" className="btn-secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+              <Button type="button" variant="secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
                 Hủy
               </Button>
-              <Button type="button" className={styles.disableButton} onClick={confirmDelete} loading={deleting}>
+              <Button type="button" variant="secondary" className="danger-action" onClick={confirmDelete} loading={deleting}>
                 Xác nhận xóa
               </Button>
             </div>

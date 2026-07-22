@@ -20,8 +20,7 @@
   color: var(--muted);
 }
 
-.header :global(.btn),
-.rowActions :global(.btn) {
+.header :global(.btn) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -96,22 +95,6 @@
   color: #475569;
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
-}
-
-.rowActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.disableButton {
-  color: var(--error) !important;
-  border-color: rgba(239, 68, 68, 0.35) !important;
-  background: rgba(239, 68, 68, 0.06) !important;
-}
-
-.disableButton:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.12) !important;
 }
 
 .pagination {
@@ -200,10 +183,5 @@
 
   .formGrid {
     grid-template-columns: 1fr;
-  }
-
-  .rowActions {
-    align-items: stretch;
-    flex-direction: column;
   }
 }
