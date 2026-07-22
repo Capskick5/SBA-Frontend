@@ -11,13 +11,34 @@ export default function AdminInventoryPage() {
     return mov.delta ?? mov.quantityDelta ?? mov.change ?? mov.quantity ?? mov.amount ?? mov.quantityChange ?? 0;
   };
 
+  const REASON_LABELS = {
+    ADMIN_IMPORT: 'Nhập kho',
+    ADMIN_ADJUSTMENT: 'Điều chỉnh thủ công',
+    ORDER_HOLD: 'Giữ hàng đơn',
+    ORDER_CANCEL_RELEASE: 'Hoàn kho khi hủy đơn',
+    ORDER_EXPIRED_RELEASE: 'Hoàn kho khi hết hạn đơn',
+  };
+
+  const NOTE_LABELS = {
+    'Stock held for checkout': 'Giữ tồn kho khi thanh toán',
+    'Stock released after customer cancellation': 'Hoàn tồn kho sau khi khách hủy đơn',
+    'Stock released after order expiry': 'Hoàn tồn kho sau khi đơn hết hạn',
+    'Stock released after payment cancellation': 'Hoàn tồn kho sau khi hủy thanh toán',
+  };
+
   const formatReason = (reason) => {
     if (!reason) return 'Không xác định';
-    return reason
+    const key = String(reason).toUpperCase();
+    return REASON_LABELS[key] || reason
       .toLowerCase()
       .split('_')
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
+  };
+
+  const formatNote = (note) => {
+    if (!note) return '';
+    return NOTE_LABELS[note] || note;
   };
 
   const [movements, setMovements] = useState([]);
@@ -89,8 +110,9 @@ export default function AdminInventoryPage() {
 
     const bookTitle = (mov.book?.title || '').toLowerCase();
     const bookId = String(mov.bookId || '');
-    const note = (mov.note || '').toLowerCase();
     const reason = (mov.reason || '').toLowerCase();
+    const reasonLabel = formatReason(mov.reason).toLowerCase();
+    const note = formatNote(mov.note || '').toLowerCase();
     const orderId = String(mov.orderId || '');
     const creator = (mov.createdByName || usersMap[mov.createdBy] || String(mov.createdBy) || '').toLowerCase();
     const quantity = String(getQuantity(mov));
@@ -99,6 +121,7 @@ export default function AdminInventoryPage() {
       bookId.includes(lowerQuery) ||
       note.includes(lowerQuery) ||
       reason.includes(lowerQuery) ||
+      reasonLabel.includes(lowerQuery) ||
       orderId.includes(lowerQuery) ||
       creator.includes(lowerQuery) ||
       quantity.includes(lowerQuery);
@@ -166,7 +189,7 @@ export default function AdminInventoryPage() {
                         );
                       })()}
                     </td>
-                    <td>{mov.note}</td>
+                    <td>{formatNote(mov.note)}</td>
                     <td>{mov.createdByName || usersMap[mov.createdBy] || mov.createdBy || 'Hệ thống'}</td>
                     <td>{formatDateTime(mov.createdAt)}</td>
                   </tr>
