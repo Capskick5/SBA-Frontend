@@ -1,11 +1,13 @@
 import { apiGet } from '../api/apiClient';
+import { formatCategoryName } from '../utils/formatters';
 
 const coverFor = (book) => `https://placehold.co/240x340?text=${encodeURIComponent(book.title || 'Book')}`;
 
 function mapBook(book) {
+  const rawCatName = typeof book.category === 'object' ? book.category?.name : book.category;
   return {
     ...book,
-    category: book.category?.name || 'General',
+    category: formatCategoryName(rawCatName || 'Tổng hợp'),
     categoryId: book.category?.id,
     coverUrl: book.coverUrl || coverFor(book),
     ratingAvg: Number(book.ratingAvg ?? 0),
@@ -40,6 +42,9 @@ export const bookService = {
   },
   async getCategories() {
     const page = await apiGet('/categories', { page: 0, size: 100 });
-    return page.items || [];
+    return (page.items || []).map((cat) => ({
+      ...cat,
+      name: formatCategoryName(cat.name),
+    }));
   },
 };

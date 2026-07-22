@@ -207,40 +207,48 @@ export default function CatalogPage() {
         />
       )}
 
-      {/* Catalog Filters & Book Grid */}
-      <section className="stack">
-        <CatalogFilters
-          query={query}
-          setQuery={(value) => updateCatalogUrl({ query: value }, { resetPage: true })}
-          category={category}
-          setCategory={(value) => updateCatalogUrl({ category: value }, { resetPage: true })}
-          sort={sort}
-          setSort={(value) => updateCatalogUrl({ sort: value }, { resetPage: true })}
-          categories={categories}
-        />
-        {!loading && !error && (
-          <p className="muted">
-            Hiển thị {showingStart}-{showingEnd} trong tổng số {totalItems} sách
-          </p>
-        )}
-        {loading && <LoadingState text="Đang tải sách..." />}
-        {!loading && error && (
-          <ErrorState text={error}>
-            <button className="btn" type="button" onClick={retryLoadBooks}>
-              Thử lại
-            </button>
-          </ErrorState>
-        )}
-        {!loading && !error && (
-          <>
-            <BookGrid books={books} />
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={(page) => updateCatalogUrl({ page })}
-            />
-          </>
-        )}
+      {/* 2-Column Catalog Layout: Left Sidebar + Main Product Grid */}
+      <section className="catalog-layout">
+        <aside className="catalog-sidebar">
+          <CatalogFilters
+            query={query}
+            setQuery={(value) => updateCatalogUrl({ query: value }, { resetPage: true })}
+            category={category}
+            setCategory={(value) => updateCatalogUrl({ category: value }, { resetPage: true })}
+            sort={sort}
+            setSort={(value) => updateCatalogUrl({ sort: value }, { resetPage: true })}
+            categories={categories}
+          />
+        </aside>
+
+        <main className="catalog-content">
+          {!loading && !error && (
+            <div className="catalog-content-header">
+              <p className="catalog-results-count">
+                Hiển thị <strong>{showingStart}-{showingEnd}</strong> trong tổng số <strong>{totalItems}</strong> cuốn sách
+              </p>
+            </div>
+          )}
+
+          {loading && <LoadingState text="Đang tải danh sách sách..." />}
+          {!loading && error && (
+            <ErrorState text={error}>
+              <button className="btn" type="button" onClick={retryLoadBooks}>
+                Thử lại
+              </button>
+            </ErrorState>
+          )}
+          {!loading && !error && (
+            <>
+              <BookGrid books={books} />
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => updateCatalogUrl({ page })}
+              />
+            </>
+          )}
+        </main>
       </section>
     </div>
   );

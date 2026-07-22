@@ -36,3 +36,26 @@ export const formatDateTime = (value, fallback = 'Không có') => {
 
   return `${formatDate(date, fallback)} ${time}`;
 };
+
+const CATEGORY_VI_MAP = {
+  'Business & Finance': 'Kinh doanh & Tài chính',
+  'Technology & Computing': 'Công nghệ & Máy tính',
+  'Psychology & Self-Help': 'Tâm lý & Phát triển bản thân',
+  'Science & Mathematics': 'Khoa học & Toán học',
+  "Children's Books": 'Sách thiếu nhi',
+  'History, Politics & International Relations': 'Lịch sử & Chính trị',
+  'Fiction & Literature': 'Văn học & Tiểu thuyết',
+  'Religion & Spirituality': 'Tôn giáo & Tâm linh',
+  'Health & Fitness': 'Sức khỏe & Đời sống',
+  'Education': 'Giáo dục & Sư phạm',
+  'Social Sciences': 'Khoa học xã hội',
+  'Arts & Photography': 'Nghệ thuật & Nhiếp ảnh',
+  'Biographies & Memoirs': 'Tiểu sử & Hồi ký',
+  'Cookbooks, Food & Wine': 'Ẩm thực & Nấu ăn',
+};
+
+export const formatCategoryName = (name) => {
+  if (!name) return 'Tổng hợp';
+  if (name === 'all' || name === 'Tất cả') return 'Tất cả';
+  return CATEGORY_VI_MAP[name] || name;
+};
