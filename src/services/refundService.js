@@ -1,86 +1,44 @@
-const REFUND_STORAGE_KEY = 'bookverse_mock_refunds';
-
-function getStoredRefunds() {
-  try {
-    const data = localStorage.getItem(REFUND_STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    console.error('Failed to parse mock refunds:', e);
-    return [];
-  }
-}
-
-function saveStoredRefunds(refunds) {
-  try {
-    localStorage.setItem(REFUND_STORAGE_KEY, JSON.stringify(refunds));
-    window.dispatchEvent(new Event('refund_updated'));
-  } catch (e) {
-    console.error('Failed to save mock refunds:', e);
-  }
-}
+import { apiClient } from '../api/apiClient';
 
 export const refundService = {
-  getRefundRequests() {
-    return Promise.resolve(getStoredRefunds());
+  async createRefundRequest(orderId, refundData) {
+    const result = await apiClient.post(`/orders/${orderId}/refund-requests`, {
+      items: refundData.items,
+      reason: refundData.reason,
+      description: refundData.description || '',
+      bankName: refundData.bankName,
+      bankAccountNumber: refundData.accountNumber,
+      bankAccountHolder: refundData.accountOwner,
+      changeOfMindAcknowledged: refundData.changeOfMindAcknowledged || undefined,
+    });
+    window.dispatchEvent(new Event('refund_updated'));
+    return result;
   },
 
   getRefundByOrderId(orderId) {
-    const refunds = getStoredRefunds();
-    const found = refunds.find((r) => String(r.orderId) === String(orderId));
-    return Promise.resolve(found || null);
+    return apiClient.get(`/orders/${orderId}/refund-requests/me`);
   },
 
-  createRefundRequest(orderId, refundData) {
-    const refunds = getStoredRefunds();
-    const existingIndex = refunds.findIndex((r) => String(r.orderId) === String(orderId));
-
-    const newRefund = {
-      id: `REF-${Date.now()}`,
-      orderId: String(orderId),
-      reason: refundData.reason || 'Other',
-      description: refundData.description || '',
-      bankName: refundData.bankName || '',
-      accountNumber: refundData.accountNumber || '',
-      accountOwner: refundData.accountOwner || '',
-      items: refundData.items || [],
-      refundAmount: refundData.refundAmount || 0,
-      proofImages: refundData.proofImages || [],
-      status: 'PENDING', // PENDING, APPROVED, REJECTED
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      rejectReason: null,
-    };
-
-    if (existingIndex >= 0) {
-      refunds[existingIndex] = newRefund;
-    } else {
-      refunds.unshift(newRefund);
-    }
-
-    saveStoredRefunds(refunds);
-    return Promise.resolve(newRefund);
+  async uploadEvidenceFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiClient.post('/refund-requests/evidence/upload', formData);
   },
 
-  approveRefund(requestId) {
-    const refunds = getStoredRefunds();
-    const item = refunds.find((r) => r.id === requestId);
-    if (item) {
-      item.status = 'APPROVED';
-      item.updatedAt = new Date().toISOString();
-      saveStoredRefunds(refunds);
-    }
-    return Promise.resolve(item);
+  async submitEvidence(orderId, refundRequestId, { url }) {
+    const result = await apiClient.put(`/orders/${orderId}/refund-requests/${refundRequestId}/evidence`, {
+      url,
+    });
+    window.dispatchEvent(new Event('refund_updated'));
+    return result;
   },
 
-  rejectRefund(requestId, rejectReason) {
-    const refunds = getStoredRefunds();
-    const item = refunds.find((r) => r.id === requestId);
-    if (item) {
-      item.status = 'REJECTED';
-      item.rejectReason = rejectReason || 'Does not meet return terms.';
-      item.updatedAt = new Date().toISOString();
-      saveStoredRefunds(refunds);
-    }
-    return Promise.resolve(item);
+  async submitReturnShipment(orderId, refundRequestId, { shippingProvider, trackingCode }) {
+    const result = await apiClient.put(`/orders/${orderId}/refund-requests/${refundRequestId}/return-shipment`, {
+      shippingProvider,
+      trackingCode,
+    });
+    window.dispatchEvent(new Event('refund_updated'));
+    return result;
   },
 };

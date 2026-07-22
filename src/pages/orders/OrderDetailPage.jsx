@@ -19,6 +19,40 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useAuth } from '../../context/AuthContext';
 import { getOrderStatusConfig, getPaymentMethodLabel } from '../../utils/orderLabels';
 
+const REFUND_STATUS_META = {
+  RETURN_REQUESTED: { badgeClass: 'refund-requested', badgeLabel: 'ĐÃ GỬI YÊU CẦU', bg: 'rgba(245, 158, 11, 0.08)', border: 'rgba(245, 158, 11, 0.2)', heading: '📝 Yêu cầu trả hàng đã được ghi nhận — vui lòng nộp bằng chứng bên dưới' },
+  WAITING_EVIDENCE: { badgeClass: 'refund-requested', badgeLabel: 'CẦN BỔ SUNG BẰNG CHỨNG', bg: 'rgba(245, 158, 11, 0.08)', border: 'rgba(245, 158, 11, 0.2)', heading: '📸 Vui lòng nộp thêm bằng chứng (hình ảnh/video) để CSKH xem xét' },
+  UNDER_REVIEW: { badgeClass: 'refund-requested', badgeLabel: 'ĐANG XEM XÉT', bg: 'rgba(245, 158, 11, 0.08)', border: 'rgba(245, 158, 11, 0.2)', heading: '⏳ Yêu cầu đang được CSKH xem xét' },
+  APPROVED: { badgeClass: 'refund-requested', badgeLabel: 'ĐÃ DUYỆT', bg: 'rgba(59, 130, 246, 0.08)', border: 'rgba(59, 130, 246, 0.2)', heading: '✅ Yêu cầu đã được duyệt' },
+  REJECTED: { badgeClass: 'cancelled', badgeLabel: 'TỪ CHỐI', bg: 'rgba(239, 68, 68, 0.08)', border: 'rgba(239, 68, 68, 0.2)', heading: '❌ Yêu cầu trả hàng bị từ chối' },
+  PICKUP_PENDING: { badgeClass: 'refund-requested', badgeLabel: 'CHỜ GỬI HÀNG TRẢ', bg: 'rgba(59, 130, 246, 0.08)', border: 'rgba(59, 130, 246, 0.2)', heading: '📦 Yêu cầu đã được chấp nhận — vui lòng gửi sản phẩm về kho' },
+  RETURN_RECEIVED: { badgeClass: 'refund-requested', badgeLabel: 'ĐÃ NHẬN HÀNG TRẢ', bg: 'rgba(59, 130, 246, 0.08)', border: 'rgba(59, 130, 246, 0.2)', heading: '📬 Kho đã nhận được hàng trả, chờ kiểm tra' },
+  INSPECTING: { badgeClass: 'refund-requested', badgeLabel: 'ĐANG KIỂM TRA HÀNG', bg: 'rgba(59, 130, 246, 0.08)', border: 'rgba(59, 130, 246, 0.2)', heading: '🔍 Kho đang kiểm tra tình trạng sản phẩm trả về' },
+  RESHIP_PENDING: { badgeClass: 'refund-requested', badgeLabel: 'CHỜ GỬI HÀNG THAY THẾ', bg: 'rgba(59, 130, 246, 0.08)', border: 'rgba(59, 130, 246, 0.2)', heading: '📮 Yêu cầu đã được duyệt — BookVerse sẽ gửi lại sách còn thiếu' },
+  EXCHANGE_SHIPPING: { badgeClass: 'refund-requested', badgeLabel: 'ĐANG GỬI HÀNG ĐỔI', bg: 'rgba(59, 130, 246, 0.08)', border: 'rgba(59, 130, 246, 0.2)', heading: '🔄 Đang gửi sách thay thế cho bạn' },
+  REFUND_PROCESSING: { badgeClass: 'refund-requested', badgeLabel: 'ĐANG XỬ LÝ HOÀN TIỀN', bg: 'rgba(59, 130, 246, 0.08)', border: 'rgba(59, 130, 246, 0.2)', heading: '💸 Yêu cầu hoàn tiền đang được xử lý' },
+  REFUND_COMPLETED: { badgeClass: 'refunded', badgeLabel: 'ĐÃ HOÀN TIỀN', bg: 'rgba(16, 185, 129, 0.08)', border: 'rgba(16, 185, 129, 0.2)', heading: '✅ Đã hoàn tiền vào tài khoản đã cung cấp' },
+  COMPLETED: { badgeClass: 'refunded', badgeLabel: 'HOÀN TẤT', bg: 'rgba(16, 185, 129, 0.08)', border: 'rgba(16, 185, 129, 0.2)', heading: '✅ Yêu cầu trả hàng đã hoàn tất' },
+};
+
+const REASON_LABELS = {
+  BOOK_DEFECT: 'Sách bị lỗi',
+  WRONG_BOOK: 'Giao sai sách',
+  MISSING_BOOK: 'Thiếu sách trong đơn hàng',
+  DAMAGED_IN_TRANSIT: 'Sách bị hư hỏng do vận chuyển',
+  CHANGE_OF_MIND: 'Đổi ý, không muốn mua nữa',
+};
+
+const EVIDENCE_ACCEPTING_STATUSES = ['RETURN_REQUESTED', 'WAITING_EVIDENCE'];
+
+function EvidenceThumbnail({ url }) {
+  const [isVideo, setIsVideo] = useState(false);
+  const style = { width: '96px', height: '96px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border)' };
+  return isVideo
+    ? <video src={url} style={style} muted />
+    : <img src={url} alt="Bằng chứng" style={style} onError={() => setIsVideo(true)} />;
+}
+
 export default function OrderDetailPage({ adminView = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -35,17 +69,70 @@ export default function OrderDetailPage({ adminView = false }) {
   const [showLockDialog, setShowLockDialog] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundRequest, setRefundRequest] = useState(null);
+  const [returnProvider, setReturnProvider] = useState('');
+  const [returnTrackingCode, setReturnTrackingCode] = useState('');
+  const [submittingReturn, setSubmittingReturn] = useState(false);
+  const [evidenceFile, setEvidenceFile] = useState(null);
+  const [evidenceInputKey, setEvidenceInputKey] = useState(0);
+  const [submittingEvidence, setSubmittingEvidence] = useState(false);
 
   const fetchRefundInfo = async () => {
-    if (id) {
+    if (!id) return;
+    try {
       const existing = await refundService.getRefundByOrderId(id);
       setRefundRequest(existing);
+    } catch (err) {
+      console.error('Failed to load refund request info:', err);
     }
   };
 
   useEffect(() => {
     fetchRefundInfo();
   }, [id]);
+
+  const handleSubmitEvidence = async (e) => {
+    e.preventDefault();
+    if (!evidenceFile) {
+      showToast('Vui lòng chọn một tệp hình ảnh hoặc video', 'error');
+      return;
+    }
+    setSubmittingEvidence(true);
+    try {
+      const { url } = await refundService.uploadEvidenceFile(evidenceFile);
+      await refundService.submitEvidence(order.id, refundRequest.id, { url });
+      showToast('Đã nộp bằng chứng thành công!', 'success');
+      setEvidenceFile(null);
+      setEvidenceInputKey((key) => key + 1);
+      fetchRefundInfo();
+    } catch (err) {
+      showToast(err?.message || 'Có lỗi xảy ra, vui lòng thử lại.', 'error');
+    } finally {
+      setSubmittingEvidence(false);
+    }
+  };
+
+  const handleSubmitReturnShipment = async (e) => {
+    e.preventDefault();
+    if (!returnProvider.trim() || !returnTrackingCode.trim()) {
+      showToast('Vui lòng nhập đầy đủ nhà vận chuyển và mã vận đơn', 'error');
+      return;
+    }
+    setSubmittingReturn(true);
+    try {
+      await refundService.submitReturnShipment(order.id, refundRequest.id, {
+        shippingProvider: returnProvider.trim(),
+        trackingCode: returnTrackingCode.trim(),
+      });
+      showToast('Đã gửi thông tin vận chuyển trả hàng thành công!', 'success');
+      setReturnProvider('');
+      setReturnTrackingCode('');
+      fetchRefundInfo();
+    } catch (err) {
+      showToast(err?.message || 'Có lỗi xảy ra, vui lòng thử lại.', 'error');
+    } finally {
+      setSubmittingReturn(false);
+    }
+  };
 
   useEffect(() => {
     orderService.getOrderById(id)
@@ -193,15 +280,15 @@ export default function OrderDetailPage({ adminView = false }) {
             <h1>
               Đơn #{order.id} - <span className={`highlight ${statusConfig.class}`}>{statusConfig.text}</span>
             </h1>
-            {!adminView && (['DELIVERED', 'PAID', 'PROCESSING', 'SHIPPED'].includes(order.status) || refundRequest) && (
+            {!adminView && (order.status === 'DELIVERED' || refundRequest) && (
               <div>
                 {!refundRequest ? (
                   <Button variant="outline" style={{ borderColor: '#e11d48', color: '#e11d48' }} onClick={() => setShowRefundModal(true)}>
                     Trả hàng / Hoàn tiền
                   </Button>
                 ) : (
-                  <span className={`status-badge ${refundRequest.status === 'APPROVED' ? 'refunded' : refundRequest.status === 'REJECTED' ? 'cancelled' : 'refund-requested'}`}>
-                    Yêu cầu hoàn tiền: {refundRequest.status === 'APPROVED' ? 'ĐÃ CHẤP NHẬN' : refundRequest.status === 'REJECTED' ? 'TỪ CHỐI' : 'ĐANG XEM XÉT'}
+                  <span className={`status-badge ${REFUND_STATUS_META[refundRequest.status]?.badgeClass || 'refund-requested'}`}>
+                    Yêu cầu trả hàng: {REFUND_STATUS_META[refundRequest.status]?.badgeLabel || refundRequest.status}
                   </span>
                 )}
               </div>
@@ -225,18 +312,100 @@ export default function OrderDetailPage({ adminView = false }) {
           <div style={{
             padding: '16px',
             borderRadius: '8px',
-            background: refundRequest.status === 'APPROVED' ? 'rgba(16, 185, 129, 0.08)' : refundRequest.status === 'REJECTED' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(245, 158, 11, 0.08)',
-            border: `1px solid ${refundRequest.status === 'APPROVED' ? 'rgba(16, 185, 129, 0.2)' : refundRequest.status === 'REJECTED' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`,
+            background: REFUND_STATUS_META[refundRequest.status]?.bg || 'rgba(245, 158, 11, 0.08)',
+            border: `1px solid ${REFUND_STATUS_META[refundRequest.status]?.border || 'rgba(245, 158, 11, 0.2)'}`,
           }}>
             <h4 style={{ margin: '0 0 6px 0', fontSize: '15px' }}>
-              {refundRequest.status === 'APPROVED' ? '✅ Yêu cầu hoàn tiền đã được chấp nhận' : refundRequest.status === 'REJECTED' ? '❌ Yêu cầu hoàn tiền bị từ chối' : '⏳ Yêu cầu hoàn tiền đang chờ Admin xử lý'}
+              {REFUND_STATUS_META[refundRequest.status]?.heading || refundRequest.status}
             </h4>
             <p style={{ margin: '0', fontSize: '13px', color: 'var(--muted)' }}>
-              Lý do hoàn: <strong>{refundRequest.reason}</strong> · Tài khoản nhận tiền: <strong>{refundRequest.bankName} - {refundRequest.accountNumber} ({refundRequest.accountOwner})</strong>
+              Lý do trả hàng: <strong>{REASON_LABELS[refundRequest.reason] || refundRequest.reason}</strong> · Tài khoản nhận tiền: <strong>{refundRequest.bankName} - {refundRequest.bankAccountNumber} ({refundRequest.bankAccountHolder})</strong>
             </p>
-            {refundRequest.status === 'REJECTED' && refundRequest.rejectReason && (
+            {refundRequest.items?.length > 0 && (
+              <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: 'var(--muted)' }}>
+                Sản phẩm yêu cầu trả: <strong>{refundRequest.items.map((item) => `${item.title} (x${item.quantity})`).join(', ')}</strong>
+              </p>
+            )}
+            {refundRequest.status === 'REJECTED' && (refundRequest.inspectionNote || refundRequest.decisionNote) && (
               <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: '#ef4444' }}>
-                Lý do từ chối từ Admin: {refundRequest.rejectReason}
+                Lý do từ chối: {refundRequest.inspectionNote || refundRequest.decisionNote}
+              </p>
+            )}
+
+            {EVIDENCE_ACCEPTING_STATUSES.includes(refundRequest.status) && (
+              <form onSubmit={handleSubmitEvidence} style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed var(--border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ margin: 0, fontSize: '13px' }}>Vui lòng nộp bằng chứng (hình ảnh/video) để CSKH xem xét yêu cầu của bạn:</p>
+                <input
+                  key={evidenceInputKey}
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={(e) => setEvidenceFile(e.target.files?.[0] || null)}
+                  style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '13px' }}
+                />
+                {evidenceFile && (
+                  <p style={{ margin: 0, fontSize: '12px', color: 'var(--muted)' }}>
+                    Đã chọn: {evidenceFile.name} ({(evidenceFile.size / 1024 / 1024).toFixed(1)} MB)
+                  </p>
+                )}
+                <p style={{ margin: 0, fontSize: '12px', color: 'var(--muted)' }}>
+                  Chấp nhận hình ảnh hoặc video, tối đa 20MB.
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button type="submit" variant="primary" disabled={submittingEvidence}>
+                    {submittingEvidence ? 'Đang tải lên...' : 'Nộp bằng chứng'}
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {refundRequest.evidence?.length > 0 && (
+              <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed var(--border)' }}>
+                <p style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: '600' }}>Bằng chứng đã nộp:</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                  {refundRequest.evidence.map((ev) => (
+                    <a key={ev.id} href={ev.url} target="_blank" rel="noreferrer" style={{ display: 'block' }}>
+                      <EvidenceThumbnail url={ev.url} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {refundRequest.status === 'PICKUP_PENDING' && !refundRequest.returnTrackingCode && (
+              <form onSubmit={handleSubmitReturnShipment} style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed var(--border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ margin: 0, fontSize: '13px' }}>Vui lòng gửi sản phẩm về cho BookVerse và nhập thông tin vận chuyển bên dưới:</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <input
+                    value={returnProvider}
+                    onChange={(e) => setReturnProvider(e.target.value)}
+                    placeholder="Nhà vận chuyển (VD: GHTK, GHN...)"
+                    style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '13px' }}
+                  />
+                  <input
+                    value={returnTrackingCode}
+                    onChange={(e) => setReturnTrackingCode(e.target.value)}
+                    placeholder="Mã vận đơn"
+                    style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '13px' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button type="submit" variant="primary" disabled={submittingReturn}>
+                    {submittingReturn ? 'Đang gửi...' : 'Xác nhận đã gửi hàng'}
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {refundRequest.returnTrackingCode && (
+              <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: 'var(--muted)' }}>
+                Vận chuyển trả hàng: <strong>{refundRequest.returnShippingProvider} - {refundRequest.returnTrackingCode}</strong>
+                {refundRequest.status === 'PICKUP_PENDING' && ' (chờ BookVerse xác nhận đã nhận được hàng)'}
+              </p>
+            )}
+
+            {refundRequest.replacementTrackingCode && (
+              <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: 'var(--muted)' }}>
+                Vận chuyển hàng thay thế: <strong>{refundRequest.replacementShippingProvider} - {refundRequest.replacementTrackingCode}</strong>
               </p>
             )}
           </div>

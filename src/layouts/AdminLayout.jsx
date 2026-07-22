@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { adminService } from '../services/adminService';
-import { refundService } from '../services/refundService';
 import {
   LayoutDashboard,
   BookOpen,
@@ -61,10 +60,9 @@ export default function AdminLayout({ children }) {
       }
 
       try {
-        const refunds = await refundService.getRefundRequests();
-        const pendingRef = refunds.filter(r => r.status === 'PENDING').length;
-        if (isMounted) {
-          setPendingRefundsCount(pendingRef);
+        const refundRes = await adminService.getRefundRequests({ status: 'UNDER_REVIEW', page: 0, size: 1 });
+        if (isMounted && refundRes) {
+          setPendingRefundsCount(refundRes?.totalItems ?? refundRes?.totalElements ?? 0);
         }
       } catch {
         // Ignore
@@ -72,9 +70,11 @@ export default function AdminLayout({ children }) {
     };
     fetchPendingCount();
     const interval = setInterval(fetchPendingCount, 30000); // refresh every 30s
+    window.addEventListener('refund_updated', fetchPendingCount);
     return () => {
       isMounted = false;
       clearInterval(interval);
+      window.removeEventListener('refund_updated', fetchPendingCount);
     };
   }, []);
 
