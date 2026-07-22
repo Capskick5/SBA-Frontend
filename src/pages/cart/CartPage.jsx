@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShoppingCart, TicketPercent, ArrowRight, ChevronRight, MapPin, Pencil } from 'lucide-react';
 import CartItemRow from '../../components/cart/CartItemRow';
-import { EmptyState, LoadingState } from '../../components/ui/State';
+import CartEmptyState from '../../components/cart/CartEmptyState';
+import { LoadingState } from '../../components/ui/State';
 import { cartFacade } from '../../services/cartFacade';
 import { addressService } from '../../services/addressService';
 import { voucherService } from '../../services/voucherService';
@@ -149,10 +150,7 @@ export default function CartPage() {
   if (!cart.items || cart.items.length === 0) {
     return (
       <div className="cart-page">
-        <div className="cart-empty-wrap">
-          <EmptyState text="Giỏ hàng của bạn đang trống." />
-          <button className="btn" onClick={() => navigate('/')}>Tiếp tục mua sắm</button>
-        </div>
+        <CartEmptyState />
       </div>
     );
   }
