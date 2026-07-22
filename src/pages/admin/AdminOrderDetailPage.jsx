@@ -211,7 +211,7 @@ export default function AdminOrderDetailPage() {
                   Lý do: <strong>{refundRequest.reason}</strong> · Ngân hàng: <strong>{refundRequest.bankName} ({refundRequest.accountNumber})</strong>
                 </p>
               </div>
-              <Link to="/admin/refunds" className="btn btn-outline" style={{ fontSize: '12px', padding: '6px 12px' }}>
+              <Link to="/admin/refunds" className="btn btn-sm btn-outline">
                 Đến trang duyệt hoàn tiền &rarr;
               </Link>
             </div>
@@ -270,7 +270,7 @@ export default function AdminOrderDetailPage() {
               required
             />
             <div style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: 'flex-end' }}>
-              <Button type="button" className="btn-secondary" onClick={() => setShowShipModal(false)}>Hủy</Button>
+              <Button type="button" variant="secondary" onClick={() => setShowShipModal(false)}>Hủy</Button>
               <Button type="submit" variant="primary" loading={updating}>Xác nhận giao hàng</Button>
             </div>
           </form>

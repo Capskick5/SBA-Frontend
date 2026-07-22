@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Pagination from '../../components/catalog/Pagination';
+import AdminPagination from '../../components/ui/AdminPagination';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import Table from '../../components/ui/Table';
@@ -126,7 +126,7 @@ export default function AdminReviewsPage() {
   }, [historyPage, historyTarget]);
 
   return (
-    <section className="stack">
+    <section className="stack admin-reviews-page">
       <div className="admin-review-heading">
         <div>
           <h1>Quản lý đánh giá</h1>
@@ -166,7 +166,11 @@ export default function AdminReviewsPage() {
               {
                 key: 'bookId',
                 label: 'Sách',
-                render: (row) => <Link to={`/admin/books/${row.bookId}`}>Sách #{row.bookId}</Link>,
+                render: (row) => (
+                  <Link className="admin-review-book" to={`/admin/books/${row.bookId}`}>
+                    Sách #{row.bookId}
+                  </Link>
+                ),
               },
               { key: 'userName', label: 'Khách hàng' },
               {
@@ -202,11 +206,11 @@ export default function AdminReviewsPage() {
                 key: 'action',
                 label: 'Thao tác',
                 render: (row) => (
-                  <div className="admin-review-actions">
-                    <Button className="btn-secondary" onClick={() => openHistory(row)}>
+                  <div className="admin-row-actions">
+                    <Button type="button" variant="secondary" size="sm" onClick={() => openHistory(row)}>
                       Lịch sử
                     </Button>
-                    <Button className="btn-secondary" onClick={() => openModeration(row)}>
+                    <Button type="button" variant="secondary" size="sm" onClick={() => openModeration(row)}>
                       {row.status === 'HIDDEN' ? 'Khôi phục' : 'Ẩn'}
                     </Button>
                   </div>
@@ -215,10 +219,10 @@ export default function AdminReviewsPage() {
             ]}
             rows={reviews}
           />
-          <Pagination
-            currentPage={page + 1}
+          <AdminPagination
+            page={page}
             totalPages={totalPages}
-            onPageChange={(nextPage) => setPage(nextPage - 1)}
+            onPageChange={setPage}
           />
         </>
       )}
@@ -249,10 +253,10 @@ export default function AdminReviewsPage() {
               </label>
             )}
             <div className="actions">
-              <Button className="btn-secondary" onClick={() => setModerationTarget(null)} disabled={moderating}>
+              <Button type="button" variant="secondary" onClick={() => setModerationTarget(null)} disabled={moderating}>
                 Hủy
               </Button>
-              <Button onClick={handleModeration} loading={moderating}>
+              <Button type="button" onClick={handleModeration} loading={moderating}>
                 {moderationTarget.status === 'HIDDEN' ? 'Khôi phục đánh giá' : 'Ẩn đánh giá'}
               </Button>
             </div>
@@ -282,10 +286,10 @@ export default function AdminReviewsPage() {
                   </li>
                 ))}
               </ol>
-              <Pagination
-                currentPage={historyPage + 1}
+              <AdminPagination
+                page={historyPage}
                 totalPages={historyTotalPages}
-                onPageChange={(nextPage) => setHistoryPage(nextPage - 1)}
+                onPageChange={setHistoryPage}
               />
             </>
           )}

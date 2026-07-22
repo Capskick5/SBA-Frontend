@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
+import AdminPagination from '../../components/ui/AdminPagination';
 import Input from '../../components/ui/Input';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
@@ -179,7 +180,7 @@ export default function AdminBooksPage() {
                 key: 'active',
                 label: 'Trạng thái',
                 render: (row) => (
-                  <span style={{ color: row.active ? 'green' : 'red', fontWeight: 'bold' }}>
+                  <span className={`status-badge ${row.active ? 'delivered' : 'unknown'}`}>
                     {row.active ? 'Đang hiện' : 'Đã ẩn'}
                   </span>
                 ),
@@ -188,22 +189,23 @@ export default function AdminBooksPage() {
                 key: 'action',
                 label: 'Thao tác',
                 render: (row) => (
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div className="admin-row-actions">
                     <Link
                       to={`/admin/books/${row.id}`}
                       state={{ book: row }}
-                      className="btn-link"
+                      className="btn btn-secondary btn-sm"
                     >
                       Sửa
                     </Link>
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="sm"
+                      className={row.active ? 'danger-action' : ''}
                       onClick={() => handleToggleActive(row)}
-                      className="btn-link"
-                      style={{ color: row.active ? '#e53e3e' : '#3182ce' }}
                     >
                       {row.active ? 'Ẩn' : 'Hiện'}
-                    </button>
+                    </Button>
                   </div>
                 ),
               },
@@ -212,17 +214,11 @@ export default function AdminBooksPage() {
           />
 
           {books.length > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '20px' }}>
-            <Button type="button" disabled={currentPage === 0} onClick={() => setCurrentPage((prev) => prev - 1)}>
-              &laquo; Trước
-            </Button>
-            <span style={{ fontWeight: 'bold' }}>
-              Trang {currentPage + 1} / {totalPages}
-            </span>
-            <Button type="button" disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage((prev) => prev + 1)}>
-              Sau &raquo;
-            </Button>
-          </div>
+            <AdminPagination
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           )}
         </>
       )}

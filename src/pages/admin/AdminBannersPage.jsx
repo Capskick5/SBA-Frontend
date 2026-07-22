@@ -220,14 +220,14 @@ export default function AdminBannersPage() {
       key: 'actions',
       label: 'Thao tác',
       render: (banner) => (
-        <div className="banner-row-actions">
-          <Button type="button" className="btn-secondary" onClick={() => openEdit(banner)}>
+        <div className="admin-row-actions">
+          <Button type="button" variant="secondary" size="sm" onClick={() => openEdit(banner)}>
             Sửa
           </Button>
-          <Button type="button" className="btn-secondary" onClick={() => toggleActive(banner)}>
+          <Button type="button" variant="secondary" size="sm" onClick={() => toggleActive(banner)}>
             {banner.active ? 'Tắt' : 'Bật'}
           </Button>
-          <Button type="button" className="btn-secondary danger-action" onClick={() => setDeleteTarget(banner)}>
+          <Button type="button" variant="secondary" size="sm" className="danger-action" onClick={() => setDeleteTarget(banner)}>
             <Trash2 size={15} /> Xóa
           </Button>
         </div>
@@ -315,7 +315,7 @@ export default function AdminBannersPage() {
             </label>
 
             <div className="confirm-dialog-actions">
-              <Button type="button" className="btn-secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
+              <Button type="button" variant="secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
                 Hủy
               </Button>
               <Button type="submit" loading={submitting} disabled={uploadingImage}>
@@ -333,10 +333,10 @@ export default function AdminBannersPage() {
               <strong>{deleteTarget.title}</strong> sẽ bị xóa vĩnh viễn khỏi trang chủ.
             </p>
             <div className="confirm-dialog-actions">
-              <Button type="button" className="btn-secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+              <Button type="button" variant="secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
                 Hủy
               </Button>
-              <Button type="button" className="danger-action" onClick={confirmDelete} loading={deleting}>
+              <Button type="button" variant="secondary" className="danger-action" onClick={confirmDelete} loading={deleting}>
                 Xóa banner
               </Button>
             </div>

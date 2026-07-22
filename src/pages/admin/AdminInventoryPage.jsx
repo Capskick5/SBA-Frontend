@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 import Button from '../../components/ui/Button';
+import AdminPagination from '../../components/ui/AdminPagination';
 import { EmptyState, ErrorState, LoadingState } from '../../components/ui/State';
 import { formatDateTime } from '../../utils/formatters';
 
@@ -174,25 +175,11 @@ export default function AdminInventoryPage() {
             </tbody>
           </table>
           {filteredMovements.length > 0 && (
-            <div className="pagination" style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
-              <Button
-                type="button"
-                className="btn-secondary"
-                disabled={currentPage === 0}
-                onClick={() => setCurrentPage(currentPage - 1)}
-              >
-                Trước
-              </Button>
-              <span>Trang {currentPage + 1} / {totalPages}</span>
-              <Button
-                type="button"
-                className="btn-secondary"
-                disabled={currentPage >= totalPages - 1}
-                onClick={() => setCurrentPage(currentPage + 1)}
-              >
-                Sau
-              </Button>
-            </div>
+            <AdminPagination
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           )}
         </>
       )}

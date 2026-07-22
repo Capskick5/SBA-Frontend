@@ -223,14 +223,14 @@ export default function AdminGiftWrapsPage() {
       key: 'actions',
       label: 'Thao tác',
       render: (giftWrap) => (
-        <div className="banner-row-actions">
-          <Button type="button" className="btn-secondary" onClick={() => openEdit(giftWrap)}>
+        <div className="admin-row-actions">
+          <Button type="button" variant="secondary" size="sm" onClick={() => openEdit(giftWrap)}>
             Sửa
           </Button>
-          <Button type="button" className="btn-secondary" onClick={() => toggleActive(giftWrap)}>
+          <Button type="button" variant="secondary" size="sm" onClick={() => toggleActive(giftWrap)}>
             {giftWrap.active ? 'Tắt' : 'Bật'}
           </Button>
-          <Button type="button" className="btn-secondary danger-action" onClick={() => setDeleteTarget(giftWrap)}>
+          <Button type="button" variant="secondary" size="sm" className="danger-action" onClick={() => setDeleteTarget(giftWrap)}>
             <Trash2 size={15} /> Xóa
           </Button>
         </div>
@@ -315,7 +315,7 @@ export default function AdminGiftWrapsPage() {
             </label>
 
             <div className="confirm-dialog-actions">
-              <Button type="button" className="btn-secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
+              <Button type="button" variant="secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
                 Hủy
               </Button>
               <Button type="submit" loading={submitting} disabled={uploadingImage}>
@@ -333,10 +333,10 @@ export default function AdminGiftWrapsPage() {
               <strong>{deleteTarget.name}</strong> sẽ bị xóa vĩnh viễn khỏi tùy chọn thanh toán.
             </p>
             <div className="confirm-dialog-actions">
-              <Button type="button" className="btn-secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+              <Button type="button" variant="secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
                 Hủy
               </Button>
-              <Button type="button" className="danger-action" onClick={confirmDelete} loading={deleting}>
+              <Button type="button" variant="secondary" className="danger-action" onClick={confirmDelete} loading={deleting}>
                 Xóa giấy gói quà
               </Button>
             </div>

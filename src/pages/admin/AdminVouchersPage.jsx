@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Ban, Copy, Plus, TicketPercent } from 'lucide-react';
 import Button from '../../components/ui/Button';
+import AdminPagination from '../../components/ui/AdminPagination';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import Table from '../../components/ui/Table';
@@ -228,19 +229,19 @@ export default function AdminVouchersPage() {
       key: 'actions',
       label: 'Thao tác',
       render: (rule) => (
-        <div className={styles.rowActions}>
-          <Button type="button" className="btn-secondary" onClick={() => openEdit(rule)}>
+        <div className="admin-row-actions">
+          <Button type="button" variant="secondary" size="sm" onClick={() => openEdit(rule)}>
             Sửa
           </Button>
-          <Button type="button" className="btn-secondary" onClick={() => openClone(rule)}>
+          <Button type="button" variant="secondary" size="sm" onClick={() => openClone(rule)}>
             <Copy size={15} /> Sao chép
           </Button>
           {rule.active ? (
-            <Button type="button" className={styles.disableButton} onClick={() => setDisableTarget(rule)}>
+            <Button type="button" variant="secondary" size="sm" className="danger-action" onClick={() => setDisableTarget(rule)}>
               <Ban size={15} /> Vô hiệu
             </Button>
           ) : (
-            <Button type="button" className="btn-secondary" onClick={() => enableRule(rule)}>
+            <Button type="button" variant="secondary" size="sm" onClick={() => enableRule(rule)}>
               Kích hoạt
             </Button>
           )}
@@ -295,25 +296,11 @@ export default function AdminVouchersPage() {
         <>
           <Table columns={columns} rows={rules} emptyText="Không tìm thấy quy tắc voucher nào." />
           {rules.length > 0 && (
-            <div className={styles.pagination}>
-              <Button
-                type="button"
-                className="btn-secondary"
-                disabled={currentPage === 0}
-                onClick={() => changePage(currentPage - 1)}
-              >
-                Trước
-              </Button>
-              <span>Trang {currentPage + 1} / {totalPages}</span>
-              <Button
-                type="button"
-                className="btn-secondary"
-                disabled={currentPage >= totalPages - 1}
-                onClick={() => changePage(currentPage + 1)}
-              >
-                Sau
-              </Button>
-            </div>
+            <AdminPagination
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={changePage}
+            />
           )}
         </>
       )}
@@ -375,7 +362,7 @@ export default function AdminVouchersPage() {
               <span>Kích hoạt quy tắc này ngay</span>
             </label>
             <div className={styles.modalActions}>
-              <Button type="button" className="btn-secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
+              <Button type="button" variant="secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
                 Hủy
               </Button>
               <Button type="submit" loading={submitting}>
@@ -393,10 +380,10 @@ export default function AdminVouchersPage() {
               <strong>{disableTarget.name}</strong> sẽ không còn được chọn cho phần thưởng voucher trong tương lai.
             </p>
             <div className={styles.modalActions}>
-              <Button type="button" className="btn-secondary" onClick={() => setDisableTarget(null)} disabled={disabling}>
+              <Button type="button" variant="secondary" onClick={() => setDisableTarget(null)} disabled={disabling}>
                 Giữ kích hoạt
               </Button>
-              <Button type="button" className={styles.disableButton} onClick={confirmDisable} loading={disabling}>
+              <Button type="button" variant="secondary" className="danger-action" onClick={confirmDisable} loading={disabling}>
                 Vô hiệu hóa quy tắc
               </Button>
             </div>

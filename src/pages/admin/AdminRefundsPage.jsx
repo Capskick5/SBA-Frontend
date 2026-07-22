@@ -90,9 +90,11 @@ export default function AdminRefundsPage() {
       key: 'actions',
       label: 'Thao tác',
       render: (row) => (
-        <Button variant="outline" size="small" onClick={() => { setSelectedRefund(row); setShowRejectInput(false); setRejectReason(''); }}>
-          <Eye size={14} style={{ marginRight: '4px' }} /> Chi tiết
-        </Button>
+        <div className="admin-row-actions">
+          <Button type="button" variant="secondary" size="sm" onClick={() => { setSelectedRefund(row); setShowRejectInput(false); setRejectReason(''); }}>
+            <Eye size={14} /> Chi tiết
+          </Button>
+        </div>
       ),
     },
   ];
@@ -125,7 +127,7 @@ export default function AdminRefundsPage() {
       </div>
 
       {/* Tabs Filter */}
-      <div style={{ display: 'flex', gap: '10px', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
+      <div className="admin-filter-tabs">
         {[
           { id: 'ALL', label: 'Tất cả' },
           { id: 'PENDING', label: 'Chờ duyệt' },
@@ -134,17 +136,9 @@ export default function AdminRefundsPage() {
         ].map((tab) => (
           <button
             key={tab.id}
+            type="button"
+            className={`admin-filter-tab ${filterStatus === tab.id ? 'is-active' : ''}`}
             onClick={() => setFilterStatus(tab.id)}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: 'none',
-              background: filterStatus === tab.id ? 'var(--accent)' : 'transparent',
-              color: filterStatus === tab.id ? '#fff' : 'var(--text)',
-              fontWeight: filterStatus === tab.id ? 'bold' : 'normal',
-              cursor: 'pointer',
-              fontSize: '14px',
-            }}
           >
             {tab.label}
           </button>
@@ -185,12 +179,12 @@ export default function AdminRefundsPage() {
             {selectedRefund.status === 'PENDING' && (
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {!showRejectInput ? (
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                    <Button variant="outline" style={{ borderColor: '#ef4444', color: '#ef4444' }} onClick={() => setShowRejectInput(true)} disabled={processing}>
-                      <XCircle size={16} style={{ marginRight: '4px' }} /> Từ chối
+                  <div className="admin-row-actions">
+                    <Button type="button" variant="secondary" className="danger-action" onClick={() => setShowRejectInput(true)} disabled={processing}>
+                      <XCircle size={16} /> Từ chối
                     </Button>
-                    <Button variant="primary" style={{ background: '#10b981', borderColor: '#10b981' }} onClick={() => handleApprove(selectedRefund.id)} disabled={processing}>
-                      <CheckCircle size={16} style={{ marginRight: '4px' }} /> Phê duyệt hoàn tiền
+                    <Button type="button" variant="primary" onClick={() => handleApprove(selectedRefund.id)} disabled={processing}>
+                      <CheckCircle size={16} /> Phê duyệt hoàn tiền
                     </Button>
                   </div>
                 ) : (
@@ -201,9 +195,9 @@ export default function AdminRefundsPage() {
                       onChange={(e) => setRejectReason(e.target.value)}
                       rows={2}
                     />
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                      <Button variant="outline" onClick={() => setShowRejectInput(false)} disabled={processing}>Hủy</Button>
-                      <Button variant="primary" style={{ background: '#ef4444' }} onClick={() => handleReject(selectedRefund.id)} disabled={processing}>
+                    <div className="admin-row-actions">
+                      <Button type="button" variant="secondary" onClick={() => setShowRejectInput(false)} disabled={processing}>Hủy</Button>
+                      <Button type="button" variant="primary" className="danger-action" onClick={() => handleReject(selectedRefund.id)} disabled={processing}>
                         Xác nhận từ chối
                       </Button>
                     </div>

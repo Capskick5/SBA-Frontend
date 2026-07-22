@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import OrderStatusBadge from '../../components/orders/OrderStatusBadge';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
+import AdminPagination from '../../components/ui/AdminPagination';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 import { formatCurrency, formatDate } from '../../utils/formatters';
@@ -96,23 +97,27 @@ export default function AdminOrdersPage() {
               },
               { key: 'status', label: 'Trạng thái', render: (row) => <OrderStatusBadge status={row.status} /> },
               { key: 'total', label: 'Tổng tiền', render: (row) => <strong style={{ color: '#e53e3e' }}>{formatCurrency(row.total)}</strong> },
-              { key: 'action', label: 'Thao tác', render: (row) => <Link to={`/admin/orders/${row.id}`} className="btn-link">Xem</Link> },
+              {
+                key: 'action',
+                label: 'Thao tác',
+                render: (row) => (
+                  <div className="admin-row-actions">
+                    <Link to={`/admin/orders/${row.id}`} className="btn btn-secondary btn-sm">
+                      Xem
+                    </Link>
+                  </div>
+                ),
+              },
             ]}
             rows={orders}
           />
 
           {orders.length > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '20px' }}>
-              <Button type="button" disabled={currentPage === 0} onClick={() => setCurrentPage((prev) => prev - 1)}>
-                &laquo; Trước
-              </Button>
-              <span style={{ fontWeight: 'bold' }}>
-                Trang {currentPage + 1} / {totalPages}
-              </span>
-              <Button type="button" disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage((prev) => prev + 1)}>
-                Sau &raquo;
-              </Button>
-            </div>
+            <AdminPagination
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           )}
         </>
       )}
