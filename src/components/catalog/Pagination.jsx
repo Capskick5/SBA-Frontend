@@ -9,6 +9,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
     <nav className="pagination" aria-label="Phân trang danh mục">
       <Button
         type="button"
+        variant="secondary"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
       >
@@ -19,6 +20,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
           <Button
             key={page}
             type="button"
+            variant="secondary"
             className={`pagination-page ${page === currentPage ? 'is-active' : ''}`.trim()}
             aria-current={page === currentPage ? 'page' : undefined}
             onClick={() => onPageChange(page)}
@@ -29,6 +31,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
       </div>
       <Button
         type="button"
+        variant="secondary"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
       >

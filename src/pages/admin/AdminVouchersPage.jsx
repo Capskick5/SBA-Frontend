@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Trash2, TicketPercent } from 'lucide-react';
 import Button from '../../components/ui/Button';
+import AdminPagination from '../../components/ui/AdminPagination';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import Table from '../../components/ui/Table';
@@ -264,9 +265,9 @@ export default function AdminVouchersPage() {
       key: 'actions',
       label: 'Thao tác',
       render: (v) => (
-        <div className={styles.rowActions}>
-          <Button type="button" className="btn-secondary" onClick={() => openEdit(v)}>Sửa</Button>
-          <Button type="button" className={styles.disableButton} onClick={() => setDeleteTarget(v)}>
+        <div className="admin-row-actions">
+          <Button type="button" variant="secondary" size="sm" onClick={() => openEdit(v)}>Sửa</Button>
+          <Button type="button" variant="secondary" size="sm" className="danger-action" onClick={() => setDeleteTarget(v)}>
             <Trash2 size={15} /> Xóa
           </Button>
         </div>
@@ -321,15 +322,11 @@ export default function AdminVouchersPage() {
         <>
           <Table columns={columns} rows={vouchers} emptyText="Không tìm thấy voucher nào." />
           {vouchers.length > 0 && (
-            <div className={styles.pagination}>
-              <Button type="button" className="btn-secondary" disabled={currentPage === 0} onClick={() => changePage(currentPage - 1)}>
-                Trước
-              </Button>
-              <span>Trang {currentPage + 1} / {totalPages}</span>
-              <Button type="button" className="btn-secondary" disabled={currentPage >= totalPages - 1} onClick={() => changePage(currentPage + 1)}>
-                Sau
-              </Button>
-            </div>
+            <AdminPagination
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={changePage}
+            />
           )}
         </>
       )}
@@ -443,7 +440,7 @@ export default function AdminVouchersPage() {
             </label>
 
             <div className={styles.modalActions}>
-              <Button type="button" className="btn-secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
+              <Button type="button" variant="secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
                 Hủy
               </Button>
               <Button type="submit" loading={submitting}>
@@ -461,10 +458,10 @@ export default function AdminVouchersPage() {
               Voucher <strong>{deleteTarget.code}</strong> sẽ bị xóa khỏi hệ thống. Khách hàng sẽ không thể nhận thêm nữa. Voucher mà khách đã nhận trước đó không bị ảnh hưởng.
             </p>
             <div className={styles.modalActions}>
-              <Button type="button" className="btn-secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+              <Button type="button" variant="secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
                 Hủy
               </Button>
-              <Button type="button" className={styles.disableButton} onClick={confirmDelete} loading={deleting}>
+              <Button type="button" variant="secondary" className="danger-action" onClick={confirmDelete} loading={deleting}>
                 Xóa voucher
               </Button>
             </div>

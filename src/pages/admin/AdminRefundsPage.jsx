@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import Pagination from '../../components/catalog/Pagination';
+import AdminPagination from '../../components/ui/AdminPagination';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
@@ -216,9 +216,11 @@ export default function AdminRefundsPage() {
       key: 'actions',
       label: 'Thao tác',
       render: (row) => (
-        <Button variant="outline" size="small" onClick={() => { setSelectedRefund(row); resetDetailForms(); }}>
-          <Eye size={14} style={{ marginRight: '4px' }} /> Chi tiết
-        </Button>
+        <div className="admin-row-actions">
+          <Button type="button" variant="secondary" size="sm" onClick={() => { setSelectedRefund(row); resetDetailForms(); }}>
+            <Eye size={14} /> Chi tiết
+          </Button>
+        </div>
       ),
     },
   ];
@@ -237,21 +239,13 @@ export default function AdminRefundsPage() {
       </div>
 
       {/* Tabs Filter */}
-      <div style={{ display: 'flex', gap: '10px', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
+      <div className="admin-filter-tabs">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.id}
+            type="button"
+            className={`admin-filter-tab ${filterTab === tab.id ? 'is-active' : ''}`}
             onClick={() => { setFilterTab(tab.id); setPage(0); }}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: 'none',
-              background: filterTab === tab.id ? 'var(--accent)' : 'transparent',
-              color: filterTab === tab.id ? '#fff' : 'var(--text)',
-              fontWeight: filterTab === tab.id ? 'bold' : 'normal',
-              cursor: 'pointer',
-              fontSize: '14px',
-            }}
           >
             {tab.label}
           </button>
@@ -267,11 +261,13 @@ export default function AdminRefundsPage() {
       ) : (
         <>
           <Table columns={columns} rows={refunds} emptyText="Chưa có yêu cầu trả hàng nào." />
-          <Pagination
-            currentPage={page + 1}
-            totalPages={totalPages}
-            onPageChange={(nextPage) => setPage(nextPage - 1)}
-          />
+          {totalPages > 0 && (
+            <AdminPagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          )}
         </>
       )}
 

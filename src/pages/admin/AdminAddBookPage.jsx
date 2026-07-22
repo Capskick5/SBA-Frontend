@@ -180,8 +180,8 @@ export default function AdminAddBookPage() {
                 <Input name="isbn" label="ISBN" placeholder="Nhập ISBN" />
                 <Textarea name="description" label="Mô tả" rows={5} />
 
-                <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-                    <Button type="button" onClick={() => navigate('/admin/books')}>Hủy</Button>
+                <div className="admin-row-actions" style={{ marginTop: '20px', justifyContent: 'flex-start' }}>
+                    <Button type="button" variant="secondary" onClick={() => navigate('/admin/books')}>Hủy</Button>
                     <Button type="submit" variant="primary" loading={submitting} disabled={uploadingCover || uploadingFile}>
                         Lưu
                     </Button>

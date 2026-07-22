@@ -147,7 +147,7 @@ export default function AdminDashboardPage() {
         <h1>Bảng điều khiển quản trị</h1>
         <Button
           type="button"
-          className="btn-secondary"
+          variant="secondary"
           onClick={() => setReloadKey((value) => value + 1)}
         >
           Làm mới

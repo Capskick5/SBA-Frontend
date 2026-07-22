@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
+import AdminPagination from '../../components/ui/AdminPagination';
 import Input from '../../components/ui/Input';
 import { adminService } from '../../services/adminService';
 import { ErrorState, LoadingState } from '../../components/ui/State';
@@ -82,7 +83,7 @@ export default function AdminCategoriesPage() {
             required
           />
         </div>
-        <Button type="submit" variant="primary" loading={submitting} style={{ height: '42px' }}>
+        <Button type="submit" variant="primary" loading={submitting}>
           Thêm
         </Button>
       </form>
@@ -101,25 +102,11 @@ export default function AdminCategoriesPage() {
             rows={paginatedCategories}
           />
           {categories.length > 0 && (
-            <div className="pagination" style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
-              <Button
-                type="button"
-                className="btn-secondary"
-                disabled={currentPage === 0}
-                onClick={() => setCurrentPage(currentPage - 1)}
-              >
-                Trước
-              </Button>
-              <span>Trang {currentPage + 1} / {totalPages}</span>
-              <Button
-                type="button"
-                className="btn-secondary"
-                disabled={currentPage >= totalPages - 1}
-                onClick={() => setCurrentPage(currentPage + 1)}
-              >
-                Sau
-              </Button>
-            </div>
+            <AdminPagination
+              page={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           )}
         </>
       )}

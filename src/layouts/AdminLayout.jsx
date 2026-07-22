@@ -94,24 +94,13 @@ export default function AdminLayout({ children }) {
   return (
     <div className={`admin-shell ${collapsed ? 'sidebar-collapsed' : ''}`}>
       <aside className="admin-sidebar">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', marginBottom: '20px' }}>
-          {!collapsed && <h2 style={{ margin: 0 }}>Quản trị</h2>}
-          <button 
-            onClick={toggleSidebar} 
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--muted)',
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background 0.2s'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface-alt)'}
-            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+        <div className="admin-sidebar-header">
+          {!collapsed && <h2>Quản trị</h2>}
+          <button
+            type="button"
+            className="admin-sidebar-icon-btn"
+            onClick={toggleSidebar}
+            aria-label={collapsed ? 'Mở sidebar' : 'Thu gọn sidebar'}
           >
             <Menu size={20} />
           </button>
@@ -145,8 +134,8 @@ export default function AdminLayout({ children }) {
               )}
               {key === 'refunds' && pendingRefundsCount > 0 && (
                 <span 
-                  className="admin-nav-badge"
-                  style={collapsed ? { position: 'absolute', top: '4px', right: '4px', margin: 0, background: '#f59e0b' } : { background: '#f59e0b' }}
+                  className={`admin-nav-badge admin-nav-badge-warning`}
+                  style={collapsed ? { position: 'absolute', top: '4px', right: '4px', margin: 0 } : {}}
                   title={`${pendingRefundsCount} yêu cầu hoàn tiền cần xử lý`}
                 >
                   {pendingRefundsCount > 99 ? '99+' : pendingRefundsCount}
@@ -155,20 +144,12 @@ export default function AdminLayout({ children }) {
             </NavLink>
           ))}
         </div>
-        <div style={{ padding: '20px 0', borderTop: '1px solid var(--border)' }}>
-          <button 
+        <div className="admin-sidebar-footer">
+          <button
+            type="button"
+            className="admin-sidebar-logout"
             onClick={handleLogout}
             title={collapsed ? 'Đăng xuất' : undefined}
-            style={{
-              display: 'flex', alignItems: 'center', gap: collapsed ? '0' : '8px', 
-              justifyContent: collapsed ? 'center' : 'flex-start',
-              background: 'transparent', border: 'none', 
-              color: '#f87171', cursor: 'pointer',
-              padding: collapsed ? '12px' : '8px', width: '100%',
-              fontSize: '1rem', textAlign: 'left', borderRadius: '4px'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)'}
-            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
           >
             <LogOut size={18} />
             {!collapsed && <span>Đăng xuất</span>}

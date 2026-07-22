@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Bell,
-  CreditCard,
-  Eye,
-  Heart,
   Lock,
   Mail,
   MapPin,
@@ -23,6 +19,7 @@ import { LoadingState, ErrorState } from '../../components/ui/State';
 import { profileService } from '../../services/profileService';
 import { useAuth } from '../../context/AuthContext';
 import AddressesPage from './AddressesPage';
+import MyReviewsPage from './MyReviewsPage';
 import OrdersPage from '../orders/OrdersPage';
 import VouchersPage from './VouchersPage';
 
@@ -130,38 +127,11 @@ export default function ProfilePage() {
 
   const menuItems = [
     { id: 'account', label: 'Thông tin tài khoản', icon: User },
-    { id: 'notifications', label: 'Thông báo của tôi', icon: Bell },
     { id: 'orders', label: 'Quản lý đơn hàng', icon: Package },
     { id: 'vouchers', label: 'Voucher của tôi', icon: TicketPercent },
     { id: 'addresses', label: 'Sổ địa chỉ', icon: MapPin },
-    { id: 'payments', label: 'Thông tin thanh toán', icon: CreditCard },
     { id: 'reviews', label: 'Đánh giá sản phẩm', icon: Star },
-    { id: 'viewed', label: 'Sản phẩm đã xem', icon: Eye },
-    { id: 'favorites', label: 'Sản phẩm yêu thích', icon: Heart },
   ];
-
-  const placeholderContent = {
-    notifications: {
-      title: 'Thông báo của tôi',
-      text: 'Tùy chọn thông báo sẽ hiển thị tại đây khi tính năng này được hỗ trợ.',
-    },
-    payments: {
-      title: 'Thông tin thanh toán',
-      text: 'Phương thức thanh toán đã lưu sẽ hiển thị tại đây khi tính năng lưu thông tin thanh toán được hỗ trợ.',
-    },
-    reviews: {
-      title: 'Đánh giá sản phẩm',
-      text: 'Đánh giá sản phẩm của bạn sẽ hiển thị tại đây sau khi bạn đánh giá sách đã mua.',
-    },
-    viewed: {
-      title: 'Sản phẩm đã xem',
-      text: 'Sách xem gần đây sẽ hiển thị tại đây khi lịch sử duyệt được hỗ trợ.',
-    },
-    favorites: {
-      title: 'Sản phẩm yêu thích',
-      text: 'Sách yêu thích sẽ hiển thị tại đây khi tính năng danh sách yêu thích được hỗ trợ.',
-    },
-  };
 
   const renderProfilePanel = () => {
     if (activeTab === 'vouchers') {
@@ -197,16 +167,12 @@ export default function ProfilePage() {
       );
     }
 
-    if (activeTab !== 'account') {
-      const content = placeholderContent[activeTab];
+    if (activeTab === 'reviews') {
       return (
         <div className="profile-content">
-          <h1>{content.title}</h1>
-          <div className="profile-card profile-placeholder-card">
-            <div>
-              <h2>{content.title}</h2>
-              <p>{content.text}</p>
-            </div>
+          <h1>Đánh giá sản phẩm</h1>
+          <div className="profile-card profile-embedded-card">
+            <MyReviewsPage />
           </div>
         </div>
       );

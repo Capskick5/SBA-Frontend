@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { adminService } from '../../services/adminService';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
+import AdminPagination from '../../components/ui/AdminPagination';
 import { LoadingState } from '../../components/ui/State';
 
 export default function AdminRagPage() {
@@ -403,61 +404,31 @@ export default function AdminRagPage() {
           <Button type="submit">Tìm kiếm</Button>
         </form>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
+        <div className="admin-row-actions">
+          <Button
             type="button"
             onClick={handleBulkIngest}
             disabled={selectedIds.length === 0 || bulkProcessing}
-            style={{
-              background: selectedIds.length === 0 ? '#cbd5e1' : '#4f46e5',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '10px 16px',
-              cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-              transition: 'background 0.2s',
-              minHeight: '40px'
-            }}
           >
             {bulkProcessing ? 'Đang lập chỉ mục...' : `Lập chỉ mục nội dung (${selectedIds.length})`}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="secondary"
             onClick={handleBulkSyncCatalog}
             disabled={selectedIds.length === 0 || bulkProcessing}
-            style={{
-              background: selectedIds.length === 0 ? '#cbd5e1' : '#0ea5e9',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '10px 16px',
-              cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-              transition: 'background 0.2s',
-              minHeight: '40px'
-            }}
           >
             Đồng bộ danh mục ({selectedIds.length})
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="secondary"
+            className="danger-action"
             onClick={handleBulkDelete}
             disabled={selectedIds.length === 0 || bulkProcessing}
-            style={{
-              background: selectedIds.length === 0 ? '#cbd5e1' : '#ef4444',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '10px 16px',
-              cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-              transition: 'background 0.2s',
-              minHeight: '40px'
-            }}
           >
             Xóa ({selectedIds.length})
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -531,29 +502,35 @@ export default function AdminRagPage() {
                   const hasIndex = info && (info.status?.toLowerCase() === 'indexed' || info.chunkCount > 0);
                   
                   return (
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="admin-row-actions">
                       <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
                         onClick={() => handleSingleIngest(row.id)}
                         disabled={!!state || !row.fileKey}
-                        size="sm"
                       >
                         {state === 'ingest' ? 'Đang lập chỉ mục...' : 'Lập chỉ mục'}
                       </Button>
                       
                       <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
                         onClick={() => handleSyncCatalog(row.id)}
                         disabled={!!state || !row.fileKey}
-                        size="sm"
                       >
                         {state === 'catalog' ? 'Đang đồng bộ...' : 'Đồng bộ danh mục'}
                       </Button>
                       
                       {hasIndex && (
                         <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="danger-action"
                           onClick={() => handleDeleteIndex(row.id)}
                           disabled={!!state}
-                          size="sm"
-                          style={{ background: '#d9534f', color: 'white' }}
                         >
                           {state === 'delete' ? 'Đang xóa...' : 'Xóa chỉ mục'}
                         </Button>
@@ -566,25 +543,11 @@ export default function AdminRagPage() {
             rows={books}
           />
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
-            <span className="muted">
-              Trang {currentPage + 1} / {totalPages}
-            </span>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <Button
-                disabled={currentPage === 0}
-                onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-              >
-                Trước
-              </Button>
-              <Button
-                disabled={currentPage >= totalPages - 1}
-                onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
-              >
-                Sau
-              </Button>
-            </div>
-          </div>
+          <AdminPagination
+            page={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </>
       )}
     </section>

@@ -248,8 +248,8 @@ export default function AdminOrderDetailPage() {
               const isActive = stepsActive[index];
               const isClickable = index === nextStepIndex && !updating;
               return (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className={`admin-order-flow-step ${isActive ? 'active' : ''} ${isClickable ? 'clickable' : ''}`}
                   onClick={() => handleStepClick(index)}
                   title={getStepTooltip(index, step.label)}
@@ -288,7 +288,7 @@ export default function AdminOrderDetailPage() {
               required
             />
             <div style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: 'flex-end' }}>
-              <Button type="button" className="btn-secondary" onClick={() => setShowShipModal(false)}>Hủy</Button>
+              <Button type="button" variant="secondary" onClick={() => setShowShipModal(false)}>Hủy</Button>
               <Button type="submit" variant="primary" loading={updating}>Xác nhận giao hàng</Button>
             </div>
           </form>
