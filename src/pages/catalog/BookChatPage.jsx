@@ -1,24 +1,70 @@
 import { useEffect, useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import {
+  BookOpen,
+  MessageSquare,
+  Plus,
+  Trash2,
+  ShieldCheck,
+  Sparkles,
+  Send,
+  ShoppingBag,
+  Info,
+  Lock,
+  Search,
+  CheckCircle2,
+  X,
+  Layers,
+  Bot,
+  User as UserIcon,
+  ArrowLeft,
+  CheckSquare,
+  Square,
+} from 'lucide-react';
 import { aiChatService } from '../../services/aiChatService';
 import { orderService } from '../../services/orderService';
 import { bookService } from '../../services/bookService';
-import Button from '../../components/ui/Button';
-import { LoadingState } from '../../components/ui/State';
+import { LoadingState, EmptyState } from '../../components/ui/State';
 import { formatDate } from '../../utils/formatters';
+
+function BookCover({ src, title, className = '' }) {
+  const [hasError, setHasError] = useState(false);
+
+  if (!src || hasError) {
+    return (
+      <div className={`book-cover-fallback ${className}`}>
+        <BookOpen size={22} />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={title || ''}
+      className={className}
+      onError={() => setHasError(true)}
+    />
+  );
+}
 
 export default function BookChatPage() {
   const chatType = 'BOOK_CHAT';
   const [sessions, setSessions] = useState([]);
   const [currentSession, setCurrentSession] = useState(null);
   const [purchasedBooks, setPurchasedBooks] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedBookIds, setSelectedBookIds] = useState([]);
-  const [newChatTitle, setNewChatTitle] = useState('');
   const [messageText, setMessageText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [booksLoading, setBooksLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [showPolicy, setShowPolicy] = useState(true);
+
+  // Library search and multi-select states
+  const [librarySearchTerm, setLibrarySearchTerm] = useState('');
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+  const [selectedBookIds, setSelectedBookIds] = useState([]);
 
   const chatHistoryRef = useRef(null);
 
@@ -48,14 +94,16 @@ export default function BookChatPage() {
   }
 
   async function loadPurchasedBooks() {
+    setBooksLoading(true);
     try {
       const orders = await orderService.getOrders();
-      const validOrders = orders.filter(
+      const validOrders = (orders || []).filter(
         (o) =>
           o.status === 'PAID' ||
           o.status === 'PROCESSING' ||
           o.status === 'SHIPPED' ||
-          o.status === 'DELIVERED'
+          o.status === 'DELIVERED' ||
+          o.status === 'COMPLETED'
       );
 
       const detailedOrders = await Promise.all(
@@ -83,6 +131,8 @@ export default function BookChatPage() {
               bookId: Number(id),
               title: detail.title,
               coverUrl: detail.coverUrl,
+              author: detail.author?.name || detail.author || 'Tác giả',
+              category: detail.category?.name || (typeof detail.category === 'string' ? detail.category : 'Tổng hợp'),
             };
           } catch (err) {
             console.error(err);
@@ -90,6 +140,8 @@ export default function BookChatPage() {
               bookId: Number(id),
               title: booksMap[id].title,
               coverUrl: null,
+              author: 'Tác giả',
+              category: 'Tổng hợp',
             };
           }
         })
@@ -98,6 +150,9 @@ export default function BookChatPage() {
       setPurchasedBooks(bookDetailsList);
     } catch (err) {
       console.error('Failed to load purchased books:', err);
+      setPurchasedBooks([]);
+    } finally {
+      setBooksLoading(false);
     }
   }
 
@@ -116,35 +171,41 @@ export default function BookChatPage() {
       loadSessions();
       loadPurchasedBooks();
     });
-    // The chat type is fixed for this page; reload functions intentionally run once.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleCreateSession = async (e) => {
-    e.preventDefault();
-    if (selectedBookIds.length === 0) {
-      alert('Vui lòng chọn ít nhất một cuốn sách để trò chuyện.');
-      return;
-    }
-
-    const firstBook = purchasedBooks.find((b) => b.bookId === selectedBookIds[0]);
-    let defaultTitle = 'Hỏi đáp về sách';
-    if (firstBook) {
-      defaultTitle = firstBook.title.length > 35 ? firstBook.title.substring(0, 35) + '...' : firstBook.title;
-    }
-    const title = newChatTitle.trim() || defaultTitle;
-
+  const handleStartChatWithBook = async (book) => {
+    const defaultTitle = book.title.length > 35 ? book.title.substring(0, 35) + '...' : book.title;
     try {
-      const newSession = await aiChatService.createSession('BOOK_CHAT', title, selectedBookIds);
-      setIsModalOpen(false);
-      setNewChatTitle('');
-      setSelectedBookIds([]);
-
+      const newSession = await aiChatService.createSession('BOOK_CHAT', defaultTitle, [book.bookId]);
       setSessions((prev) => [newSession, ...prev]);
       setCurrentSession({
         ...newSession,
         messages: [],
       });
+    } catch (err) {
+      console.error(err);
+      alert('Không thể bắt đầu cuộc trò chuyện mới.');
+    }
+  };
+
+  const handleStartMultiBookChat = async () => {
+    if (selectedBookIds.length === 0) return;
+
+    const firstBook = purchasedBooks.find((b) => b.bookId === selectedBookIds[0]);
+    let title = `Hỏi đáp về ${selectedBookIds.length} cuốn sách`;
+    if (firstBook) {
+      title = `Thảo luận (${selectedBookIds.length} sách): ${firstBook.title.substring(0, 25)}...`;
+    }
+
+    try {
+      const newSession = await aiChatService.createSession('BOOK_CHAT', title, selectedBookIds);
+      setSessions((prev) => [newSession, ...prev]);
+      setCurrentSession({
+        ...newSession,
+        messages: [],
+      });
+      setIsMultiSelectMode(false);
+      setSelectedBookIds([]);
     } catch (err) {
       console.error(err);
       alert('Không thể bắt đầu cuộc trò chuyện mới.');
@@ -204,250 +265,402 @@ export default function BookChatPage() {
     }
   };
 
-  const toggleBookSelection = (bookId) => {
+  const toggleBookSelection = (bookId, e) => {
+    if (e) e.stopPropagation();
     setSelectedBookIds((prev) =>
       prev.includes(bookId) ? prev.filter((id) => id !== bookId) : [...prev, bookId]
     );
   };
 
+  // Filtered books based on search query
+  const displayedBooks = purchasedBooks.filter((book) => {
+    return (
+      book.title.toLowerCase().includes(librarySearchTerm.toLowerCase()) ||
+      book.author.toLowerCase().includes(librarySearchTerm.toLowerCase())
+    );
+  });
+
   return (
-    <section className="stack">
-      {error && <div className="panel" style={{ borderLeft: '4px solid var(--error)', color: 'var(--error)' }}>{error}</div>}
+    <div className="book-chat-page-wrapper">
+      {/* Page Header Title */}
+      <div className="book-chat-page-header">
+        <div className="book-chat-header-title">
+          <BookOpen size={28} className="book-chat-header-icon" />
+          <div>
+            <h1>Trợ lý đọc sách AI</h1>
+            <p>Hỗ trợ tóm tắt, giải thích ngữ cảnh & đào sâu kiến thức từ các cuốn sách bạn đã mua</p>
+          </div>
+        </div>
 
-      <div className="chat-layout">
-        <aside className="chat-sidebar panel">
-          <Button
-            onClick={() => {
-              setSelectedBookIds(purchasedBooks.length > 0 ? [purchasedBooks[0].bookId] : []);
-              setIsModalOpen(true);
-            }}
-            style={{ width: '100%', marginBottom: '16px' }}
-          >
-            + Bắt đầu trò chuyện mới
-          </Button>
+        <button
+          type="button"
+          className="book-chat-policy-toggle-btn"
+          onClick={() => setShowPolicy(!showPolicy)}
+        >
+          <ShieldCheck size={16} />
+          {showPolicy ? 'Ẩn cam kết bản quyền' : 'Xem cam kết bản quyền'}
+        </button>
+      </div>
 
-          {loading ? (
-            <LoadingState text="Đang tải lịch sử..." />
-          ) : sessions.length === 0 ? (
-            <p className="muted" style={{ textAlign: 'center', fontSize: '14px', marginTop: '20px' }}>Chưa có lịch sử trò chuyện.</p>
-          ) : (
-            <div className="session-list">
-              {sessions.map((session) => (
-                <div
-                  key={session.id}
-                  onClick={() => loadSessionDetails(session.id)}
-                  className={`session-item ${currentSession?.id === session.id ? 'active' : ''}`}
-                >
-                  <div className="session-item-info">
-                    <span className="session-title">{session.title}</span>
-                    <span className="session-date">
-                      {formatDate(session.updatedAt || session.createdAt)}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="delete-session-btn"
-                    onClick={(e) => handleDeleteSession(session.id, e)}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
+      {/* Content Usage Commitment Policy Banner */}
+      {showPolicy && (
+        <div className="book-chat-policy-banner">
+          <div className="book-chat-policy-header">
+            <div className="book-chat-policy-badge">
+              <ShieldCheck size={18} />
+              Cam kết bảo vệ bản quyền & Hỗ trợ đọc sách cá nhân
             </div>
-          )}
+            <button
+              type="button"
+              className="book-chat-policy-close"
+              onClick={() => setShowPolicy(false)}
+              aria-label="Đóng thông báo"
+            >
+              <X size={16} />
+            </button>
+          </div>
+          <div className="book-chat-policy-grid">
+            <div className="book-chat-policy-item">
+              <BookOpen size={16} className="book-chat-policy-icon" />
+              <div>
+                <strong>Chỉ phục vụ học tập cá nhân</strong>
+                <p>Nội dung sách được phân tích dành riêng cho tài khoản đã sở hữu tác phẩm.</p>
+              </div>
+            </div>
+            <div className="book-chat-policy-item">
+              <Lock size={16} className="book-chat-policy-icon" />
+              <div>
+                <strong>Tôn trọng tác quyền & NXB</strong>
+                <p>Hệ thống không chia sẻ, sao chép hoặc phát tán nguyên văn toàn bộ tác phẩm.</p>
+              </div>
+            </div>
+            <div className="book-chat-policy-item">
+              <Layers size={16} className="book-chat-policy-icon" />
+              <div>
+                <strong>Đối chiếu đa cuốn sách</strong>
+                <p>Bạn có thể chọn 1 hoặc nhiều cuốn sách đã mua để so sánh và liên kết kiến thức.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="book-chat-error-alert" role="alert">
+          <Info size={18} />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Main Chat Layout */}
+      <div className="book-chat-layout">
+        {/* Left Sidebar: New Session CTA & Chat History */}
+        <aside className="book-chat-sidebar">
+          {/* Action: Create New Session */}
+          <button
+            type="button"
+            className="btn book-chat-new-btn"
+            onClick={() => {
+              setCurrentSession(null);
+            }}
+          >
+            <Plus size={18} />
+            Cuộc trò chuyện mới
+          </button>
+
+          {/* Chat Session History List */}
+          <div className="book-chat-history-widget">
+            <div className="book-chat-widget-header">
+              <span className="book-chat-widget-title">Lịch sử trò chuyện</span>
+              {sessions.length > 0 && (
+                <span className="book-chat-widget-count">{sessions.length}</span>
+              )}
+            </div>
+
+            {loading ? (
+              <LoadingState text="Đang tải..." />
+            ) : sessions.length === 0 ? (
+              <div className="book-chat-widget-empty">
+                Chưa có lịch sử trò chuyện. Chọn sách từ Tủ sách bên phải để bắt đầu.
+              </div>
+            ) : (
+              <div className="book-chat-session-list">
+                {sessions.map((session) => {
+                  const isActive = currentSession?.id === session.id;
+                  return (
+                    <div
+                      key={session.id}
+                      onClick={() => loadSessionDetails(session.id)}
+                      className={`book-chat-session-item${isActive ? ' is-active' : ''}`}
+                    >
+                      <MessageSquare size={16} className="book-chat-session-icon" />
+                      <div className="book-chat-session-info">
+                        <span className="book-chat-session-title">{session.title}</span>
+                        <span className="book-chat-session-date">
+                          {formatDate(session.updatedAt || session.createdAt)}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        className="book-chat-delete-btn"
+                        onClick={(e) => handleDeleteSession(session.id, e)}
+                        title="Xóa trò chuyện"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </aside>
 
-        <main className="chat-mainpanel panel">
+        {/* Right Main Panel */}
+        <main className={`book-chat-main${currentSession ? ' is-chatting' : ''}`}>
           {currentSession ? (
-            <div className="chat-area">
-              <div className="chat-area-header">
-                <h3>{currentSession.title}</h3>
+            /* Active Chat Conversation View */
+            <div className="book-chat-area">
+              {/* Header inside Active Chat */}
+              <div className="book-chat-area-header">
+                <div className="book-chat-area-title-row">
+                  <button
+                    type="button"
+                    className="book-chat-back-to-lib-btn"
+                    onClick={() => setCurrentSession(null)}
+                    title="Về Tủ sách đã mua"
+                  >
+                    <ArrowLeft size={16} />
+                    <span>Tủ sách</span>
+                  </button>
+                  <h2>{currentSession.title}</h2>
+                </div>
                 {currentSession.sessionType === 'BOOK_CHAT' && currentSession.bookIds?.length > 0 && (
-                  <div className="chat-meta-books">
-                    <span className="muted" style={{ fontSize: '12px' }}>Đang hỏi về sách: </span>
-                    {currentSession.bookIds.map((bid) => {
-                      const book = purchasedBooks.find((pb) => pb.bookId === bid);
-                      return (
-                        <span key={bid} className="chat-book-tag">
-                          {book ? book.title : `Sách #${bid}`}
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div ref={chatHistoryRef} className="chat-history-container">
-                {currentSession.messages && currentSession.messages.length > 0 ? (
-                  currentSession.messages.map((msg) => (
-                    <div key={msg.id} className={`chat-message-bubble ${msg.role === 'user' ? 'user' : 'assistant'}`}>
-                      <div className="bubble-role">{msg.role === 'user' ? 'Bạn' : 'AI'}</div>
-                      <div className="bubble-content"><ReactMarkdown>{msg.content}</ReactMarkdown></div>
-                      {msg.sources && msg.sources.length > 0 && (
-                        <details className="sources-details">
-                          <summary>Tham khảo &amp; nguồn ({msg.sources.length})</summary>
-                          <div className="sources-list">
-                            {msg.sources.map((src, idx) => (
-                              <div key={idx} className="source-item-box">
-                                <div style={{ fontWeight: 'bold', fontSize: '12px' }}>
-                                  [{idx + 1}] {src.bookTitle} {src.page ? `(trang ${src.page})` : ''} - độ khớp: {Math.round(src.score * 100)}%
-                                </div>
-                                <div className="source-item-text">{src.text}</div>
-                              </div>
-                            ))}
+                  <div className="book-chat-active-books">
+                    <span className="book-chat-active-label">Sách đang thảo luận:</span>
+                    <div className="book-chat-active-tags">
+                      {currentSession.bookIds.map((bid) => {
+                        const book = purchasedBooks.find((pb) => pb.bookId === bid);
+                        return (
+                          <div key={bid} className="book-chat-book-tag">
+                            <BookOpen size={12} />
+                            <span>{book ? book.title : `Sách #${bid}`}</span>
                           </div>
-                        </details>
-                      )}
+                        );
+                      })}
                     </div>
-                  ))
-                ) : (
-                  <div style={{ textAlign: 'center', marginTop: '60px' }} className="muted">
-                    Hãy đặt câu hỏi đầu tiên để bắt đầu cuộc trò chuyện.
-                  </div>
-                )}
-                {sending && (
-                  <div className="chat-message-bubble assistant loading">
-                    <div className="bubble-role">AI</div>
-                    <div className="bubble-content" style={{ fontStyle: 'italic' }}>AI đang suy nghĩ...</div>
                   </div>
                 )}
               </div>
 
-              <form onSubmit={handleSendMessage} className="chat-input-form-bar">
+              {/* Message Bubble History Container */}
+              <div ref={chatHistoryRef} className="book-chat-messages-container">
+                {currentSession.messages && currentSession.messages.length > 0 ? (
+                  currentSession.messages.map((msg) => {
+                    const isUser = msg.role === 'user';
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`book-chat-message-row${isUser ? ' is-user' : ' is-assistant'}`}
+                      >
+                        <div className="book-chat-avatar">
+                          {isUser ? <UserIcon size={16} /> : <Bot size={16} />}
+                        </div>
+                        <div className="book-chat-bubble-content">
+                          <div className="book-chat-author-name">
+                            {isUser ? 'Bạn' : 'Trợ lý đọc sách BookVerse'}
+                          </div>
+                          <div className="book-chat-markdown">
+                            <ReactMarkdown>{msg.content}</ReactMarkdown>
+                          </div>
+
+                          {/* Sources citation block */}
+                          {msg.sources && msg.sources.length > 0 && (
+                            <details className="book-chat-sources">
+                              <summary>
+                                <Info size={13} />
+                                <span>Trích dẫn nguồn từ sách ({msg.sources.length})</span>
+                              </summary>
+                              <div className="book-chat-sources-list">
+                                {msg.sources.map((src, idx) => (
+                                  <div key={idx} className="book-chat-source-item">
+                                    <div className="book-chat-source-meta">
+                                      <span>[{idx + 1}] {src.bookTitle} {src.page ? `(trang ${src.page})` : ''}</span>
+                                      <span className="book-chat-source-score">Độ khớp: {Math.round(src.score * 100)}%</span>
+                                    </div>
+                                    <p className="book-chat-source-quote">{src.text}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </details>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="book-chat-empty-messages">
+                    <Sparkles size={36} className="book-chat-empty-icon" />
+                    <h3>Hãy đặt câu hỏi đầu tiên!</h3>
+                    <p>Hỏi về nội dung, bài học chính, hoặc nhờ tóm tắt về cuốn sách bạn đã chọn.</p>
+                  </div>
+                )}
+
+                {sending && (
+                  <div className="book-chat-message-row is-assistant is-loading">
+                    <div className="book-chat-avatar">
+                      <Bot size={16} />
+                    </div>
+                    <div className="book-chat-bubble-content">
+                      <div className="book-chat-author-name">Trợ lý đọc sách BookVerse</div>
+                      <div className="book-chat-loading-dots">
+                        <span />
+                        <span />
+                        <span />
+                        <span className="loading-text">Đang phân tích sách...</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Chat Input Form */}
+              <form onSubmit={handleSendMessage} className="book-chat-input-form">
                 <input
                   type="text"
-                  placeholder="Đặt câu hỏi..."
+                  placeholder="Đặt câu hỏi về nội dung cuốn sách..."
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   disabled={sending}
                   required
                 />
-                <Button type="submit" disabled={sending}>
-                  Gửi
-                </Button>
+                <button type="submit" className="btn book-chat-send-btn" disabled={sending || !messageText.trim()}>
+                  <span>Gửi</span>
+                  <Send size={16} />
+                </button>
               </form>
             </div>
           ) : (
-            <div style={{ display: 'grid', placeItems: 'center', height: '100%', minHeight: '300px' }} className="muted">
-              <div>
-                <p style={{ textAlign: 'center', fontSize: '18px' }}>Chọn hoặc bắt đầu cuộc trò chuyện mới.</p>
-                {chatType === 'BOOK_CHAT' && purchasedBooks.length === 0 && (
-                  <p style={{ color: 'var(--error)', fontSize: '14px', textAlign: 'center', marginTop: '10px' }}>
-                    Cảnh báo: Bạn chưa có sách đã mua để hỏi đáp.
+            /* Streamlined Ultra Compact Library View without Category Tags */
+            <div className="book-chat-welcome-container">
+              {booksLoading ? (
+                <LoadingState text="Đang tải tủ sách của bạn..." />
+              ) : purchasedBooks.length > 0 ? (
+                <div className="book-chat-books-grid-section">
+                  {/* Single Line Header Toolbar */}
+                  <div className="book-chat-library-toolbar">
+                    <div className="book-chat-toolbar-title">
+                      <BookOpen size={20} className="book-chat-title-icon" />
+                      <h2>Tủ sách của bạn ({purchasedBooks.length} cuốn)</h2>
+                    </div>
+
+                    <div className="book-chat-toolbar-actions">
+                      <div className="book-chat-library-search">
+                        <Search size={14} />
+                        <input
+                          type="text"
+                          placeholder="Tìm tên sách..."
+                          value={librarySearchTerm}
+                          onChange={(e) => setLibrarySearchTerm(e.target.value)}
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        className={`book-chat-multi-mode-btn${isMultiSelectMode ? ' is-active' : ''}`}
+                        onClick={() => {
+                          setIsMultiSelectMode(!isMultiSelectMode);
+                          setSelectedBookIds([]);
+                        }}
+                      >
+                        {isMultiSelectMode ? <CheckSquare size={15} /> : <Square size={15} />}
+                        <span>Chọn nhiều</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Multi-select Header CTA when active */}
+                  {isMultiSelectMode && (
+                    <div className="book-chat-multi-bar">
+                      <span>Đã chọn <strong>{selectedBookIds.length}</strong> cuốn sách</span>
+                      <button
+                        type="button"
+                        className="btn btn-sm book-chat-start-multi-btn"
+                        disabled={selectedBookIds.length === 0}
+                        onClick={handleStartMultiBookChat}
+                      >
+                        <MessageSquare size={14} />
+                        Thảo luận ({selectedBookIds.length} sách)
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Book Cards Grid */}
+                  {displayedBooks.length > 0 ? (
+                    <div className="book-chat-books-grid">
+                      {displayedBooks.map((book) => {
+                        const isSelected = selectedBookIds.includes(book.bookId);
+                        return (
+                          <div
+                            key={book.bookId}
+                            className={`book-chat-grid-card${isSelected ? ' is-selected' : ''}`}
+                            onClick={(e) => {
+                              if (isMultiSelectMode) {
+                                toggleBookSelection(book.bookId, e);
+                              } else {
+                                handleStartChatWithBook(book);
+                              }
+                            }}
+                          >
+                            <div className="book-chat-card-top">
+                              {isMultiSelectMode && (
+                                <div className={`book-chat-card-checkbox${isSelected ? ' is-checked' : ''}`}>
+                                  {isSelected && <CheckCircle2 size={16} />}
+                                </div>
+                              )}
+                              <div className="book-chat-card-cover">
+                                <BookCover src={book.coverUrl} title={book.title} />
+                              </div>
+                              <div className="book-chat-card-info">
+                                <h4 className="book-chat-card-title">{book.title}</h4>
+                                <span className="book-chat-card-author">{book.author}</span>
+                                <span className="book-chat-card-cat-badge">{book.category}</span>
+                              </div>
+                            </div>
+
+                            {!isMultiSelectMode && (
+                              <button type="button" className="btn book-chat-card-start-btn">
+                                <MessageSquare size={14} />
+                                Hỏi AI về sách này
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <EmptyState
+                      title="Không tìm thấy sách phù hợp"
+                      description="Hãy thử đổi từ khóa tìm kiếm."
+                    />
+                  )}
+                </div>
+              ) : (
+                <div className="book-chat-no-books-card">
+                  <ShoppingBag size={40} className="book-chat-no-books-icon" />
+                  <h3>Bạn chưa có sách đã mua trong tủ sách</h3>
+                  <p>
+                    Vui lòng chọn mua các cuốn sách yêu thích tại BookVerse để mở khóa quyền trợ lý đọc sách AI cá nhân.
                   </p>
-                )}
-              </div>
+                  <Link to="/" className="btn book-chat-browse-btn">
+                    Khám phá cửa hàng sách
+                  </Link>
+                </div>
+              )}
             </div>
           )}
         </main>
       </div>
-
-      {isModalOpen && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <div className="modal-header">
-              <h3>Bắt đầu trò chuyện AI mới</h3>
-              <button type="button" onClick={() => setIsModalOpen(false)} style={{ border: 0, background: 'transparent', fontSize: '20px', cursor: 'pointer' }}>×</button>
-            </div>
-            <form onSubmit={handleCreateSession} className="form" style={{ marginTop: '16px' }}>
-              <div className="field">
-                <label>Tiêu đề trò chuyện</label>
-                <input
-                  type="text"
-                  placeholder="Nhập tiêu đề tùy chỉnh (không bắt buộc)"
-                  value={newChatTitle}
-                  onChange={(e) => setNewChatTitle(e.target.value)}
-                />
-              </div>
-
-              {purchasedBooks.length === 0 ? (
-                <div className="field">
-                  <p style={{ color: 'var(--error)', fontSize: '14px' }}>
-                    Bạn chưa có sách đã mua. Vui lòng mua sách trước khi bắt đầu trò chuyện.
-                  </p>
-                </div>
-              ) : (
-                <div style={{ display: 'grid', gap: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <label style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text)', margin: 0 }}>Chọn sách để hỏi</label>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedBookIds(purchasedBooks.map((b) => b.bookId))}
-                        style={{ border: 'none', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '12px', padding: 0 }}
-                      >
-                        Chọn tất cả
-                      </button>
-                      <span style={{ color: 'var(--muted)', fontSize: '12px' }}>|</span>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedBookIds([])}
-                        style={{ border: 'none', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '12px', padding: 0 }}
-                      >
-                        Bỏ chọn tất cả
-                      </button>
-                    </div>
-                  </div>
-                  <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '8px 12px', background: 'var(--surface-alt)' }}>
-                    {purchasedBooks.map((book, index) => (
-                      <label
-                        key={book.bookId}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px',
-                          padding: '8px 0',
-                          borderBottom: index === purchasedBooks.length - 1 ? 'none' : '1px solid var(--border)',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedBookIds.includes(book.bookId)}
-                          onChange={() => toggleBookSelection(book.bookId)}
-                          style={{
-                            width: '18px',
-                            height: '18px',
-                            accentColor: 'var(--accent)',
-                            cursor: 'pointer',
-                            flexShrink: 0
-                          }}
-                        />
-                        {book.coverUrl && (
-                          <img
-                            src={book.coverUrl}
-                            alt={book.title}
-                            style={{
-                              width: '32px',
-                              height: '44px',
-                              objectFit: 'cover',
-                              borderRadius: 'var(--radius-sm)',
-                              boxShadow: 'var(--shadow-sm)'
-                            }}
-                          />
-                        )}
-                        <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text)' }}>
-                          {book.title}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                  {selectedBookIds.length === 0 && (
-                    <span style={{ color: 'var(--error)', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                      Vui lòng chọn ít nhất một cuốn sách để hỏi.
-                    </span>
-                  )}
-                </div>
-              )}
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '24px' }}>
-                <Button type="button" onClick={() => setIsModalOpen(false)}>Hủy</Button>
-                <Button type="submit" disabled={purchasedBooks.length === 0 || selectedBookIds.length === 0}>Tạo trò chuyện</Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </section>
+    </div>
   );
 }
