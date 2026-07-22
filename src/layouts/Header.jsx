@@ -76,6 +76,24 @@ export default function Header() {
   };
 
   useEffect(() => {
+    const updateStickyTop = () => {
+      const navbar = document.querySelector('.navbar');
+      const navbarHeight = navbar?.getBoundingClientRect().height || 132;
+      const offset = Math.round(navbarHeight + 16);
+      document.documentElement.style.setProperty('--header-sticky-top', `${offset}px`);
+      document.documentElement.style.setProperty('--catalog-sticky-top', `${offset}px`);
+      document.documentElement.style.setProperty('--profile-sticky-top', `${offset}px`);
+      document.documentElement.style.setProperty('--checkout-sticky-top', `${offset}px`);
+      document.documentElement.style.setProperty('--book-detail-sticky-top', `${offset}px`);
+      document.documentElement.style.setProperty('--cart-sticky-top', `${offset}px`);
+    };
+
+    updateStickyTop();
+    window.addEventListener('resize', updateStickyTop);
+    return () => window.removeEventListener('resize', updateStickyTop);
+  }, []);
+
+  useEffect(() => {
     Promise.resolve().then(() => setSearchQuery(queryParam));
   }, [queryParam]);
 

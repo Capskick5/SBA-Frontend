@@ -273,7 +273,17 @@ export default function OrderDetailPage({ adminView = false }) {
   const expectedDateText = getExpectedDeliveryDate(order.createdAt);
 
   return (
-    <section className="stack" style={{ gap: '16px' }}>
+    <section className="order-detail-page-container stack" style={{ gap: '16px' }}>
+      {!adminView && (
+        <nav className="page-breadcrumb" aria-label="Breadcrumb">
+          <Link to="/">Trang chủ</Link>
+          <span>/</span>
+          <Link to="/profile?tab=orders">Đơn hàng của tôi</Link>
+          <span>/</span>
+          <span>Đơn #{order.id}</span>
+        </nav>
+      )}
+
       {/* Title Header */}
       <div className="order-detail-header">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>

@@ -282,24 +282,28 @@ export default function BookChatPage() {
 
   return (
     <div className="book-chat-page-wrapper">
+      <nav className="page-breadcrumb" aria-label="Breadcrumb">
+        <Link to="/">Trang chủ</Link>
+        <span>/</span>
+        <span>Trợ lý đọc sách AI</span>
+      </nav>
+
       {/* Page Header Title */}
-      <div className="book-chat-page-header">
-        <div className="book-chat-header-title">
-          <BookOpen size={28} className="book-chat-header-icon" />
+      <div className="page-header">
+        <div className="book-chat-header-row">
           <div>
             <h1>Trợ lý đọc sách AI</h1>
-            <p>Hỗ trợ tóm tắt, giải thích ngữ cảnh & đào sâu kiến thức từ các cuốn sách bạn đã mua</p>
+            <p className="page-subtitle">Hỗ trợ tóm tắt, giải thích ngữ cảnh &amp; đào sâu kiến thức từ các cuốn sách bạn đã mua</p>
           </div>
+          <button
+            type="button"
+            className="book-chat-policy-toggle-btn"
+            onClick={() => setShowPolicy(!showPolicy)}
+          >
+            <ShieldCheck size={16} />
+            {showPolicy ? 'Ẩn cam kết bản quyền' : 'Xem cam kết bản quyền'}
+          </button>
         </div>
-
-        <button
-          type="button"
-          className="book-chat-policy-toggle-btn"
-          onClick={() => setShowPolicy(!showPolicy)}
-        >
-          <ShieldCheck size={16} />
-          {showPolicy ? 'Ẩn cam kết bản quyền' : 'Xem cam kết bản quyền'}
-        </button>
       </div>
 
       {/* Content Usage Commitment Policy Banner */}

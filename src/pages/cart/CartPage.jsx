@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShoppingCart, TicketPercent, ArrowRight, ChevronRight, MapPin, Pencil } from 'lucide-react';
+import { TicketPercent, ArrowRight, ChevronRight, MapPin, Pencil } from 'lucide-react';
 import CartItemRow from '../../components/cart/CartItemRow';
 import CartEmptyState from '../../components/cart/CartEmptyState';
 import { LoadingState } from '../../components/ui/State';
@@ -245,10 +245,16 @@ export default function CartPage() {
 
   return (
     <div className="cart-page">
-      <h1 className="cart-page-title">
-        <ShoppingCart size={26} />
-        Giỏ hàng
-      </h1>
+      <nav className="page-breadcrumb" aria-label="Breadcrumb">
+        <Link to="/">Trang chủ</Link>
+        <span>/</span>
+        <span>Giỏ hàng</span>
+      </nav>
+
+      <div className="page-header">
+        <h1>Giỏ hàng</h1>
+        <p className="page-subtitle">Kiểm tra danh sách sản phẩm và chọn hình thức đặt hàng</p>
+      </div>
 
       <div className="cart-layout">
         {/* ── Left: Items ─────────────────────── */}

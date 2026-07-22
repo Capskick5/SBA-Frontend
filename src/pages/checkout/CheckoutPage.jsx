@@ -702,11 +702,15 @@ export default function CheckoutPage() {
 
   return (
     <div className="checkout-page-wrapper">
-      <div className="checkout-page-header">
-        <Link to="/cart" className="checkout-back-cart-link">
-          Quay lại giỏ hàng
-        </Link>
+      <nav className="page-breadcrumb" aria-label="Breadcrumb">
+        <Link to="/">Trang chủ</Link>
+        <span>/</span>
+        <Link to="/cart">Giỏ hàng</Link>
+      </nav>
+
+      <div className="page-header">
         <h1>Thông tin thanh toán</h1>
+        <p className="page-subtitle">Hoàn tất thông tin giao hàng và xác nhận đơn hàng</p>
       </div>
       {isGuest && (
         <p className="form-message form-message-success">

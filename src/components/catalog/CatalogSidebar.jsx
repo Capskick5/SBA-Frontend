@@ -1,20 +1,15 @@
-import {
-  SlidersHorizontal,
-  RotateCcw,
-  BookOpen,
-  Check,
-} from 'lucide-react';
-import { formatCategoryName } from '../../utils/formatters';
+import { SlidersHorizontal, RotateCcw, BookOpen, Check } from "lucide-react";
+import { formatCategoryName } from "../../utils/formatters";
 
 export default function CatalogSidebar({
   category,
   setCategory,
   categories = [],
 }) {
-  const isFiltered = category !== 'all';
+  const isFiltered = category !== "all";
 
   const handleReset = () => {
-    setCategory('all');
+    setCategory("all");
   };
 
   return (
@@ -33,7 +28,7 @@ export default function CatalogSidebar({
             title="Xóa bộ lọc"
           >
             <RotateCcw size={13} />
-            <span>Tất cả</span>
+            <span>Xóa</span>
           </button>
         )}
       </div>
@@ -46,21 +41,25 @@ export default function CatalogSidebar({
         </label>
         <div className="catalog-category-list">
           <div
-            className={`catalog-category-item${category === 'all' ? ' is-active' : ''}`}
-            onClick={() => setCategory('all')}
+            className={`catalog-category-item${category === "all" ? " is-active" : ""}`}
+            onClick={() => setCategory("all")}
           >
             <span className="category-name">Tất cả danh mục</span>
-            {category === 'all' && <Check size={14} className="category-check" />}
+            {category === "all" && (
+              <Check size={14} className="category-check" />
+            )}
           </div>
           {categories.map((item) => {
             const isActive = String(category) === String(item.id);
             return (
               <div
                 key={item.id}
-                className={`catalog-category-item${isActive ? ' is-active' : ''}`}
+                className={`catalog-category-item${isActive ? " is-active" : ""}`}
                 onClick={() => setCategory(String(item.id))}
               >
-                <span className="category-name">{formatCategoryName(item.name)}</span>
+                <span className="category-name">
+                  {formatCategoryName(item.name)}
+                </span>
                 {isActive && <Check size={14} className="category-check" />}
               </div>
             );

@@ -5,7 +5,6 @@ import {
   Mail,
   MapPin,
   Package,
-  Pencil,
   Star,
   TicketPercent,
   User,
@@ -117,13 +116,6 @@ export default function ProfilePage() {
   if (loadError) return <ErrorState text={loadError} />;
 
   const displayName = profile?.fullName || 'Khách hàng BookVerse';
-  const initials = displayName
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase();
 
   const menuItems = [
     { id: 'account', label: 'Thông tin tài khoản', icon: User },
@@ -133,11 +125,44 @@ export default function ProfilePage() {
     { id: 'reviews', label: 'Đánh giá sản phẩm', icon: Star },
   ];
 
+  const tabConfig = {
+    account: {
+      title: 'Thông tin tài khoản',
+      subtitle: 'Quản lý thông tin cá nhân, thông tin liên hệ và cài đặt bảo mật tài khoản',
+      icon: User,
+    },
+    orders: {
+      title: 'Quản lý đơn hàng',
+      subtitle: 'Theo dõi tiến độ, chi tiết và lịch sử các đơn hàng đã đặt tại BookVerse',
+      icon: Package,
+    },
+    vouchers: {
+      title: 'Voucher của tôi',
+      subtitle: 'Danh sách các mã giảm giá và ưu đãi quà tặng dành cho bạn',
+      icon: TicketPercent,
+    },
+    addresses: {
+      title: addressTitle || 'Sổ địa chỉ',
+      subtitle: 'Quản lý danh sách địa chỉ nhận hàng và thông tin liên hệ giao hàng',
+      icon: MapPin,
+    },
+    reviews: {
+      title: 'Đánh giá sản phẩm',
+      subtitle: 'Xem lại và đóng góp ý kiến đánh giá các sản phẩm sách bạn đã trải nghiệm',
+      icon: Star,
+    },
+  };
+
+  const currentTab = tabConfig[activeTab] || tabConfig.account;
+
   const renderProfilePanel = () => {
     if (activeTab === 'vouchers') {
       return (
         <div className="profile-content">
-          <h1>Voucher của tôi</h1>
+          <div className="profile-page-header">
+            <h1>{tabConfig.vouchers.title}</h1>
+            <p className="profile-page-subtitle">{tabConfig.vouchers.subtitle}</p>
+          </div>
           <div className="profile-card profile-embedded-card voucher-profile-card">
             <VouchersPage />
           </div>
@@ -148,7 +173,10 @@ export default function ProfilePage() {
     if (activeTab === 'orders') {
       return (
         <div className="profile-content">
-          <h1>Quản lý đơn hàng</h1>
+          <div className="profile-page-header">
+            <h1>{tabConfig.orders.title}</h1>
+            <p className="profile-page-subtitle">{tabConfig.orders.subtitle}</p>
+          </div>
           <div className="profile-card profile-embedded-card">
             <OrdersPage />
           </div>
@@ -159,7 +187,10 @@ export default function ProfilePage() {
     if (activeTab === 'addresses') {
       return (
         <div className="profile-content">
-          <h1>{addressTitle}</h1>
+          <div className="profile-page-header">
+            <h1>{currentTab.title}</h1>
+            <p className="profile-page-subtitle">{tabConfig.addresses.subtitle}</p>
+          </div>
           <div className="profile-card profile-embedded-card">
             <AddressesPage onTitleChange={setAddressTitle} />
           </div>
@@ -170,7 +201,10 @@ export default function ProfilePage() {
     if (activeTab === 'reviews') {
       return (
         <div className="profile-content">
-          <h1>Đánh giá sản phẩm</h1>
+          <div className="profile-page-header">
+            <h1>{tabConfig.reviews.title}</h1>
+            <p className="profile-page-subtitle">{tabConfig.reviews.subtitle}</p>
+          </div>
           <div className="profile-card profile-embedded-card">
             <MyReviewsPage />
           </div>
@@ -180,7 +214,12 @@ export default function ProfilePage() {
 
     return (
       <div className="profile-content">
-        <h1>Thông tin tài khoản</h1>
+        <div className="profile-page-header">
+          <h1>{tabConfig.account.title}</h1>
+          <p className="profile-page-subtitle">
+            {tabConfig.account.subtitle}
+          </p>
+        </div>
 
         <div className="profile-card profile-account-card">
           <section className="profile-personal-panel">
@@ -191,13 +230,6 @@ export default function ProfilePage() {
             <AuthFormMessage error={saveError} success={saveSuccess} />
 
             <form className="profile-form" onSubmit={handleSaveProfile} key={profile?.updatedAt}>
-              <div className="profile-avatar-panel">
-                <div className="profile-avatar profile-avatar-lg">{initials || 'BV'}</div>
-                <button type="button" className="profile-avatar-edit" aria-label="Sửa ảnh đại diện" disabled>
-                  <Pencil size={14} />
-                </button>
-              </div>
-
               <div className="profile-fields">
                 <Input
                   label="Họ và tên"
@@ -231,7 +263,9 @@ export default function ProfilePage() {
             <section className="profile-side-section">
               <h2>Điện thoại và email</h2>
               <div className="profile-info-row">
-                <Mail size={18} />
+                <div className="info-icon-badge">
+                  <Mail size={18} />
+                </div>
                 <div>
                   <span>Địa chỉ email</span>
                   <strong>{profile?.email || 'Không có'}</strong>
@@ -243,7 +277,9 @@ export default function ProfilePage() {
             <section className="profile-side-section">
               <h2>Bảo mật</h2>
               <div className="profile-info-row">
-                <Lock size={18} />
+                <div className="info-icon-badge">
+                  <Lock size={18} />
+                </div>
                 <div>
                   <span>Mật khẩu</span>
                   <strong>Đổi mật khẩu tài khoản</strong>
@@ -288,7 +324,6 @@ export default function ProfilePage() {
                 </form>
               )}
             </section>
-
           </aside>
         </div>
       </div>
@@ -312,16 +347,19 @@ export default function ProfilePage() {
       )}
 
       <section className="profile-page">
-      <nav className="profile-breadcrumb" aria-label="Breadcrumb">
+      <nav className="page-breadcrumb" aria-label="Breadcrumb">
         <Link to="/">Trang chủ</Link>
         <span>/</span>
-        <span>Thông tin tài khoản</span>
+        {activeTab === 'account' ? (
+          <span>Tài khoản</span>
+        ) : (
+          <Link to="/profile">Tài khoản</Link>
+        )}
       </nav>
 
       <div className="profile-layout">
         <aside className="profile-sidebar" aria-label="Account navigation">
           <div className="profile-sidebar-user">
-            <div className="profile-avatar profile-avatar-sm">{initials || 'BV'}</div>
             <div>
               <span>Tài khoản của bạn</span>
               <strong>{displayName}</strong>

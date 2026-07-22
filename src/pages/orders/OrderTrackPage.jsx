@@ -70,7 +70,7 @@ export default function OrderTrackPage() {
   const hasLink = code && token;
 
   return (
-    <section className="stack" style={{ gap: '24px', maxWidth: '960px', margin: '0 auto' }}>
+    <section className="order-track-page stack" style={{ gap: '24px' }}>
       <div
         style={{
           background: 'linear-gradient(135deg, var(--brand-primary), var(--accent))',
