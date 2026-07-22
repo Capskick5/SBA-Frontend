@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Gift, Check, X, Tag as TagIcon, ArrowRight, Search } from 'lucide-react';
+import { Sparkles, Gift, Check, X, Tag as TagIcon, ArrowRight, Search, Lock } from 'lucide-react';
 import Button from '../ui/Button';
 import { LoadingState } from '../ui/State';
 import { campaignService } from '../../services/campaignService';
@@ -32,8 +32,15 @@ export default function CampaignModal({ isOpen, onClose }) {
   const [selectedCampaignId, setSelectedCampaignId] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const currentUser = authService.getCurrentUser();
+  const isLoggedIn = Boolean(currentUser);
+
   useEffect(() => {
     if (!isOpen) return;
+    if (!isLoggedIn) {
+      setLoading(false);
+      return;
+    }
 
     let active = true;
     setLoading(true);
@@ -43,9 +50,7 @@ export default function CampaignModal({ isOpen, onClose }) {
         const [cList, vResult, mineList] = await Promise.all([
           campaignService.getActiveCampaigns().catch(() => []),
           voucherService.getAvailablePage({ page: 0, size: 100 }).catch(() => ({ items: [] })),
-          authService.getCurrentUser()
-            ? voucherService.listMine().catch(() => [])
-            : Promise.resolve([]),
+          voucherService.listMine().catch(() => []),
         ]);
 
         if (!active) return;
@@ -67,12 +72,12 @@ export default function CampaignModal({ isOpen, onClose }) {
     return () => {
       active = false;
     };
-  }, [isOpen]);
+  }, [isOpen, isLoggedIn]);
 
   if (!isOpen) return null;
 
   const handleClaim = async (voucher) => {
-    if (!authService.getCurrentUser()) {
+    if (!isLoggedIn) {
       showToast('Vui lòng đăng nhập để thu thập voucher vào ví cá nhân.', 'error');
       onClose();
       navigate(`/login?redirect=${encodeURIComponent('/')}`);
@@ -142,7 +147,7 @@ export default function CampaignModal({ isOpen, onClose }) {
         <header className="campaign-modal-header">
           <div>
             <div className="campaign-modal-kicker">
-              <BookOpen size={16} /> KHO VOUCHER & CAMPAIGN KHUYẾN MÃI
+              <Sparkles size={16} /> KHO VOUCHER & CAMPAIGN KHUYẾN MÃI
             </div>
             <h2>Các Chương Trình Khuyến Mãi Đang Diễn Ra</h2>
             <p>Bấm "Thu thập" để lưu trực tiếp mã giảm giá vào ví voucher cá nhân của bạn!</p>
@@ -152,142 +157,172 @@ export default function CampaignModal({ isOpen, onClose }) {
           </button>
         </header>
 
-        {/* Campaign Search & Dynamic Admin Campaign Tabs */}
-        <div className="campaign-modal-toolbar" style={{ padding: '12px 28px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div className="campaign-search-box" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f1f5f9', padding: '8px 14px', borderRadius: '8px' }}>
-            <Search size={16} style={{ color: 'var(--muted)' }} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm kiếm theo tên Campaign hoặc Mã voucher..."
-              style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.88rem' }}
-            />
-            {searchQuery && (
-              <button type="button" onClick={() => setSearchQuery('')} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--muted)' }}>
-                <X size={14} />
-              </button>
-            )}
-          </div>
-
-          <div className="campaign-modal-tabs" style={{ padding: 0, border: 'none' }}>
-            <button
-              type="button"
-              className={`campaign-tab ${selectedCampaignId === 'ALL' ? 'active' : ''}`}
-              onClick={() => setSelectedCampaignId('ALL')}
-            >
-              <TagIcon size={15} /> Tất cả ({activeUnexpiredVouchers.length})
-            </button>
-
-            {/* Dynamic Admin Campaign Tabs Only */}
-            {campaigns.map((c) => (
-              <button
-                key={c.id}
+        {!isLoggedIn ? (
+          /* Guest Screen: Hide Vouchers and prompt to log in */
+          <div className="campaign-modal-body" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 24px' }}>
+            <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', maxWidth: '440px' }}>
+              <div style={{ width: '68px', height: '68px', borderRadius: '50%', background: '#fef0eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fb6376', boxShadow: '0 4px 14px rgba(251, 99, 118, 0.15)' }}>
+                <Lock size={32} />
+              </div>
+              <h3 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, color: 'var(--text)' }}>
+                Đăng Nhập Để Xem Kho Voucher
+              </h3>
+              <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.92rem', lineHeight: '1.6' }}>
+                Vui lòng đăng nhập tài khoản của bạn để khám phá các chương trình ưu đãi độc quyền và thu thập mã giảm giá về ví cá nhân!
+              </p>
+              <Button
                 type="button"
-                className={`campaign-tab ${selectedCampaignId === String(c.id) ? 'active' : ''}`}
-                onClick={() => setSelectedCampaignId(String(c.id))}
+                style={{ background: 'linear-gradient(135deg, #fb6376 0%, #e11d48 100%)', color: '#ffffff', fontWeight: 700, padding: '12px 32px', borderRadius: '12px', marginTop: '6px' }}
+                onClick={() => {
+                  onClose();
+                  navigate(`/login?redirect=${encodeURIComponent('/')}`);
+                }}
               >
-                <TagIcon size={15} /> {c.name}
-              </button>
-            ))}
+                Đăng nhập ngay <ArrowRight size={16} />
+              </Button>
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Logged In View */
+          <>
+            {/* Campaign Search & Dynamic Admin Campaign Tabs */}
+            <div className="campaign-modal-toolbar" style={{ padding: '12px 28px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="campaign-search-box" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f1f5f9', padding: '8px 14px', borderRadius: '8px' }}>
+                <Search size={16} style={{ color: 'var(--muted)' }} />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Tìm kiếm theo tên Campaign hoặc Mã voucher..."
+                  style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.88rem' }}
+                />
+                {searchQuery && (
+                  <button type="button" onClick={() => setSearchQuery('')} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--muted)' }}>
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
 
-        {/* Modal Body / Voucher Cards Grid */}
-        <div className="campaign-modal-body">
-          {loading ? (
-            <LoadingState text="Đang tải danh sách campaign và voucher..." />
-          ) : filteredVouchers.length > 0 ? (
-            <div className="campaign-vouchers-grid">
-              {filteredVouchers.map((voucher) => {
-                const codeUpper = (voucher.code || voucher.voucherCode || '').toUpperCase();
-                const isClaimed = claimedCodes.includes(codeUpper);
+              <div className="campaign-modal-tabs" style={{ padding: 0, border: 'none' }}>
+                <button
+                  type="button"
+                  className={`campaign-tab ${selectedCampaignId === 'ALL' ? 'active' : ''}`}
+                  onClick={() => setSelectedCampaignId('ALL')}
+                >
+                  <TagIcon size={15} /> Tất cả ({activeUnexpiredVouchers.length})
+                </button>
 
-                // Sold out check
-                const isSoldOut = voucher.totalQuantity != null
-                  && voucher.claimedQuantity != null
-                  && voucher.claimedQuantity >= voucher.totalQuantity;
-
-                const campaignTag = voucher.campaignName || (campaigns.find((c) => String(c.id) === String(voucher.campaignId))?.name) || 'Mã Ưu Đãi';
-
-                return (
-                  <article
-                    key={voucher.id || voucher.code}
-                    className={`campaign-voucher-card ${isSoldOut ? 'is-sold-out' : ''}`}
+                {/* Dynamic Admin Campaign Tabs Only */}
+                {campaigns.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className={`campaign-tab ${selectedCampaignId === String(c.id) ? 'active' : ''}`}
+                    onClick={() => setSelectedCampaignId(String(c.id))}
                   >
-                    <div className="card-top-badge">
-                      <span className="badge badge-brand"><TagIcon size={13} /> {campaignTag}</span>
-                    </div>
+                    <TagIcon size={15} /> {c.name}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-                    <div className="card-main-info">
-                      <h3>{voucher.name || `Voucher ${voucher.code}`}</h3>
-                      <div className="discount-highlight">
-                        {formatDiscount(voucher)}
-                      </div>
-                      <dl className="card-details-dl">
-                        <div>
-                          <dt>Mã voucher:</dt>
-                          <dd><strong>{voucher.code}</strong></dd>
-                        </div>
-                        <div>
-                          <dt>Đơn tối thiểu:</dt>
-                          <dd>{formatCurrency(voucher.minOrderValue || 0)}</dd>
-                        </div>
-                        <div>
-                          <dt>Hạn sử dụng:</dt>
-                          <dd>{formatDate(voucher.endTime || voucher.expiresAt)}</dd>
-                        </div>
-                      </dl>
-                    </div>
+            {/* Modal Body / Voucher Cards Grid */}
+            <div className="campaign-modal-body">
+              {loading ? (
+                <LoadingState text="Đang tải danh sách campaign và voucher..." />
+              ) : filteredVouchers.length > 0 ? (
+                <div className="campaign-vouchers-grid">
+                  {filteredVouchers.map((voucher) => {
+                    const codeUpper = (voucher.code || voucher.voucherCode || '').toUpperCase();
+                    const isClaimed = claimedCodes.includes(codeUpper);
 
-                    <div className="card-action-bar">
-                      <button
-                        type="button"
-                        className={`btn-claim-campaign ${isClaimed ? 'is-claimed' : ''} ${isSoldOut ? 'is-disabled' : ''}`}
-                        onClick={() => handleClaim(voucher)}
-                        disabled={claimingId === voucher.id || isClaimed || isSoldOut}
+                    // Sold out check
+                    const isSoldOut = voucher.totalQuantity != null
+                      && voucher.claimedQuantity != null
+                      && voucher.claimedQuantity >= voucher.totalQuantity;
+
+                    const campaignTag = voucher.campaignName || (campaigns.find((c) => String(c.id) === String(voucher.campaignId))?.name) || 'Mã Ưu Đãi';
+
+                    return (
+                      <article
+                        key={voucher.id || voucher.code}
+                        className={`campaign-voucher-card ${isSoldOut ? 'is-sold-out' : ''}`}
                       >
-                        {claimingId === voucher.id ? (
-                          'Đang thu thập...'
-                        ) : isClaimed ? (
-                          <>
-                            <Check size={16} /> Đã thu thập
-                          </>
-                        ) : isSoldOut ? (
-                          'Đã hết lượt'
-                        ) : (
-                          <>
-                            <Gift size={16} /> Thu thập voucher
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="campaign-empty-inline" style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted)' }}>
-              <Gift size={36} style={{ marginBottom: '10px', opacity: 0.5 }} />
-              <h3>Chưa có voucher phù hợp</h3>
-              <p>Hiện chưa có mã voucher nào thuộc danh mục này. Bạn có thể mở danh mục Tất cả!</p>
-            </div>
-          )}
-        </div>
+                        <div className="card-top-badge">
+                          <span className="badge badge-brand"><TagIcon size={13} /> {campaignTag}</span>
+                        </div>
 
-        <footer className="campaign-modal-footer">
-          <span>Tất cả voucher đã thu thập sẽ được tự động lưu vào ví của bạn.</span>
-          <Button
-            type="button"
-            className="btn-secondary"
-            onClick={() => {
-              onClose();
-              navigate('/profile?tab=vouchers');
-            }}
-          >
-            Quản lý Ví Voucher <ArrowRight size={16} />
-          </Button>
-        </footer>
+                        <div className="card-main-info">
+                          <h3>{voucher.name || `Voucher ${voucher.code}`}</h3>
+                          <div className="discount-highlight">
+                            {formatDiscount(voucher)}
+                          </div>
+                          <dl className="card-details-dl">
+                            <div>
+                              <dt>Mã voucher:</dt>
+                              <dd><strong>{voucher.code}</strong></dd>
+                            </div>
+                            <div>
+                              <dt>Đơn tối thiểu:</dt>
+                              <dd>{formatCurrency(voucher.minOrderValue || 0)}</dd>
+                            </div>
+                            <div>
+                              <dt>Hạn sử dụng:</dt>
+                              <dd>{formatDate(voucher.endTime || voucher.expiresAt)}</dd>
+                            </div>
+                          </dl>
+                        </div>
+
+                        <div className="card-action-bar">
+                          <button
+                            type="button"
+                            className={`btn-claim-campaign ${isClaimed ? 'is-claimed' : ''} ${isSoldOut ? 'is-disabled' : ''}`}
+                            onClick={() => handleClaim(voucher)}
+                            disabled={claimingId === voucher.id || isClaimed || isSoldOut}
+                          >
+                            {claimingId === voucher.id ? (
+                              'Đang thu thập...'
+                            ) : isClaimed ? (
+                              <>
+                                <Check size={16} /> Đã thu thập
+                              </>
+                            ) : isSoldOut ? (
+                              'Đã hết lượt'
+                            ) : (
+                              <>
+                                <Gift size={16} /> Thu thập voucher
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="campaign-empty-inline" style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted)' }}>
+                  <Gift size={36} style={{ marginBottom: '10px', opacity: 0.5 }} />
+                  <h3>Chưa có voucher phù hợp</h3>
+                  <p>Hiện chưa có mã voucher nào thuộc danh mục này. Bạn có thể mở danh mục Tất cả!</p>
+                </div>
+              )}
+            </div>
+
+            <footer className="campaign-modal-footer">
+              <span>Tất cả voucher đã thu thập sẽ được tự động lưu vào ví của bạn.</span>
+              <Button
+                type="button"
+                className="btn-secondary"
+                onClick={() => {
+                  onClose();
+                  navigate('/profile?tab=vouchers');
+                }}
+              >
+                Quản lý Ví Voucher <ArrowRight size={16} />
+              </Button>
+            </footer>
+          </>
+        )}
       </div>
     </div>
   );
