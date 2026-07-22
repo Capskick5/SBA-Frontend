@@ -21,7 +21,7 @@ import { showToast } from '../../utils/toast';
 const EMPTY_FORM = {
   name: '',
   feeVnd: '',
-  displayOrder: '0',
+  displayOrder: '1',
   active: true,
   imageKey: '',
 };
@@ -93,7 +93,7 @@ export default function AdminGiftWrapsPage() {
     setForm({
       name: giftWrap.name || '',
       feeVnd: String(giftWrap.feeVnd ?? ''),
-      displayOrder: String(giftWrap.displayOrder ?? 0),
+      displayOrder: String(giftWrap.displayOrder ?? 1),
       active: Boolean(giftWrap.active),
       imageKey: giftWrap.imageKey || '',
     });
@@ -137,8 +137,8 @@ export default function AdminGiftWrapsPage() {
       return;
     }
     const displayOrder = Number(form.displayOrder);
-    if (!Number.isFinite(displayOrder)) {
-      setFormError('Thứ tự hiển thị phải là số.');
+    if (!Number.isFinite(displayOrder) || displayOrder < 1) {
+      setFormError('Thứ tự hiển thị phải từ 1 trở lên.');
       return;
     }
 
@@ -300,6 +300,8 @@ export default function AdminGiftWrapsPage() {
             <Input
               label="Thứ tự hiển thị"
               type="number"
+              min="1"
+              step="1"
               value={form.displayOrder}
               onChange={(event) => setField('displayOrder', event.target.value)}
             />

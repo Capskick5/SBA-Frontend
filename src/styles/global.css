@@ -590,12 +590,6 @@ html[data-theme="dark"] .navbar-bottom-links a.active {
   position: relative;
 }
 
-.profile-trigger-btn {
-  padding: 0;
-  border: none;
-  background: transparent;
-}
-
 .chevron-icon {
   color: var(--muted);
   transition: transform 0.3s ease;
@@ -2443,6 +2437,12 @@ td:has(> .admin-row-actions) {
   width: 1%;
   white-space: nowrap;
   vertical-align: middle;
+}
+
+/* Keep "Thao tác" header on one line (column is width:1% for the buttons). */
+table:has(td > .admin-row-actions) th:last-child {
+  width: 1%;
+  white-space: nowrap;
 }
 
 .addresses-back-link {

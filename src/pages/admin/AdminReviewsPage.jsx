@@ -37,15 +37,33 @@ export default function AdminReviewsPage() {
   const loadReviews = useCallback(() => {
     setLoading(true);
     setError(null);
+
+    const ratingValue = ratingFilter === 'ALL' ? null : Number(ratingFilter);
+    const fetchSize = ratingValue == null ? PAGE_SIZE : 200;
+    const fetchPage = ratingValue == null ? page : 0;
+
     adminService.getReviews({
-      page,
-      size: PAGE_SIZE,
+      page: fetchPage,
+      size: fetchSize,
       sort: sortBy,
       ...(status === 'ALL' ? {} : { status }),
-      ...(ratingFilter === 'ALL' ? {} : { rating: Number(ratingFilter) }),
+      ...(ratingValue == null ? {} : { rating: ratingValue }),
     })
       .then((result) => {
-        setReviews(result?.items || result?.content || []);
+        let items = result?.items || result?.content || [];
+
+        // Ensure "Số sao" always acts as an exact rating filter (not a sort).
+        if (ratingValue != null) {
+          items = items.filter((review) => Number(review.rating) === ratingValue);
+          const total = items.length;
+          const start = page * PAGE_SIZE;
+          setReviews(items.slice(start, start + PAGE_SIZE));
+          setTotalItems(total);
+          setTotalPages(total === 0 ? 0 : Math.ceil(total / PAGE_SIZE));
+          return;
+        }
+
+        setReviews(items);
         setTotalItems(result?.totalItems ?? result?.totalElements ?? 0);
         setTotalPages(result?.totalPages ?? 0);
       })
@@ -157,7 +175,7 @@ export default function AdminReviewsPage() {
           </select>
         </AdminFilterField>
 
-        <AdminFilterField label="Số sao">
+        <AdminFilterField label="Số sao (lọc)">
           <select
             value={ratingFilter}
             onChange={(event) => {
@@ -184,8 +202,8 @@ export default function AdminReviewsPage() {
           >
             <option value="createdAt,desc">Mới nhất trước</option>
             <option value="createdAt,asc">Cũ nhất trước</option>
-            <option value="rating,desc">Số sao: Cao đến thấp</option>
-            <option value="rating,asc">Số sao: Thấp đến cao</option>
+            <option value="rating,desc">Điểm: cao → thấp</option>
+            <option value="rating,asc">Điểm: thấp → cao</option>
           </select>
         </AdminFilterField>
       </AdminToolbar>
