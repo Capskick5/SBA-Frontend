@@ -9,6 +9,7 @@ import {
   LogOut,
   Search,
   TicketPercent,
+  Sparkles,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -192,11 +193,12 @@ export default function Header() {
           {(!user || user.role !== "ADMIN") && (
             <Link
               to={user ? "/books/chat" : "/login"}
-              className="header-secondary-link"
+              className="header-ai-btn"
               aria-label="Mở trợ lý đọc sách AI cho sách đã mua"
               title="Trợ lý đọc sách AI cho sách đã mua"
             >
-              Trợ lý đọc sách AI
+              <Sparkles size={16} className="header-ai-icon" />
+              <span>Trợ lý đọc sách AI</span>
             </Link>
           )}
 
@@ -252,7 +254,7 @@ export default function Header() {
                     </Link>
                     {user.role !== "ADMIN" && (
                       <Link
-                        to="/orders"
+                        to="/profile?tab=orders"
                         onClick={() => setDropdownOpen(false)}
                         className="dropdown-item"
                       >

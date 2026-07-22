@@ -175,7 +175,7 @@ export default function OrderDetailPage({ adminView = false }) {
     return (
       <section className="stack">
         <ErrorState text={error}>
-          <Link to={isLoggedIn ? '/orders' : '/'}><Button>Quay lại {isLoggedIn ? 'đơn hàng' : 'trang chủ'}</Button></Link>
+          <Link to={isLoggedIn ? '/profile?tab=orders' : '/'}><Button>Quay lại {isLoggedIn ? 'đơn hàng' : 'trang chủ'}</Button></Link>
         </ErrorState>
       </section>
     );
@@ -589,7 +589,7 @@ export default function OrderDetailPage({ adminView = false }) {
       {/* Footer controls */}
       {!adminView && (
         <div className="order-detail-footer-actions">
-          <Link to={isLoggedIn ? '/orders' : '/'} className="order-detail-back-link">
+          <Link to={isLoggedIn ? '/profile?tab=orders' : '/'} className="order-detail-back-link">
             &lt;&lt; {isLoggedIn ? 'Quay lại đơn hàng' : 'Quay lại trang chủ'}
           </Link>
           <button

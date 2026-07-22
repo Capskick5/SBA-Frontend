@@ -701,7 +701,7 @@ export default function CheckoutPage() {
 
 
   return (
-    <div className="stack" style={{ gap: '24px' }}>
+    <div className="checkout-page-wrapper">
       <div className="checkout-page-header">
         <Link to="/cart" className="checkout-back-cart-link">
           Quay lại giỏ hàng

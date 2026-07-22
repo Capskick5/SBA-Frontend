@@ -116,7 +116,7 @@ export default function PaymentResultPage() {
                   <Home size={18} /> Trang chủ
                 </Button>
               </Link>
-              <Link to={isLoggedIn ? '/orders' : '/'} style={{ flex: 1, textDecoration: 'none' }}>
+              <Link to={isLoggedIn ? '/profile?tab=orders' : '/'} style={{ flex: 1, textDecoration: 'none' }}>
                 <Button style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
                   <ShoppingBag size={18} /> {isLoggedIn ? 'Đơn hàng' : 'Mua ngay'}
                 </Button>
@@ -139,7 +139,7 @@ export default function PaymentResultPage() {
                   <Home size={18} /> Trang chủ
                 </Button>
               </Link>
-              <Link to={isLoggedIn ? '/orders' : '/'} style={{ flex: 1, textDecoration: 'none' }}>
+              <Link to={isLoggedIn ? '/profile?tab=orders' : '/'} style={{ flex: 1, textDecoration: 'none' }}>
                 <Button style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
                   <ShoppingBag size={18} /> {isLoggedIn ? 'Đơn hàng' : 'Mua ngay'}
                 </Button>
