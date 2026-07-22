@@ -479,9 +479,7 @@ export default function AdminRagPage() {
                 label: 'Thao tác',
                 render: (row) => {
                   const state = actionLoading[row.id];
-                  const info = ragStatuses[row.id];
-                  const hasIndex = info && (info.status?.toLowerCase() === 'indexed' || info.chunkCount > 0);
-                  
+
                   return (
                     <div className="admin-row-actions">
                       <Button
@@ -493,7 +491,7 @@ export default function AdminRagPage() {
                       >
                         {state === 'ingest' ? 'Đang lập chỉ mục...' : 'Lập chỉ mục'}
                       </Button>
-                      
+
                       <Button
                         type="button"
                         variant="secondary"
@@ -503,19 +501,17 @@ export default function AdminRagPage() {
                       >
                         {state === 'catalog' ? 'Đang đồng bộ...' : 'Đồng bộ danh mục'}
                       </Button>
-                      
-                      {hasIndex && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          className="danger-action"
-                          onClick={() => handleDeleteIndex(row.id)}
-                          disabled={!!state}
-                        >
-                          {state === 'delete' ? 'Đang xóa...' : 'Xóa chỉ mục'}
-                        </Button>
-                      )}
+
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="danger-action"
+                        onClick={() => handleDeleteIndex(row.id)}
+                        disabled={!!state}
+                      >
+                        {state === 'delete' ? 'Đang xóa...' : 'Xóa'}
+                      </Button>
                     </div>
                   );
                 }

@@ -48,6 +48,7 @@ export default function AdminInventoryPage() {
   const [usersMap, setUsersMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
@@ -61,7 +62,7 @@ export default function AdminInventoryPage() {
       try {
         const [movementsRes, usersRes] = await Promise.all([
           adminService.getStockMovements({ page: 0, size: 200, sort: 'createdAt,desc' }),
-          adminService.getUsers({ limit: 1000 })
+          adminService.getUsers({ limit: 1000 }),
         ]);
 
         if (!active) return;
@@ -75,7 +76,7 @@ export default function AdminInventoryPage() {
         const usersList = usersRes.data?.items || usersRes.data || [];
         const map = {};
         if (Array.isArray(usersList)) {
-          usersList.forEach(u => {
+          usersList.forEach((u) => {
             map[u.id] = u.name || u.email || `User ${u.id}`;
           });
         }
@@ -90,20 +91,14 @@ export default function AdminInventoryPage() {
     };
 
     fetchMovements();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [reloadKey]);
 
-  if (loading) return <LoadingState text="Đang tải nhật ký kho..." />;
-  if (error) {
-    return (
-      <ErrorState text={`Không thể tải nhật ký kho. ${error}`}>
-        <Button type="button" onClick={() => setReloadKey((value) => value + 1)}>Thử lại</Button>
-      </ErrorState>
-    );
-  }
-
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
+  const handleSearchSubmit = (event) => {
+    event?.preventDefault?.();
+    setSearchQuery(searchInput.trim());
     setCurrentPage(0);
   };
 
@@ -120,14 +115,16 @@ export default function AdminInventoryPage() {
     const creator = (mov.createdByName || usersMap[mov.createdBy] || String(mov.createdBy) || '').toLowerCase();
     const quantity = String(getQuantity(mov));
 
-    return bookTitle.includes(lowerQuery) ||
+    return (
+      bookTitle.includes(lowerQuery) ||
       bookId.includes(lowerQuery) ||
       note.includes(lowerQuery) ||
       reason.includes(lowerQuery) ||
       reasonLabel.includes(lowerQuery) ||
       orderId.includes(lowerQuery) ||
       creator.includes(lowerQuery) ||
-      quantity.includes(lowerQuery);
+      quantity.includes(lowerQuery)
+    );
   });
 
   const paginatedMovements = filteredMovements.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
@@ -135,7 +132,15 @@ export default function AdminInventoryPage() {
 
   const columns = [
     { key: 'id', label: 'ID' },
-    { key: 'bookId', label: 'Mã sách' },
+    {
+      key: 'bookId',
+      label: 'Mã sách',
+      render: (mov) => (
+        mov.bookId
+          ? <Link className="inventory-order-link" to={`/admin/books/${mov.bookId}`}>{mov.bookId}</Link>
+          : <span className="muted">—</span>
+      ),
+    },
     {
       key: 'reason',
       label: 'Lý do',
@@ -184,24 +189,44 @@ export default function AdminInventoryPage() {
   ];
 
   return (
-    <section>
+    <section className="stack">
       <AdminPageHeader
         title="Quản lý kho"
         subtitle="Nhật ký toàn cục mọi biến động tồn kho sách."
+        actions={(
+          <Button type="button" variant="secondary" onClick={() => setReloadKey((value) => value + 1)}>
+            Làm mới
+          </Button>
+        )}
       />
 
       <AdminToolbar>
-        <AdminFilterField label="Tìm kiếm">
+        <AdminFilterField label="Tìm kiếm" className="admin-filter-field-pair">
           <input
             type="text"
             placeholder="Tìm kiếm nhật ký (sách, ghi chú, người dùng...)"
-            value={searchQuery}
-            onChange={handleSearchChange}
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                handleSearchSubmit(event);
+              }
+            }}
           />
         </AdminFilterField>
+        <Button type="button" onClick={handleSearchSubmit}>
+          Tìm kiếm
+        </Button>
       </AdminToolbar>
 
-      {movements.length === 0 ? (
+      {loading ? (
+        <LoadingState text="Đang tải nhật ký kho..." />
+      ) : error ? (
+        <ErrorState text={`Không thể tải nhật ký kho. ${error}`}>
+          <Button type="button" onClick={() => setReloadKey((value) => value + 1)}>Thử lại</Button>
+        </ErrorState>
+      ) : movements.length === 0 ? (
         <EmptyState title="Chưa có hoạt động kho" text="Thay đổi tồn kho sẽ hiển thị tại đây sau đơn hàng hoặc điều chỉnh thủ công." />
       ) : (
         <>
