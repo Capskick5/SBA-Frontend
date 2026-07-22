@@ -1,9 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { adminService } from '../../services/adminService';
+import AdminPageHeader from '../../components/ui/AdminPageHeader';
+import AdminToolbar, { AdminFilterField } from '../../components/ui/AdminToolbar';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
 import AdminPagination from '../../components/ui/AdminPagination';
 import { LoadingState } from '../../components/ui/State';
+
+function displayHealthValue(value) {
+  if (value == null || value === '') return 'Không có';
+  if (String(value).toLowerCase() === 'ok') return 'ổn';
+  return value;
+}
 
 export default function AdminRagPage() {
   const [books, setBooks] = useState([]);
@@ -119,7 +127,7 @@ export default function AdminRagPage() {
   }, [currentPage, appliedQuery, loadBooks]);
 
   const handleSearchSubmit = (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
     setCurrentPage(0);
     setAppliedQuery(searchQuery);
   };
@@ -262,175 +270,148 @@ export default function AdminRagPage() {
 
   const renderStatus = (row) => {
     if (!row.fileKey) {
-      return <span style={{ color: '#888', fontWeight: 'bold' }}>Không có tệp PDF/EPUB</span>;
+      return <span className="admin-status-muted">Không có tệp PDF/EPUB</span>;
     }
     const info = ragStatuses[row.id];
     if (!info) {
-      return <span className="muted">Đang kiểm tra...</span>;
+      return <span className="admin-status-muted">Đang kiểm tra...</span>;
     }
     if (info.loading) {
-      return <span className="muted">Đang tải thông tin RAG...</span>;
+      return <span className="admin-status-muted">Đang tải thông tin RAG...</span>;
     }
     if (info.status?.toLowerCase() === 'indexed' || info.chunkCount > 0) {
       return (
         <div>
-          <span style={{ color: 'green', fontWeight: 'bold' }}>Đã lập chỉ mục</span>
-          <div style={{ fontSize: '12px', color: '#555' }}>
+          <span className="admin-status-ok">Đã lập chỉ mục</span>
+          <div style={{ fontSize: '12px', color: 'var(--muted)' }}>
             Khối: <strong>{info.chunkCount}</strong>
           </div>
         </div>
       );
     }
-    return <span style={{ color: '#c00' }}>Chưa lập chỉ mục</span>;
+    return <span className="admin-status-bad">Chưa lập chỉ mục</span>;
   };
 
   const renderCatalogStatus = (row) => {
     const info = ragStatuses[row.id];
     if (!info) {
-      return <span className="muted">Đang kiểm tra...</span>;
+      return <span className="admin-status-muted">Đang kiểm tra...</span>;
     }
     if (info.catalogLoading) {
-      return <span className="muted">Đang tải...</span>;
+      return <span className="admin-status-muted">Đang tải...</span>;
     }
     if (info.catalogStatus?.toLowerCase() === 'indexed') {
-      return <span style={{ color: 'green', fontWeight: 'bold' }}>Đã đồng bộ</span>;
+      return <span className="admin-status-ok">Đã đồng bộ</span>;
     }
-    return <span style={{ color: '#c00' }}>Chưa đồng bộ</span>;
+    return <span className="admin-status-bad">Chưa đồng bộ</span>;
   };
 
   const renderHealth = () => {
     if (healthLoading) {
-      return <span className="muted">Đang kiểm tra trạng thái...</span>;
+      return <span className="admin-status-muted">Đang kiểm tra trạng thái...</span>;
     }
     if (!health || health.status !== 'ok') {
       return (
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', background: '#d9534f' }}></span>
-          <strong style={{ color: '#d9534f' }}>Ngoại tuyến (Không kết nối được cổng 8000)</strong>
-        </div>
+        <>
+          <span className="admin-health-dot is-bad" aria-hidden="true" />
+          <strong className="admin-status-bad">Ngoại tuyến (Không kết nối được cổng 8000)</strong>
+        </>
       );
     }
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', background: '#5cb85c' }}></span>
-          <strong style={{ color: '#5cb85c' }}>Trực tuyến</strong>
-        </div>
-        <div style={{ fontSize: '12px', color: '#666' }}>
-          Cơ sở dữ liệu: MongoDB: {health.mongo} | Qdrant: {health.qdrant} | MinIO: {health.minio || 'ok'}
-        </div>
-      </div>
+      <>
+        <span className="admin-health-dot is-ok" aria-hidden="true" />
+        <strong className="admin-status-ok">Trực tuyến</strong>
+        <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
+          MongoDB: {displayHealthValue(health.mongo)} · Qdrant: {displayHealthValue(health.qdrant)} · MinIO: {displayHealthValue(health.minio || 'ok')}
+        </span>
+      </>
     );
   };
 
   return (
     <section className="stack">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div>
-          <h1>Quản lý danh mục RAG</h1>
-          <p className="muted">Lập chỉ mục nội dung PDF/EPUB và siêu dữ liệu sách để phục vụ Tìm kiếm AI và Chat.</p>
-        </div>
-        <div className="panel" style={{ padding: '12px 20px', margin: 0 }}>
-          <strong style={{ display: 'block', marginBottom: '4px', fontSize: '12px', textTransform: 'uppercase', color: '#666' }}>Trạng thái dịch vụ RAG</strong>
-          {renderHealth()}
-        </div>
+      <AdminPageHeader
+        title="Quản lý danh mục RAG"
+        subtitle="Đồng bộ chỉ mục nội dung và danh mục sách phục vụ tìm kiếm AI."
+      />
+
+      <div className="admin-health-strip">
+        <strong style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--muted)' }}>
+          Trạng thái dịch vụ RAG
+        </strong>
+        {renderHealth()}
       </div>
 
       {message.text && (
-        <div className={`panel`} style={{
-          borderLeft: `4px solid ${message.type === 'success' ? '#5cb85c' : '#d9534f'}`,
-          background: message.type === 'success' ? '#f4faf4' : '#faf4f4',
-          padding: '12px 16px',
-          marginBottom: '20px'
-        }}>
+        <div className={`admin-panel-box ${message.type === 'success' ? 'admin-status-ok' : 'admin-status-bad'}`}>
           {message.text}
         </div>
       )}
 
-      <div className="panel" style={{
-        padding: '16px 20px',
-        marginBottom: '20px',
-        background: '#f8fafc',
-        border: '1px solid #e2e8f0',
-        borderRadius: '6px',
-        display: 'flex',
-        gap: '24px',
-        alignItems: 'center'
-      }}>
-        <div style={{ fontWeight: '600', color: '#334155', fontSize: '15px' }}>
-          Cài đặt lập chỉ mục
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <label style={{ fontSize: '14px', color: '#475569', fontWeight: '500' }}>Kích thước khối:</label>
+      <AdminToolbar>
+        <AdminFilterField label="Kích thước khối" className="admin-filter-field-fixed">
           <input
             type="number"
             value={chunkSize}
             onChange={(e) => setChunkSize(Math.max(1, parseInt(e.target.value) || 0))}
-            style={{
-              width: '80px',
-              padding: '6px 10px',
-              border: '1px solid #cbd5e1',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
           />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <label style={{ fontSize: '14px', color: '#475569', fontWeight: '500' }}>Kích thước chồng lấn:</label>
+        </AdminFilterField>
+        <AdminFilterField label="Kích thước chồng lấn" className="admin-filter-field-fixed">
           <input
             type="number"
             value={overlapSize}
             onChange={(e) => setOverlapSize(Math.max(0, parseInt(e.target.value) || 0))}
-            style={{
-              width: '80px',
-              padding: '6px 10px',
-              border: '1px solid #cbd5e1',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
           />
-        </div>
-      </div>
+        </AdminFilterField>
+      </AdminToolbar>
 
-      <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '20px' }}>
-        <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '8px', flex: 1 }}>
+      <AdminToolbar
+        end={(
+          <div className="admin-row-actions">
+            <Button
+              type="button"
+              onClick={handleBulkIngest}
+              disabled={selectedIds.length === 0 || bulkProcessing}
+            >
+              {bulkProcessing ? 'Đang lập chỉ mục...' : `Lập chỉ mục nội dung (${selectedIds.length})`}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleBulkSyncCatalog}
+              disabled={selectedIds.length === 0 || bulkProcessing}
+            >
+              Đồng bộ danh mục ({selectedIds.length})
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              className="danger-action"
+              onClick={handleBulkDelete}
+              disabled={selectedIds.length === 0 || bulkProcessing}
+            >
+              Xóa ({selectedIds.length})
+            </Button>
+          </div>
+        )}
+      >
+        <AdminFilterField label="Tìm kiếm" className="admin-filter-field-pair">
           <input
             type="text"
             placeholder="Tìm kiếm theo tiêu đề hoặc tác giả"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', flex: 1 }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSearchSubmit(e);
+              }
+            }}
           />
-          <Button type="submit">Tìm kiếm</Button>
-        </form>
-
-        <div className="admin-row-actions">
-          <Button
-            type="button"
-            onClick={handleBulkIngest}
-            disabled={selectedIds.length === 0 || bulkProcessing}
-          >
-            {bulkProcessing ? 'Đang lập chỉ mục...' : `Lập chỉ mục nội dung (${selectedIds.length})`}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleBulkSyncCatalog}
-            disabled={selectedIds.length === 0 || bulkProcessing}
-          >
-            Đồng bộ danh mục ({selectedIds.length})
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            className="danger-action"
-            onClick={handleBulkDelete}
-            disabled={selectedIds.length === 0 || bulkProcessing}
-          >
-            Xóa ({selectedIds.length})
-          </Button>
-        </div>
-      </div>
+        </AdminFilterField>
+        <Button type="button" onClick={handleSearchSubmit}>Tìm kiếm</Button>
+      </AdminToolbar>
 
       {loading ? (
         <LoadingState text="Đang tải sách..." />
@@ -463,7 +444,7 @@ export default function AdminRagPage() {
                   row.coverUrl ? (
                     <img src={row.coverUrl} alt={row.title} style={{ width: '40px', height: '60px', objectFit: 'cover', borderRadius: '2px' }} />
                   ) : (
-                    <div style={{ width: '40px', height: '60px', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: '#999' }}>Không có bìa</div>
+                    <div style={{ width: '40px', height: '60px', background: 'var(--surface-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: 'var(--muted)' }}>Không có bìa</div>
                   )
                 )
               },
@@ -473,15 +454,15 @@ export default function AdminRagPage() {
                 render: (row) => (
                   <div>
                     <strong style={{ fontSize: '15px' }}>{row.title}</strong>
-                    <div style={{ fontSize: '13px', color: '#666' }}>Tác giả: {row.author}</div>
-                    <div style={{ fontSize: '12px', color: '#888' }}>NXB: {row.publisher || 'N/A'} ({row.publicationYear || 'N/A'})</div>
+                    <div style={{ fontSize: '13px', color: 'var(--muted)' }}>Tác giả: {row.author}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--muted)' }}>NXB: {row.publisher || 'Không có'} ({row.publicationYear || 'Không có'})</div>
                   </div>
                 )
               },
               {
                 key: 'category',
                 label: 'Danh mục',
-                render: (row) => row.category?.name || 'N/A'
+                render: (row) => row.category?.name || 'Không có'
               },
               {
                 key: 'status',

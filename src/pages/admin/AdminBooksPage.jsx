@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
 import AdminPagination from '../../components/ui/AdminPagination';
-import Input from '../../components/ui/Input';
+import AdminPageHeader from '../../components/ui/AdminPageHeader';
+import AdminToolbar, { AdminFilterField } from '../../components/ui/AdminToolbar';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 import { formatCurrency } from '../../utils/formatters';
@@ -81,79 +82,60 @@ export default function AdminBooksPage() {
     }
   };
 
-  const toolbarControlStyle = {
-    padding: '12px 16px',
-    borderRadius: 'var(--radius-md)',
-    border: '1px solid var(--border)',
-    background: 'var(--surface)',
-    color: 'var(--text)',
-    height: '46px',
-    boxSizing: 'border-box',
-  };
-
   return (
     <section className="stack">
-      <h1>Kho sách</h1>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '16px', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', maxWidth: '500px', flex: '1 1 320px' }}>
-          <div style={{ flex: 1 }}>
-            <Input
-              aria-label="Tìm kiếm sách"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Tiêu đề, tác giả hoặc ISBN"
-              style={{ height: '46px' }}
-            />
-          </div>
-          <Button
-            type="button"
-            variant="primary"
-            onClick={() => navigate('/admin/books/new')}
-            style={{ height: '46px', flexShrink: 0 }}
-          >
+      <AdminPageHeader
+        title="Kho sách"
+        actions={(
+          <Button type="button" variant="primary" onClick={() => navigate('/admin/books/new')}>
             + Thêm sách
           </Button>
-        </div>
+        )}
+      />
 
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <label htmlFor="statusSelect" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', margin: 0 }}>
-            Trạng thái:
-            <select
-              id="statusSelect"
-              value={statusFilter}
-              onChange={(event) => {
-                setStatusFilter(event.target.value);
-                setCurrentPage(0);
-              }}
-              style={toolbarControlStyle}
-            >
-              <option value="all">Tất cả</option>
-              <option value="active">Đang hiện</option>
-              <option value="hidden">Đã ẩn</option>
-            </select>
-          </label>
+      <AdminToolbar>
+        <AdminFilterField label="Tìm kiếm" className="admin-filter-field-grow">
+          <input
+            type="text"
+            aria-label="Tìm kiếm sách"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Tiêu đề, tác giả hoặc ISBN"
+          />
+        </AdminFilterField>
 
-          <label htmlFor="sortSelect" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', margin: 0 }}>
-            Sắp xếp:
-            <select
-              id="sortSelect"
-              value={sortBy}
-              onChange={(event) => {
-                setSortBy(event.target.value);
-                setCurrentPage(0);
-              }}
-              style={toolbarControlStyle}
-            >
-              <option value="id,desc">ID: Mới nhất trước</option>
-              <option value="id,asc">ID: Cũ nhất trước</option>
-              <option value="price,asc">Giá: Thấp đến cao</option>
-              <option value="price,desc">Giá: Cao đến thấp</option>
-              <option value="soldCount,desc">Bán chạy nhất</option>
-            </select>
-          </label>
-        </div>
-      </div>
+        <AdminFilterField label="Trạng thái">
+          <select
+            id="statusSelect"
+            value={statusFilter}
+            onChange={(event) => {
+              setStatusFilter(event.target.value);
+              setCurrentPage(0);
+            }}
+          >
+            <option value="all">Tất cả</option>
+            <option value="active">Đang hiện</option>
+            <option value="hidden">Đã ẩn</option>
+          </select>
+        </AdminFilterField>
+
+        <AdminFilterField label="Sắp xếp">
+          <select
+            id="sortSelect"
+            value={sortBy}
+            onChange={(event) => {
+              setSortBy(event.target.value);
+              setCurrentPage(0);
+            }}
+          >
+            <option value="id,desc">ID: Mới nhất trước</option>
+            <option value="id,asc">ID: Cũ nhất trước</option>
+            <option value="price,asc">Giá: Thấp đến cao</option>
+            <option value="price,desc">Giá: Cao đến thấp</option>
+            <option value="soldCount,desc">Bán chạy nhất</option>
+          </select>
+        </AdminFilterField>
+      </AdminToolbar>
 
       {loading ? (
         <LoadingState text="Đang tải sách..." />
@@ -172,7 +154,7 @@ export default function AdminBooksPage() {
               {
                 key: 'category',
                 label: 'Danh mục',
-                render: (row) => row.category?.name || <em style={{ color: '#999' }}>Chưa phân loại</em>,
+                render: (row) => row.category?.name || <em className="muted">Chưa phân loại</em>,
               },
               { key: 'price', label: 'Giá', render: (row) => formatCurrency(row.price) },
               { key: 'stock', label: 'Tồn kho' },

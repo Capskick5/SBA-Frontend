@@ -4,6 +4,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import Table from '../../components/ui/Table';
+import AdminPageHeader from '../../components/ui/AdminPageHeader';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 import {
@@ -237,22 +238,19 @@ export default function AdminBannersPage() {
 
   return (
     <section className="stack">
-      <header className="admin-banners-header">
-        <div>
-          <h1>Banner</h1>
-          <p>Cấu hình banner trang chủ.</p>
-        </div>
-        <Button type="button" onClick={openCreate}>
-          <Plus size={17} /> Thêm banner
-        </Button>
-      </header>
-
-      <div className="admin-banners-subheader">
-        <h2>Banner trang chủ</h2>
-        {usingMockBanners && (
-          <span className="status-badge unknown">Dữ liệu mẫu ngoại tuyến</span>
+      <AdminPageHeader
+        title="Quản lý banner"
+        subtitle="Cấu hình banner trang chủ."
+        actions={(
+          <Button type="button" onClick={openCreate}>
+            <Plus size={17} /> Thêm banner
+          </Button>
         )}
-      </div>
+      >
+        {usingMockBanners ? (
+          <span className="status-badge unknown">Dữ liệu mẫu ngoại tuyến</span>
+        ) : null}
+      </AdminPageHeader>
 
       {loading ? (
         <LoadingState text="Đang tải banner..." />

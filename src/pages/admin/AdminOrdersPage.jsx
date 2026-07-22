@@ -4,6 +4,8 @@ import OrderStatusBadge from '../../components/orders/OrderStatusBadge';
 import Table from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
 import AdminPagination from '../../components/ui/AdminPagination';
+import AdminPageHeader from '../../components/ui/AdminPageHeader';
+import AdminToolbar, { AdminFilterField } from '../../components/ui/AdminToolbar';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 import { formatCurrency, formatDate } from '../../utils/formatters';
@@ -48,10 +50,10 @@ export default function AdminOrdersPage() {
 
   return (
     <section className="stack">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Quản lý đơn hàng</h1>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-          <label htmlFor="sortOrders" style={{ fontWeight: 'bold' }}>Sắp xếp:</label>
+      <AdminPageHeader title="Quản lý đơn hàng" />
+
+      <AdminToolbar>
+        <AdminFilterField label="Sắp xếp">
           <select
             id="sortOrders"
             value={sortBy}
@@ -59,15 +61,14 @@ export default function AdminOrdersPage() {
               setSortBy(event.target.value);
               setCurrentPage(0);
             }}
-            style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
           >
             <option value="id,desc">Mã đơn: Mới nhất trước</option>
             <option value="id,asc">Mã đơn: Cũ nhất trước</option>
             <option value="total,desc">Giá trị: Cao đến thấp</option>
             <option value="total,asc">Giá trị: Thấp đến cao</option>
           </select>
-        </div>
-      </div>
+        </AdminFilterField>
+      </AdminToolbar>
 
       {loading ? (
         <LoadingState text="Đang tải đơn hàng..." />
@@ -96,7 +97,11 @@ export default function AdminOrdersPage() {
                 render: (row) => formatDate(row.createdAt),
               },
               { key: 'status', label: 'Trạng thái', render: (row) => <OrderStatusBadge status={row.status} /> },
-              { key: 'total', label: 'Tổng tiền', render: (row) => <strong style={{ color: '#e53e3e' }}>{formatCurrency(row.total)}</strong> },
+              {
+                key: 'total',
+                label: 'Tổng tiền',
+                render: (row) => <strong style={{ color: '#e53e3e' }}>{formatCurrency(row.total)}</strong>,
+              },
               {
                 key: 'action',
                 label: 'Thao tác',

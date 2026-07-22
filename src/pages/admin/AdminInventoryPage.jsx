@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 import Button from '../../components/ui/Button';
+import AdminPageHeader from '../../components/ui/AdminPageHeader';
+import AdminToolbar, { AdminFilterField } from '../../components/ui/AdminToolbar';
 import AdminPagination from '../../components/ui/AdminPagination';
+import Table from '../../components/ui/Table';
 import { EmptyState, ErrorState, LoadingState } from '../../components/ui/State';
 import { formatDateTime } from '../../utils/formatters';
 
@@ -130,73 +133,83 @@ export default function AdminInventoryPage() {
   const paginatedMovements = filteredMovements.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
   const totalPages = Math.ceil(filteredMovements.length / PAGE_SIZE) || 1;
 
+  const columns = [
+    { key: 'id', label: 'ID' },
+    { key: 'bookId', label: 'Mã sách' },
+    {
+      key: 'reason',
+      label: 'Lý do',
+      render: (mov) => (
+        <span className={`inventory-reason inventory-reason-${(mov.reason || 'unknown').toLowerCase()}`}>
+          {formatReason(mov.reason)}
+        </span>
+      ),
+    },
+    {
+      key: 'orderId',
+      label: 'Mã đơn',
+      render: (mov) => (
+        mov.orderId
+          ? <Link className="inventory-order-link" to={`/admin/orders/${mov.orderId}`}>#{mov.orderId}</Link>
+          : <span className="muted">Thủ công</span>
+      ),
+    },
+    {
+      key: 'quantity',
+      label: 'Thay đổi số lượng',
+      render: (mov) => {
+        const q = getQuantity(mov);
+        return (
+          <span className={`inventory-delta ${q > 0 ? 'inventory-delta-positive' : q < 0 ? 'inventory-delta-negative' : ''}`}>
+            {q > 0 ? `+${q}` : q}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'note',
+      label: 'Ghi chú',
+      render: (mov) => formatNote(mov.note),
+    },
+    {
+      key: 'createdBy',
+      label: 'Người tạo',
+      render: (mov) => mov.createdByName || usersMap[mov.createdBy] || mov.createdBy || 'Hệ thống',
+    },
+    {
+      key: 'createdAt',
+      label: 'Ngày',
+      render: (mov) => formatDateTime(mov.createdAt),
+    },
+  ];
+
   return (
     <section>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px' }}>
-        <div>
-          <h1>Quản lý kho</h1>
-          <p style={{ color: '#666', marginTop: '8px' }}>Nhật ký toàn cục mọi biến động tồn kho sách.</p>
-        </div>
-        <div style={{ width: '300px' }}>
+      <AdminPageHeader
+        title="Quản lý kho"
+        subtitle="Nhật ký toàn cục mọi biến động tồn kho sách."
+      />
+
+      <AdminToolbar>
+        <AdminFilterField label="Tìm kiếm">
           <input
             type="text"
             placeholder="Tìm kiếm nhật ký (sách, ghi chú, người dùng...)"
             value={searchQuery}
             onChange={handleSearchChange}
-            style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
           />
-        </div>
-      </div>
+        </AdminFilterField>
+      </AdminToolbar>
 
       {movements.length === 0 ? (
         <EmptyState title="Chưa có hoạt động kho" text="Thay đổi tồn kho sẽ hiển thị tại đây sau đơn hàng hoặc điều chỉnh thủ công." />
       ) : (
         <>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Mã sách</th>
-                <th>Lý do</th>
-                <th>Mã đơn</th>
-                <th>Thay đổi số lượng</th>
-                <th>Ghi chú</th>
-                <th>Người tạo</th>
-                <th>Ngày</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedMovements.length === 0 ? (
-                <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>Không tìm thấy kết quả cho &quot;{searchQuery}&quot;</td></tr>
-              ) : (
-                paginatedMovements.map((mov) => (
-                  <tr key={mov.id}>
-                    <td>{mov.id}</td>
-                    <td>{mov.bookId}</td>
-                    <td><span className={`inventory-reason inventory-reason-${(mov.reason || 'unknown').toLowerCase()}`}>{formatReason(mov.reason)}</span></td>
-                    <td>
-                      {mov.orderId
-                        ? <Link className="inventory-order-link" to={`/admin/orders/${mov.orderId}`}>#{mov.orderId}</Link>
-                        : <span className="muted">Thủ công</span>}
-                    </td>
-                    <td>
-                      {(() => {
-                        const q = getQuantity(mov);
-                        return (
-                          <span className={`inventory-delta ${q > 0 ? 'inventory-delta-positive' : q < 0 ? 'inventory-delta-negative' : ''}`}>
-                            {q > 0 ? `+${q}` : q}
-                          </span>
-                        );
-                      })()}
-                    </td>
-                    <td>{formatNote(mov.note)}</td>
-                    <td>{mov.createdByName || usersMap[mov.createdBy] || mov.createdBy || 'Hệ thống'}</td>
-                    <td>{formatDateTime(mov.createdAt)}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <Table
+            columns={columns}
+            rows={paginatedMovements}
+            emptyText={searchQuery ? `Không tìm thấy kết quả cho "${searchQuery}"` : 'Không có dữ liệu.'}
+          />
           {filteredMovements.length > 0 && (
             <AdminPagination
               page={currentPage}
