@@ -670,6 +670,57 @@ export default function CheckoutPage() {
         ? (guestEmailValidationMessage || (!isAddressComplete(guestAddress) ? 'Confirm a delivery address below to continue to payment.' : ''))
         : (!selectedAddressId ? 'Add a delivery address to continue to payment.' : '');
 
+  const codPreviewOnly = isMockCodOrderResult(codOrderResult);
+
+  if (codOrderResult) {
+    return (
+      <section className="center-panel checkout-cod-success">
+        <CheckCircle2 size={64} color="var(--success, #10b981)" />
+        <h1>{codPreviewOnly ? 'COD preview' : 'Order placed!'}</h1>
+        <p>
+          {codPreviewOnly ? (
+            <>
+              Could not confirm this cash-on-delivery order with the server.
+              Reference <strong>{codOrderResult.orderId}</strong> for {formatCurrency(codOrderResult.total)}.
+            </>
+          ) : (
+            <>
+              Order #{codOrderResult.orderId} has been placed for {formatCurrency(codOrderResult.total)}.
+              Pay with cash when it arrives.
+            </>
+          )}
+        </p>
+        {codOrderResult.orderCode && codOrderResult.guestToken && (
+          <div className="checkout-cod-tracking">
+            <p>
+              Your order code is <strong>{codOrderResult.orderCode}</strong>. Use the button below to
+              track your order any time — we have also emailed this link to you.
+            </p>
+            <Link
+              to={`/orders/track?code=${encodeURIComponent(codOrderResult.orderCode)}&token=${encodeURIComponent(codOrderResult.guestToken)}`}
+            >
+              <Button className="btn-secondary">
+                <PackageSearch size={18} /> Track your order
+              </Button>
+            </Link>
+          </div>
+        )}
+        <div className="actions">
+          <Link to="/">
+            <Button className="btn-secondary">
+              <Home size={18} /> Home
+            </Button>
+          </Link>
+          <Link to="/">
+            <Button>
+              <ShoppingBag size={18} /> Continue shopping
+            </Button>
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <div className="stack" style={{ gap: '24px' }}>
       <div className="checkout-page-header">
