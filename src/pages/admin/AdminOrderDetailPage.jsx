@@ -196,7 +196,6 @@ export default function AdminOrderDetailPage() {
             const REFUND_REASON_LABELS = {
               BOOK_DEFECT: 'Sách bị lỗi',
               WRONG_BOOK: 'Giao sai sách',
-              MISSING_BOOK: 'Thiếu sách trong đơn hàng',
               DAMAGED_IN_TRANSIT: 'Sách bị hư hỏng do vận chuyển',
             };
             const DONE_STATUSES = ['REFUND_COMPLETED', 'COMPLETED'];

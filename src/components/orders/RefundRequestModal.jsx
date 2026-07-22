@@ -11,7 +11,6 @@ import { AlertCircle, X } from 'lucide-react';
 const REASON_OPTIONS = [
   { value: 'BOOK_DEFECT', label: 'Sách bị lỗi (in ấn, đóng gáy, mất trang...)' },
   { value: 'WRONG_BOOK', label: 'Giao sai sách' },
-  { value: 'MISSING_BOOK', label: 'Thiếu sách trong đơn hàng' },
   { value: 'DAMAGED_IN_TRANSIT', label: 'Sách bị hư hỏng do vận chuyển' },
 ];
 

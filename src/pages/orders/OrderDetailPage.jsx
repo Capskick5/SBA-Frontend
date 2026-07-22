@@ -21,7 +21,6 @@ import { getOrderStatusConfig, getPaymentMethodLabel } from '../../utils/orderLa
 
 const REFUND_STATUS_META = {
   UNDER_REVIEW: { badgeClass: 'refund-requested', badgeLabel: 'ĐANG XEM XÉT', bg: 'rgba(245, 158, 11, 0.08)', border: 'rgba(245, 158, 11, 0.2)', heading: 'Yêu cầu đang được CSKH xem xét' },
-  APPROVED: { badgeClass: 'refund-requested', badgeLabel: 'ĐÃ DUYỆT', bg: 'rgba(59, 130, 246, 0.08)', border: 'rgba(59, 130, 246, 0.2)', heading: 'Yêu cầu đã được duyệt' },
   REJECTED: { badgeClass: 'cancelled', badgeLabel: 'TỪ CHỐI', bg: 'rgba(239, 68, 68, 0.08)', border: 'rgba(239, 68, 68, 0.2)', heading: 'Yêu cầu trả hàng bị từ chối' },
   PICKUP_PENDING: { badgeClass: 'refund-requested', badgeLabel: 'CHỜ GỬI HÀNG TRẢ', bg: 'rgba(59, 130, 246, 0.08)', border: 'rgba(59, 130, 246, 0.2)', heading: 'Yêu cầu đã được chấp nhận — vui lòng gửi sản phẩm về kho' },
   RETURN_RECEIVED: { badgeClass: 'refund-requested', badgeLabel: 'ĐÃ NHẬN HÀNG TRẢ', bg: 'rgba(59, 130, 246, 0.08)', border: 'rgba(59, 130, 246, 0.2)', heading: 'Kho đã nhận được hàng trả, chờ kiểm tra' },
@@ -34,7 +33,6 @@ const REFUND_STATUS_META = {
 const REASON_LABELS = {
   BOOK_DEFECT: 'Sách bị lỗi',
   WRONG_BOOK: 'Giao sai sách',
-  MISSING_BOOK: 'Thiếu sách trong đơn hàng',
   DAMAGED_IN_TRANSIT: 'Sách bị hư hỏng do vận chuyển',
 };
 

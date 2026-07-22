@@ -16,7 +16,6 @@ const PAGE_SIZE = 10;
 const REASON_LABELS = {
   BOOK_DEFECT: 'Sách bị lỗi',
   WRONG_BOOK: 'Giao sai sách',
-  MISSING_BOOK: 'Thiếu sách trong đơn hàng',
   DAMAGED_IN_TRANSIT: 'Sách bị hư hỏng do vận chuyển',
 };
 
@@ -38,7 +37,6 @@ const STATUS_TABS = [
 
 const STATUS_META = {
   UNDER_REVIEW: { badgeClass: 'refund-requested', badgeLabel: 'ĐANG XEM XÉT' },
-  APPROVED: { badgeClass: 'refund-requested', badgeLabel: 'ĐÃ DUYỆT' },
   REJECTED: { badgeClass: 'cancelled', badgeLabel: 'TỪ CHỐI' },
   PICKUP_PENDING: { badgeClass: 'refund-requested', badgeLabel: 'CHỜ NHẬN HÀNG' },
   RETURN_RECEIVED: { badgeClass: 'refund-requested', badgeLabel: 'ĐÃ NHẬN HÀNG' },
