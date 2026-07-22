@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Star } from 'lucide-react';
 import { reviewService } from '../../services/reviewService';
+import { translateErrorMessage } from '../../api/apiError';
 import { showToast } from '../../utils/toast';
 import Button from '../ui/Button';
 import Textarea from '../ui/Textarea';
@@ -24,7 +25,7 @@ export default function ReviewForm({ bookId, onSubmitted }) {
       onSubmitted?.(review);
       showToast('Đánh giá của bạn đã được đăng.', 'success');
     } catch (err) {
-      setError(err?.message || 'Không thể gửi đánh giá. Vui lòng thử lại.');
+      setError(translateErrorMessage(err?.message) || 'Không thể gửi đánh giá. Vui lòng thử lại.');
     } finally {
       setSubmitting(false);
     }
@@ -55,7 +56,7 @@ export default function ReviewForm({ bookId, onSubmitted }) {
         label="Nhận xét"
         value={comment}
         maxLength={1000}
-        placeholder="Chia sẻ điều bạn thích về cuốn sách này..."
+        placeholder="Chia sẻ cảm nhận của bạn về cuốn sách này..."
         onChange={(event) => setComment(event.target.value)}
       />
       <div className="review-form-footer">
@@ -64,7 +65,9 @@ export default function ReviewForm({ bookId, onSubmitted }) {
           Đăng đánh giá
         </Button>
       </div>
-      <p className="review-form-policy">Chỉ có thể đánh giá sách từ các đơn đã giao thành công.</p>
+      <p className="review-form-policy">
+        Bạn chỉ có thể đánh giá sách sau khi đã nhận được hàng (đơn hàng đã giao thành công).
+      </p>
       {error && <p className="review-form-error" role="alert">{error}</p>}
     </form>
   );
