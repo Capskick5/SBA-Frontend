@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { Sparkles, ArrowRight } from 'lucide-react';
 import { bookService } from '../../services/bookService';
 import { bannerService } from '../../services/bannerService';
 import CatalogFilters from '../../components/catalog/CatalogFilters';
 import BookGrid from '../../components/catalog/BookGrid';
 import Pagination from '../../components/catalog/Pagination';
+import CampaignModal from '../../components/campaign/CampaignModal';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 
 const PAGE_SIZE = 20;
@@ -27,6 +29,9 @@ export default function CatalogPage() {
   const [retryCount, setRetryCount] = useState(0);
   const [banners, setBanners] = useState([]);
   const [activeBanner, setActiveBanner] = useState(0);
+
+  // Full-screen Campaign Modal state
+  const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
 
   useEffect(() => {
     bannerService.list().then(setBanners).catch(() => setBanners([]));
@@ -118,6 +123,7 @@ export default function CatalogPage() {
 
   return (
     <div className="catalog-container">
+      {/* Hero Banner Slider */}
       {banners.length > 0 && (
         <div className="hero-banner-slider">
           {banners.map((banner, index) => {
@@ -163,6 +169,37 @@ export default function CatalogPage() {
           )}
         </div>
       )}
+
+      {/* Discrete & High-Converting Campaign Trigger Banner */}
+      <section className="campaigns-trigger-bar">
+        <div className="trigger-bar-left">
+          <div className="trigger-icon-pulse">
+            <Sparkles size={22} />
+          </div>
+          <div>
+            <div className="trigger-badge">🔥 CHIẾN DỊCH KHUYẾN MÃI ĐANG DIỄN RA</div>
+            <h3>Kho Voucher & Campaign Khuyến Mãi</h3>
+            <p>Khám phá các ưu đãi giờ vàng, thu thập trực tiếp mã giảm giá về ví cá nhân chỉ với 1 cú click!</p>
+          </div>
+        </div>
+        <div className="trigger-bar-right">
+          <button
+            type="button"
+            className="btn-open-campaign-modal"
+            onClick={() => setIsCampaignModalOpen(true)}
+          >
+            Săn Voucher Ngay <ArrowRight size={16} />
+          </button>
+        </div>
+      </section>
+
+      {/* Full-Screen Dynamic Campaign Modal Experience */}
+      <CampaignModal
+        isOpen={isCampaignModalOpen}
+        onClose={() => setIsCampaignModalOpen(false)}
+      />
+
+      {/* Catalog Filters & Book Grid */}
       <section className="stack">
         <CatalogFilters
           query={query}

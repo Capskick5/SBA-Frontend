@@ -104,45 +104,6 @@ export const adminService = {
   updateVoucher: (id, body) => api.put(`/admin/vouchers/${id}`, body).then(res => res.data?.data || res.data),
   deleteVoucher: (id) => api.delete(`/admin/vouchers/${id}`),
 
-  getRefundRequests: ({ status, statuses, ...rest } = {}) => {
-    const params = { ...rest };
-    if (status) params.status = status;
-    if (statuses?.length) params.statuses = statuses.join(',');
-    return api.get('/admin/refund-requests', { params }).then(res => res.data?.data || res.data);
-  },
-  approveRefundRequest: (id, body) => api.put(`/admin/refund-requests/${id}/approve`, body).then((res) => {
-    window.dispatchEvent(new Event('refund_updated'));
-    return res.data?.data || res.data;
-  }),
-  rejectRefundRequest: (id, body) => api.put(`/admin/refund-requests/${id}/reject`, body).then((res) => {
-    window.dispatchEvent(new Event('refund_updated'));
-    return res.data?.data || res.data;
-  }),
-  confirmRefundReceived: (id) => api.put(`/admin/refund-requests/${id}/confirm-received`).then((res) => {
-    window.dispatchEvent(new Event('refund_updated'));
-    return res.data?.data || res.data;
-  }),
-  startRefundInspection: (id) => api.put(`/admin/refund-requests/${id}/start-inspection`).then((res) => {
-    window.dispatchEvent(new Event('refund_updated'));
-    return res.data?.data || res.data;
-  }),
-  completeRefundInspection: (id, body) => api.put(`/admin/refund-requests/${id}/complete-inspection`, body).then((res) => {
-    window.dispatchEvent(new Event('refund_updated'));
-    return res.data?.data || res.data;
-  }),
-  submitReplacementShipment: (id, body) => api.put(`/admin/refund-requests/${id}/replacement-shipment`, body).then((res) => {
-    window.dispatchEvent(new Event('refund_updated'));
-    return res.data?.data || res.data;
-  }),
-  markRefundProcessed: (id) => api.put(`/admin/refund-requests/${id}/mark-refund-processed`).then((res) => {
-    window.dispatchEvent(new Event('refund_updated'));
-    return res.data?.data || res.data;
-  }),
-  closeRefundRequest: (id) => api.put(`/admin/refund-requests/${id}/close`).then((res) => {
-    window.dispatchEvent(new Event('refund_updated'));
-    return res.data?.data || res.data;
-  }),
-
   toggleBookActive: (id, isActive) => {
     return api.put(`/books/${id}/active`, { active: isActive });
   },

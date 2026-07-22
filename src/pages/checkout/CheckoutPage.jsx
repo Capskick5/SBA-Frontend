@@ -82,6 +82,7 @@ export default function CheckoutPage() {
   const [preview, setPreview] = useState({ items: [], subtotal: 0, shippingFee: null, discountAmount: 0, total: 0 });
   const [vouchers, setVouchers] = useState([]);
   const [selectedVoucherId, setSelectedVoucherId] = useState('');
+  const [inputVoucherCode, setInputVoucherCode] = useState('');
   const [voucherError, setVoucherError] = useState('');
   const [deliveryMode, setDeliveryMode] = useState('self');
   const [loading, setLoading] = useState(true);
@@ -371,6 +372,34 @@ export default function CheckoutPage() {
     setVoucherError('');
     await refreshPreview(selectedAddressId, cartItemIds, selectedCartItems, '');
     setShowVoucherList(false);
+  };
+
+  const handleApplyVoucherCode = async (e) => {
+    e.preventDefault();
+    const cleanCode = inputVoucherCode.trim().toUpperCase();
+    if (!cleanCode) {
+      setVoucherError('Vui lòng nhập mã giảm giá.');
+      return;
+    }
+    setVoucherError('');
+    try {
+      let targetVoucher = vouchers.find((v) => String(v.voucherCode || '').toUpperCase() === cleanCode);
+      if (!targetVoucher) {
+        await voucherService.claimByCode(cleanCode);
+        const updatedList = await voucherService.listMine().catch(() => []);
+        setVouchers(updatedList);
+        targetVoucher = updatedList.find((v) => String(v.voucherCode || '').toUpperCase() === cleanCode);
+      }
+      if (targetVoucher) {
+        await applyVoucher(targetVoucher.id);
+        setInputVoucherCode('');
+        showToast(`Áp dụng mã giảm giá "${cleanCode}" thành công!`);
+      } else {
+        setVoucherError(`Mã giảm giá "${cleanCode}" không hợp lệ hoặc đã hết hạn.`);
+      }
+    } catch (err) {
+      setVoucherError(err?.message || err?.response?.data?.message || `Không thể áp dụng mã "${cleanCode}".`);
+    }
   };
 
   const handleDeliveryModeChange = async (mode) => {
@@ -670,6 +699,7 @@ export default function CheckoutPage() {
         ? (guestEmailValidationMessage || (!isAddressComplete(guestAddress) ? 'Confirm a delivery address below to continue to payment.' : ''))
         : (!selectedAddressId ? 'Add a delivery address to continue to payment.' : '');
 
+
   return (
     <div className="stack" style={{ gap: '24px' }}>
       <div className="checkout-page-header">
@@ -944,15 +974,16 @@ export default function CheckoutPage() {
                 <div className="panel-heading">
                   <h3>Mã giảm giá</h3>
                   <p>
-                    Xem lại mã giảm giá đã chọn từ giỏ hàng, hoặc chọn mã khác có sẵn.
+                    Chọn mã giảm giá bạn đã thu thập trong ví voucher cá nhân để áp dụng cho đơn hàng.
                   </p>
                 </div>
+
                 {vouchers.length > 0 ? (
                   <>
                     {selectedVoucher ? (
                       <article className="checkout-selected-voucher-card">
                         <div>
-                          <span className="voucher-card-label">Applied voucher</span>
+                          <span className="voucher-card-label">Mã đã áp dụng</span>
                           <strong>{selectedVoucher.voucherCode}</strong>
                           <p>{selectedVoucher.voucherName}</p>
                         </div>
@@ -962,13 +993,13 @@ export default function CheckoutPage() {
                             <dd>{formatVoucherDiscount(selectedVoucher)}</dd>
                           </div>
                           <div>
-                            <dt>Minimum subtotal</dt>
+                            <dt>Đơn tối thiểu</dt>
                             <dd>{formatCurrency(selectedVoucher.minOrderValue)}</dd>
                           </div>
                         </dl>
                         <div className="checkout-voucher-actions">
                           <Button type="button" className="btn-secondary" onClick={() => setShowVoucherList((open) => !open)}>
-                            {showVoucherList ? 'Ẩn' : 'Thay đổi'}
+                            {showVoucherList ? 'Ẩn ví voucher' : 'Thay đổi mã khác'}
                           </Button>
                           <Button type="button" className="btn-secondary" onClick={clearVoucher}>
                             Gỡ bỏ
@@ -978,9 +1009,9 @@ export default function CheckoutPage() {
                     ) : (
                       <div className="voucher-empty-inline">
                         <strong>Chưa chọn mã giảm giá</strong>
-                        <p>Bạn có thể tiếp tục không dùng mã hoặc chọn một mã trong tài khoản.</p>
+                        <p>Bạn có thể chọn một mã giảm giá đã thu thập từ ví voucher cá nhân.</p>
                         <Button type="button" className="btn-secondary" onClick={() => setShowVoucherList((open) => !open)}>
-                          {showVoucherList ? 'Ẩn mã giảm giá' : 'Chọn mã giảm giá'}
+                          {showVoucherList ? 'Ẩn ví voucher' : 'Chọn mã từ ví voucher'}
                         </Button>
                       </div>
                     )}
@@ -991,7 +1022,7 @@ export default function CheckoutPage() {
                           return (
                             <article className={`checkout-voucher-card${isSelected ? ' is-selected' : ''}`} key={voucher.id}>
                               <div>
-                                <span className="voucher-card-label">Voucher code</span>
+                                <span className="voucher-card-label">Mã voucher</span>
                                 <strong>{voucher.voucherCode}</strong>
                                 <p>{voucher.voucherName}</p>
                               </div>
@@ -1001,11 +1032,11 @@ export default function CheckoutPage() {
                                   <dd>{formatVoucherDiscount(voucher)}</dd>
                                 </div>
                                 <div>
-                                  <dt>Minimum subtotal</dt>
+                                  <dt>Đơn tối thiểu</dt>
                                   <dd>{formatCurrency(voucher.minOrderValue)}</dd>
                                 </div>
                                 <div>
-                                  <dt>Hết hạn</dt>
+                                  <dt>Hạn sử dụng</dt>
                                   <dd>{formatVoucherDate(voucher.expiresAt)}</dd>
                                 </div>
                               </dl>
@@ -1014,7 +1045,7 @@ export default function CheckoutPage() {
                                 className={isSelected ? 'btn-secondary' : ''}
                                 onClick={() => (isSelected ? clearVoucher() : applyVoucher(voucher.id))}
                               >
-                                {isSelected ? 'Đã áp dụng' : 'Áp dụng mã'}
+                                {isSelected ? 'Đã áp dụng' : 'Áp dụng mã này'}
                               </Button>
                             </article>
                           );
@@ -1023,19 +1054,19 @@ export default function CheckoutPage() {
                     )}
                     {selectedVoucher && (
                       <p className="voucher-applied-note">
-                        Voucher {selectedVoucher.voucherCode} is applied to this checkout.
+                        Mã giảm giá {selectedVoucher.voucherCode} đang được áp dụng cho đơn hàng này.
                       </p>
                     )}
                   </>
                 ) : (
                   <div className="voucher-empty-inline">
-                    <strong>Không có mã giảm giá khả dụng</strong>
+                    <strong>Chưa có mã giảm giá trong ví</strong>
                     <p>
-                      Hoàn tất một đơn hàng đủ điều kiện trước. Mã giảm giá có thể xuất hiện trong tài khoản cho lần mua tiếp theo.
+                      Hãy khám phá các chương trình khuyến mãi tại Trang chủ và bấm "Thu thập" để nhận mã vào ví voucher của bạn.
                     </p>
                   </div>
                 )}
-                {voucherError && <p className="form-message form-message-error">{voucherError}</p>}
+                {voucherError && <p className="form-message form-message-error" style={{ marginTop: '12px' }}>{voucherError}</p>}
               </div>
             )}
 

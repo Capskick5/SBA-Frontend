@@ -32,4 +32,18 @@ export const voucherService = {
     const result = await this.getMinePage({ page, size });
     return result.items;
   },
+
+  async claimByCode(code) {
+    const cleanCode = String(code || '').trim().toUpperCase();
+    if (!cleanCode) {
+      throw new Error('Vui lòng nhập mã giảm giá.');
+    }
+    const available = await this.getAvailablePage({ page: 0, size: 50 }).catch(() => ({ items: [] }));
+    const match = (available.items || []).find((v) => String(v.code || '').toUpperCase() === cleanCode);
+    if (!match) {
+      throw new Error(`Mã giảm giá "${cleanCode}" không hợp lệ hoặc đã hết hạn.`);
+    }
+    return this.claim(match.id);
+  },
 };
+

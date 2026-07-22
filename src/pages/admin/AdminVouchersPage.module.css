@@ -75,21 +75,27 @@
 .status {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  white-space: nowrap;
   min-height: 26px;
-  padding: 3px 9px;
+  padding: 4px 12px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
+  line-height: 1;
+  text-align: center;
 }
 
 .active {
   color: #047857;
-  background: rgba(16, 185, 129, 0.12);
+  background: #d1fae5;
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 .disabled {
-  color: #64748b;
-  background: rgba(100, 116, 139, 0.12);
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
 }
 
 .rowActions {

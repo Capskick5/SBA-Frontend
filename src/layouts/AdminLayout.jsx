@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { adminService } from '../services/adminService';
+import { refundService } from '../services/refundService';
 import {
   LayoutDashboard,
   BookOpen,
@@ -21,19 +22,19 @@ import {
 } from 'lucide-react';
 
 const links = [
-  ['/admin', 'Bảng điều khiển', LayoutDashboard],
-  ['/admin/books', 'Quản lý sách', BookOpen],
-  ['/admin/categories', 'Danh mục sách', FolderOpen],
-  ['/admin/banners', 'Banner quảng cáo', Image],
-  ['/admin/gift-wraps', 'Gói quà', Gift],
-  ['/admin/orders', 'Đơn hàng', ShoppingBag, 'orders'],
-  ['/admin/refunds', 'Yêu cầu trả hàng', RotateCcw, 'refunds'],
-  ['/admin/campaigns', 'Chiến dịch', Megaphone],
-  ['/admin/vouchers', 'Voucher', Ticket],
-  ['/admin/users', 'Người dùng', Users],
-  ['/admin/reviews', 'Đánh giá', MessageSquare],
-  ['/admin/inventory', 'Quản lý kho', ClipboardList],
-  ['/admin/rag', 'Danh mục RAG', Database],
+  ['/admin', 'Dashboard', LayoutDashboard],
+  ['/admin/books', 'Books', BookOpen],
+  ['/admin/categories', 'Categories', FolderOpen],
+  ['/admin/banners', 'Banners', Image],
+  ['/admin/gift-wraps', 'Gift Wraps', Gift],
+  ['/admin/orders', 'Orders', ShoppingBag, 'orders'],
+  ['/admin/refunds', 'Refund Requests', RotateCcw, 'refunds'],
+  ['/admin/campaigns', 'Campaigns', Megaphone],
+  ['/admin/vouchers', 'Vouchers', Ticket],
+  ['/admin/users', 'Users', Users],
+  ['/admin/reviews', 'Reviews', MessageSquare],
+  ['/admin/inventory', 'Inventory Management', ClipboardList],
+  ['/admin/rag', 'RAG Catalog', Database],
 ];
 
 export default function AdminLayout({ children }) {
@@ -60,9 +61,10 @@ export default function AdminLayout({ children }) {
       }
 
       try {
-        const refundRes = await adminService.getRefundRequests({ status: 'UNDER_REVIEW', page: 0, size: 1 });
-        if (isMounted && refundRes) {
-          setPendingRefundsCount(refundRes?.totalItems ?? refundRes?.totalElements ?? 0);
+        const refunds = await refundService.getRefundRequests();
+        const pendingRef = refunds.filter(r => r.status === 'PENDING').length;
+        if (isMounted) {
+          setPendingRefundsCount(pendingRef);
         }
       } catch {
         // Ignore
@@ -70,11 +72,9 @@ export default function AdminLayout({ children }) {
     };
     fetchPendingCount();
     const interval = setInterval(fetchPendingCount, 30000); // refresh every 30s
-    window.addEventListener('refund_updated', fetchPendingCount);
     return () => {
       isMounted = false;
       clearInterval(interval);
-      window.removeEventListener('refund_updated', fetchPendingCount);
     };
   }, []);
 
@@ -94,13 +94,24 @@ export default function AdminLayout({ children }) {
   return (
     <div className={`admin-shell ${collapsed ? 'sidebar-collapsed' : ''}`}>
       <aside className="admin-sidebar">
-        <div className="admin-sidebar-header">
-          {!collapsed && <h2>Quản trị</h2>}
-          <button
-            type="button"
-            className="admin-sidebar-icon-btn"
-            onClick={toggleSidebar}
-            aria-label={collapsed ? 'Mở sidebar' : 'Thu gọn sidebar'}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', marginBottom: '20px' }}>
+          {!collapsed && <h2 style={{ margin: 0 }}>Quản trị</h2>}
+          <button 
+            onClick={toggleSidebar} 
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--muted)',
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'background 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface-alt)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
           >
             <Menu size={20} />
           </button>
@@ -134,8 +145,8 @@ export default function AdminLayout({ children }) {
               )}
               {key === 'refunds' && pendingRefundsCount > 0 && (
                 <span 
-                  className={`admin-nav-badge admin-nav-badge-warning`}
-                  style={collapsed ? { position: 'absolute', top: '4px', right: '4px', margin: 0 } : {}}
+                  className="admin-nav-badge"
+                  style={collapsed ? { position: 'absolute', top: '4px', right: '4px', margin: 0, background: '#f59e0b' } : { background: '#f59e0b' }}
                   title={`${pendingRefundsCount} yêu cầu hoàn tiền cần xử lý`}
                 >
                   {pendingRefundsCount > 99 ? '99+' : pendingRefundsCount}
@@ -144,12 +155,20 @@ export default function AdminLayout({ children }) {
             </NavLink>
           ))}
         </div>
-        <div className="admin-sidebar-footer">
-          <button
-            type="button"
-            className="admin-sidebar-logout"
+        <div style={{ padding: '20px 0', borderTop: '1px solid var(--border)' }}>
+          <button 
             onClick={handleLogout}
             title={collapsed ? 'Đăng xuất' : undefined}
+            style={{
+              display: 'flex', alignItems: 'center', gap: collapsed ? '0' : '8px', 
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              background: 'transparent', border: 'none', 
+              color: '#f87171', cursor: 'pointer',
+              padding: collapsed ? '12px' : '8px', width: '100%',
+              fontSize: '1rem', textAlign: 'left', borderRadius: '4px'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
           >
             <LogOut size={18} />
             {!collapsed && <span>Đăng xuất</span>}

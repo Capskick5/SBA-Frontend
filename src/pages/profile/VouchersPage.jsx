@@ -1,37 +1,30 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { TicketPercent, Gift } from 'lucide-react';
+import { TicketPercent, Search } from 'lucide-react';
 import Pagination from '../../components/catalog/Pagination';
-import Button from '../../components/ui/Button';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { voucherService } from '../../services/voucherService';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
-import { showToast } from '../../utils/toast';
 
 function formatDiscount({ discountType, discountValue, maxDiscountAmount }) {
   if (discountType === 'PERCENTAGE') {
-    const cap = maxDiscountAmount ? ` up to ${formatCurrency(maxDiscountAmount)}` : '';
-    return `${discountValue}% off${cap}`;
+    const cap = maxDiscountAmount ? ` (Giảm tối đa ${formatCurrency(maxDiscountAmount)})` : '';
+    return `Giảm ${discountValue}%${cap}`;
   }
-  return `${formatCurrency(discountValue)} off`;
+  return `Giảm ${formatCurrency(discountValue)}`;
 }
 
 function formatDate(value) {
-  return formatDateTime(value, 'No expiry date');
+  return formatDateTime(value, 'Không giới hạn thời gian');
 }
 
 const STATUS_LABEL = {
-  UNUSED: 'Ready to use',
-  USED: 'Used',
-  EXPIRED: 'Expired',
+  UNUSED: 'Sẵn sàng sử dụng',
+  USED: 'Đã sử dụng',
+  EXPIRED: 'Đã hết hạn',
 };
 
 export default function VouchersPage() {
-  // Available vouchers to claim
-  const [available, setAvailable] = useState([]);
-  const [availableLoading, setAvailableLoading] = useState(true);
-  const [claimingId, setClaimingId] = useState(null);
-
   // My claimed vouchers (wallet)
   const [vouchers, setVouchers] = useState([]);
   const [page, setPage] = useState(0);
@@ -42,27 +35,6 @@ export default function VouchersPage() {
   const [reloadKey, setReloadKey] = useState(0);
 
   const reloadAll = () => setReloadKey((value) => value + 1);
-
-  useEffect(() => {
-    let active = true;
-    Promise.resolve().then(() => {
-      setAvailableLoading(true);
-      return voucherService
-        .getAvailablePage({ page: 0, size: 12 })
-        .then((result) => {
-          if (active) setAvailable(result.items || []);
-        })
-        .catch(() => {
-          if (active) setAvailable([]);
-        })
-        .finally(() => {
-          if (active) setAvailableLoading(false);
-        });
-    });
-    return () => {
-      active = false;
-    };
-  }, [reloadKey]);
 
   useEffect(() => {
     let active = true;
@@ -78,7 +50,7 @@ export default function VouchersPage() {
           setTotalItems(result.totalItems || 0);
         })
         .catch((err) => {
-          if (active) setLoadError(err.message || 'Không thể tải voucher.');
+          if (active) setLoadError(err?.response?.data?.message || err.message || 'Không thể tải danh sách voucher.');
         })
         .finally(() => {
           if (active) setLoading(false);
@@ -89,100 +61,25 @@ export default function VouchersPage() {
     };
   }, [page, reloadKey]);
 
-  const handleClaim = async (voucher) => {
-    if (claimingId) return;
-    setClaimingId(voucher.id);
-    try {
-      await voucherService.claim(voucher.id);
-      showToast(`Voucher ${voucher.code} added to your wallet!`);
-      setPage(0);
-      reloadAll();
-    } catch (err) {
-      showToast(err?.message || 'Could not claim this voucher.', 'error');
-    } finally {
-      setClaimingId(null);
-    }
-  };
-
   return (
     <section className="voucher-wallet">
-      {/* Claim available vouchers */}
-      <div className="voucher-wallet-hero">
-        <div className="voucher-wallet-icon">
-          <Gift size={28} />
-        </div>
-        <div>
-          <h2>Available vouchers</h2>
-          <p>Claim vouchers below to add them to your wallet, then apply them at checkout.</p>
-        </div>
-      </div>
-
-      {availableLoading ? (
-        <LoadingState text="Loading available vouchers..." />
-      ) : available.length > 0 ? (
-        <div className="voucher-wallet-grid">
-          {available.map((voucher) => {
-            const soldOut = voucher.totalQuantity != null
-              && voucher.claimedQuantity != null
-              && voucher.claimedQuantity >= voucher.totalQuantity;
-            return (
-              <article className="voucher-wallet-card" key={voucher.id}>
-                <div className="voucher-card-main">
-                  <span className="voucher-card-label">Voucher</span>
-                  <strong>{formatDiscount(voucher)}</strong>
-                  <p>{voucher.name}</p>
-                </div>
-                <div className="voucher-card-code">
-                  <span>Voucher code</span>
-                  <strong>{voucher.code}</strong>
-                </div>
-                <dl className="voucher-card-details">
-                  <div>
-                    <dt>Minimum subtotal</dt>
-                    <dd>{formatCurrency(voucher.minOrderValue)}</dd>
-                  </div>
-                  <div>
-                    <dt>Valid until</dt>
-                    <dd>{formatDate(voucher.endTime)}</dd>
-                  </div>
-                </dl>
-                <Button
-                  type="button"
-                  onClick={() => handleClaim(voucher)}
-                  loading={claimingId === voucher.id}
-                  disabled={soldOut || (claimingId && claimingId !== voucher.id)}
-                >
-                  {soldOut ? 'Fully claimed' : 'Claim voucher'}
-                </Button>
-              </article>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="voucher-empty-card">
-          <Gift size={34} />
-          <h2>No vouchers available right now</h2>
-          <p>Check back later — new vouchers appear during campaigns and special events.</p>
-        </div>
-      )}
-
       {/* My wallet */}
-      <div className="voucher-wallet-hero" style={{ marginTop: '28px' }}>
+      <div className="voucher-wallet-hero">
         <div className="voucher-wallet-icon">
           <TicketPercent size={28} />
         </div>
         <div>
-          <h2>My vouchers</h2>
-          <p>Vouchers you have claimed. Select one during checkout before proceeding to payment.</p>
-          <span className="voucher-wallet-count">{totalItems} in wallet</span>
+          <h2>Ví voucher của tôi</h2>
+          <p>Danh sách mã giảm giá bạn đã thu thập từ Trang chủ. Áp dụng mã khi tiến hành đặt hàng thanh toán.</p>
+          <span className="voucher-wallet-count">{totalItems} mã trong ví</span>
         </div>
       </div>
 
       {loading ? (
-        <LoadingState text="Loading your vouchers..." />
+        <LoadingState text="Đang tải danh sách mã giảm giá..." />
       ) : loadError ? (
         <ErrorState text={loadError}>
-          <button className="btn" onClick={reloadAll}>Try again</button>
+          <button className="btn" onClick={reloadAll}>Thử lại</button>
         </ErrorState>
       ) : vouchers.length > 0 ? (
         <>
@@ -199,22 +96,22 @@ export default function VouchersPage() {
                   <p>{voucher.voucherName}</p>
                 </div>
                 <div className="voucher-card-code">
-                  <span>Voucher code</span>
+                  <span>Mã voucher</span>
                   <strong>{voucher.voucherCode}</strong>
                 </div>
                 <dl className="voucher-card-details">
                   <div>
-                    <dt>Minimum subtotal</dt>
+                    <dt>Đơn tối thiểu</dt>
                     <dd>{formatCurrency(voucher.minOrderValue)}</dd>
                   </div>
                   <div>
-                    <dt>Expires</dt>
+                    <dt>Hạn sử dụng</dt>
                     <dd>{formatDate(voucher.expiresAt)}</dd>
                   </div>
                 </dl>
                 {voucher.status === 'UNUSED' ? (
                   <Link className="voucher-use-link" to="/cart">
-                    Use at checkout
+                    Sử dụng ngay khi thanh toán
                   </Link>
                 ) : (
                   <span className="voucher-use-link" style={{ pointerEvents: 'none', opacity: 0.7 }}>
@@ -233,9 +130,11 @@ export default function VouchersPage() {
       ) : (
         <div className="voucher-empty-card">
           <TicketPercent size={34} />
-          <h2>No vouchers in your wallet</h2>
-          <p>Claim one from the available vouchers above, then use it during your next checkout.</p>
-          <Link to="/orders">View my orders</Link>
+          <h2>Chưa có mã giảm giá nào trong ví</h2>
+          <p>Hãy lướt Trang chủ và bấm "Thu thập voucher" tại các chương trình khuyến mãi để tự động nhận mã vào ví!</p>
+          <Link to="/" className="btn btn-primary" style={{ marginTop: '12px', display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+            <Search size={16} /> Bấm thu thập voucher ở Trang chủ
+          </Link>
         </div>
       )}
     </section>
