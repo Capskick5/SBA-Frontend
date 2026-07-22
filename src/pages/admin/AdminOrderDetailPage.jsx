@@ -192,31 +192,47 @@ export default function AdminOrderDetailPage() {
             {order?.status && <OrderStatusBadge status={order.status} />}
           </div>
 
-          {refundRequest && (
+          {refundRequest && (() => {
+            const REFUND_REASON_LABELS = {
+              BOOK_DEFECT: 'Sách bị lỗi',
+              WRONG_BOOK: 'Giao sai sách',
+              MISSING_BOOK: 'Thiếu sách trong đơn hàng',
+              DAMAGED_IN_TRANSIT: 'Sách bị hư hỏng do vận chuyển',
+              CHANGE_OF_MIND: 'Đổi ý, không muốn mua nữa',
+            };
+            const DONE_STATUSES = ['REFUND_COMPLETED', 'COMPLETED'];
+            const isRejected = refundRequest.status === 'REJECTED';
+            const isDone = DONE_STATUSES.includes(refundRequest.status);
+            const color = isRejected ? '#dc2626' : isDone ? '#047857' : '#d97706';
+            const bg = isRejected ? 'rgba(239, 68, 68, 0.08)' : isDone ? 'rgba(16, 185, 129, 0.08)' : 'rgba(245, 158, 11, 0.08)';
+            const border = isRejected ? 'rgba(239, 68, 68, 0.2)' : isDone ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)';
+            const icon = isRejected ? '❌' : isDone ? '✅' : '⏳';
+            return (
             <div style={{
               margin: '12px 0',
               padding: '14px',
               borderRadius: '8px',
-              background: refundRequest.status === 'APPROVED' ? 'rgba(16, 185, 129, 0.08)' : refundRequest.status === 'REJECTED' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(245, 158, 11, 0.08)',
-              border: `1px solid ${refundRequest.status === 'APPROVED' ? 'rgba(16, 185, 129, 0.2)' : refundRequest.status === 'REJECTED' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`,
+              background: bg,
+              border: `1px solid ${border}`,
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
             }}>
               <div>
-                <strong style={{ fontSize: '14px', color: refundRequest.status === 'APPROVED' ? '#047857' : refundRequest.status === 'REJECTED' ? '#dc2626' : '#d97706' }}>
-                  {refundRequest.status === 'APPROVED' ? '✅ ĐƠN HÀNG ĐÃ ĐƯỢC CHẤP NHẬN HOÀN TIỀN' : refundRequest.status === 'REJECTED' ? '❌ YÊU CẦU HOÀN TIỀN BỊ TỪ CHỐI' : '⚠️ ĐƠN HÀNG CÓ YÊU CẦU HOÀN TIỀN CẦN XỬ LÝ'}
+                <strong style={{ fontSize: '14px', color }}>
+                  {icon} ĐƠN HÀNG CÓ YÊU CẦU TRẢ HÀNG — TRẠNG THÁI: {refundRequest.status}
                 </strong>
                 <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--muted)' }}>
-                  Lý do: <strong>{refundRequest.reason}</strong> · Ngân hàng: <strong>{refundRequest.bankName} ({refundRequest.accountNumber})</strong>
+                  Lý do: <strong>{REFUND_REASON_LABELS[refundRequest.reason] || refundRequest.reason}</strong> · Ngân hàng: <strong>{refundRequest.bankName} ({refundRequest.bankAccountNumber})</strong>
                 </p>
               </div>
               <Link to="/admin/refunds" className="btn btn-sm btn-outline">
                 Đến trang duyệt hoàn tiền &rarr;
               </Link>
             </div>
-          )}
-          
+            );
+          })()}
+
           <div className="admin-order-flow-steps" style={{ margin: '16px 0 20px 0' }}>
             <div className="admin-order-flow-lines">
               <div className={`admin-order-flow-line-segment ${stepsActive[0] && stepsActive[1] ? 'active' : ''}`} />

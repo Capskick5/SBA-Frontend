@@ -34,6 +34,7 @@ const AdminAddBookPage = lazy(() => import('../pages/admin/AdminAddBookPage'));
 const AdminRagPage = lazy(() => import('../pages/admin/AdminRagPage'));
 const AdminInventoryPage = lazy(() => import('../pages/admin/AdminInventoryPage'));
 const AdminVouchersPage = lazy(() => import('../pages/admin/AdminVouchersPage'));
+const AdminCampaignsPage = lazy(() => import('../pages/admin/AdminCampaignsPage'));
 const AdminBannersPage = lazy(() => import('../pages/admin/AdminBannersPage'));
 const AdminGiftWrapsPage = lazy(() => import('../pages/admin/AdminGiftWrapsPage'));
 const AdminRefundsPage = lazy(() => import('../pages/admin/AdminRefundsPage'));
@@ -83,6 +84,7 @@ export default function AppRoutes() {
         <Route path="/admin/orders" element={admin(<AdminOrdersPage />)} />
         <Route path="/admin/orders/:id" element={admin(<AdminOrderDetailPage />)} />
         <Route path="/admin/refunds" element={admin(<AdminRefundsPage />)} />
+        <Route path="/admin/campaigns" element={admin(<AdminCampaignsPage />)} />
         <Route path="/admin/vouchers" element={admin(<AdminVouchersPage />)} />
         <Route path="/admin/banners" element={admin(<AdminBannersPage />)} />
         <Route path="/admin/gift-wraps" element={admin(<AdminGiftWrapsPage />)} />

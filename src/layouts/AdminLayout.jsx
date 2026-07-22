@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { adminService } from '../services/adminService';
-import { refundService } from '../services/refundService';
 import {
   LayoutDashboard,
   BookOpen,
@@ -16,23 +15,25 @@ import {
   Database,
   Image,
   Gift,
+  Megaphone,
   Menu,
   LogOut
 } from 'lucide-react';
 
 const links = [
-  ['/admin', 'Bảng điều khiển', LayoutDashboard],
-  ['/admin/books', 'Sách', BookOpen],
-  ['/admin/categories', 'Danh mục', FolderOpen],
-  ['/admin/banners', 'Banner', Image],
-  ['/admin/gift-wraps', 'Gói quà', Gift],
-  ['/admin/orders', 'Đơn hàng', ShoppingBag, 'orders'],
-  ['/admin/refunds', 'Yêu cầu hoàn tiền', RotateCcw, 'refunds'],
-  ['/admin/vouchers', 'Quy tắc voucher', Ticket],
-  ['/admin/users', 'Người dùng', Users],
-  ['/admin/reviews', 'Đánh giá', MessageSquare],
-  ['/admin/inventory', 'Quản lý kho', ClipboardList],
-  ['/admin/rag', 'Danh mục RAG', Database],
+  ['/admin', 'Dashboard', LayoutDashboard],
+  ['/admin/books', 'Books', BookOpen],
+  ['/admin/categories', 'Categories', FolderOpen],
+  ['/admin/banners', 'Banners', Image],
+  ['/admin/gift-wraps', 'Gift Wraps', Gift],
+  ['/admin/orders', 'Orders', ShoppingBag, 'orders'],
+  ['/admin/refunds', 'Refund Requests', RotateCcw, 'refunds'],
+  ['/admin/campaigns', 'Campaigns', Megaphone],
+  ['/admin/vouchers', 'Vouchers', Ticket],
+  ['/admin/users', 'Users', Users],
+  ['/admin/reviews', 'Reviews', MessageSquare],
+  ['/admin/inventory', 'Inventory Management', ClipboardList],
+  ['/admin/rag', 'RAG Catalog', Database],
 ];
 
 export default function AdminLayout({ children }) {
@@ -54,25 +55,26 @@ export default function AdminLayout({ children }) {
           const pendingCount = items.filter(o => o.status === 'PENDING' || o.status === 'PENDING_PAYMENT').length;
           setPendingOrdersCount(res?.totalItems || pendingCount);
         }
-      } catch (err) {
+      } catch {
         // Fallback silently if filter param not supported
       }
 
       try {
-        const refunds = await refundService.getRefundRequests();
-        const pendingRef = refunds.filter(r => r.status === 'PENDING').length;
-        if (isMounted) {
-          setPendingRefundsCount(pendingRef);
+        const refundRes = await adminService.getRefundRequests({ status: 'UNDER_REVIEW', page: 0, size: 1 });
+        if (isMounted && refundRes) {
+          setPendingRefundsCount(refundRes?.totalItems ?? refundRes?.totalElements ?? 0);
         }
-      } catch (err) {
+      } catch {
         // Ignore
       }
     };
     fetchPendingCount();
     const interval = setInterval(fetchPendingCount, 30000); // refresh every 30s
+    window.addEventListener('refund_updated', fetchPendingCount);
     return () => {
       isMounted = false;
       clearInterval(interval);
+      window.removeEventListener('refund_updated', fetchPendingCount);
     };
   }, []);
 

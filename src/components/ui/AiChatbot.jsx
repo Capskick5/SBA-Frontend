@@ -155,7 +155,7 @@ export default function AiChatbot() {
           <div className="ai-chatbot-messages">
             {messages.map((msg) => (
               <div key={msg.id} className={`ai-chatbot-message is-${msg.sender}`}>
-                <div className="message-text"><ReactMarkdown>{msg.text}</ReactMarkdown></div>
+                 <div className="message-text"><ReactMarkdown>{msg.text}</ReactMarkdown></div>
                 {msg.books && msg.books.length > 0 && (
                   <div className="chatbot-books-list">
                     {msg.books.map((b) => (

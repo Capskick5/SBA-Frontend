@@ -92,10 +92,56 @@ export const adminService = {
   getReviewModerationHistory: (id, params) => api.get(`/admin/reviews/${id}/moderation-history`, { params }).then(res => res.data?.data || res.data),
   deleteReview: (id) => api.delete(`/reviews/${id}`).then(res => res.data),
 
-  getVoucherRules: (params) => api.get('/vouchers', { params }).then(res => res.data?.data || res.data),
-  createVoucherRule: (body) => api.post('/vouchers', body).then(res => res.data?.data || res.data),
-  updateVoucherRule: (id, body) => api.put(`/vouchers/${id}`, body).then(res => res.data?.data || res.data),
-  disableVoucherRule: (id) => api.delete(`/vouchers/${id}`),
+  // Campaigns (admin) — group promotions such as flash sales / welcome gifts
+  getCampaigns: (params) => api.get('/admin/campaigns', { params }).then(res => res.data?.data || res.data),
+  createCampaign: (body) => api.post('/admin/campaigns', body).then(res => res.data?.data || res.data),
+  updateCampaign: (id, body) => api.put(`/admin/campaigns/${id}`, body).then(res => res.data?.data || res.data),
+  deleteCampaign: (id) => api.delete(`/admin/campaigns/${id}`),
+
+  // Voucher templates (admin) — the redeemable coupons customers can claim
+  getVouchers: (params) => api.get('/admin/vouchers', { params }).then(res => res.data?.data || res.data),
+  createVoucher: (body) => api.post('/admin/vouchers', body).then(res => res.data?.data || res.data),
+  updateVoucher: (id, body) => api.put(`/admin/vouchers/${id}`, body).then(res => res.data?.data || res.data),
+  deleteVoucher: (id) => api.delete(`/admin/vouchers/${id}`),
+
+  getRefundRequests: ({ status, statuses, ...rest } = {}) => {
+    const params = { ...rest };
+    if (status) params.status = status;
+    if (statuses?.length) params.statuses = statuses.join(',');
+    return api.get('/admin/refund-requests', { params }).then(res => res.data?.data || res.data);
+  },
+  approveRefundRequest: (id, body) => api.put(`/admin/refund-requests/${id}/approve`, body).then((res) => {
+    window.dispatchEvent(new Event('refund_updated'));
+    return res.data?.data || res.data;
+  }),
+  rejectRefundRequest: (id, body) => api.put(`/admin/refund-requests/${id}/reject`, body).then((res) => {
+    window.dispatchEvent(new Event('refund_updated'));
+    return res.data?.data || res.data;
+  }),
+  confirmRefundReceived: (id) => api.put(`/admin/refund-requests/${id}/confirm-received`).then((res) => {
+    window.dispatchEvent(new Event('refund_updated'));
+    return res.data?.data || res.data;
+  }),
+  startRefundInspection: (id) => api.put(`/admin/refund-requests/${id}/start-inspection`).then((res) => {
+    window.dispatchEvent(new Event('refund_updated'));
+    return res.data?.data || res.data;
+  }),
+  completeRefundInspection: (id, body) => api.put(`/admin/refund-requests/${id}/complete-inspection`, body).then((res) => {
+    window.dispatchEvent(new Event('refund_updated'));
+    return res.data?.data || res.data;
+  }),
+  submitReplacementShipment: (id, body) => api.put(`/admin/refund-requests/${id}/replacement-shipment`, body).then((res) => {
+    window.dispatchEvent(new Event('refund_updated'));
+    return res.data?.data || res.data;
+  }),
+  markRefundProcessed: (id) => api.put(`/admin/refund-requests/${id}/mark-refund-processed`).then((res) => {
+    window.dispatchEvent(new Event('refund_updated'));
+    return res.data?.data || res.data;
+  }),
+  closeRefundRequest: (id) => api.put(`/admin/refund-requests/${id}/close`).then((res) => {
+    window.dispatchEvent(new Event('refund_updated'));
+    return res.data?.data || res.data;
+  }),
 
   toggleBookActive: (id, isActive) => {
     return api.put(`/books/${id}/active`, { active: isActive });
