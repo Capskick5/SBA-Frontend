@@ -124,6 +124,12 @@ body {
   box-sizing: border-box;
 }
 
+/* Catalog: pull banner tight under category nav */
+.page:has(.catalog-container) {
+  padding-top: 0;
+  width: 100%;
+}
+
 /* Unified Page Breadcrumbs */
 .profile-breadcrumb,
 .book-detail-breadcrumb,
@@ -8326,7 +8332,7 @@ a.btn {
   width: 95vw;
   margin-left: calc(-47.5vw + 50%);
   margin-right: calc(-47.5vw + 50%);
-  margin-bottom: 24px;
+  margin-bottom: 10px;
   aspect-ratio: 2048 / 600; /* Keep exact aspect ratio to prevent cropping */
   overflow: hidden;
   border-radius: var(--radius-lg);
@@ -9877,7 +9883,7 @@ html[data-theme="dark"] .status-badge.payment-failed {
    CAMPAIGN PROMO TRIGGER BAR & FULL-SCREEN CAMPAIGN MODAL
    ========================================================================== */
 .campaigns-trigger-bar {
-  margin-top: 12px;
+  margin-top: 8px;
   margin-bottom: 24px;
   background: linear-gradient(
     135deg,
@@ -10877,7 +10883,7 @@ html[data-theme="dark"] .btn-open-campaign-modal:hover {
 .catalog-container {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 24px 24px 60px;
+  padding: 8px 24px 60px;
   width: 100%;
   box-sizing: border-box;
 }

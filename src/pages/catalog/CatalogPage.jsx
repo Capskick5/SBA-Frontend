@@ -9,6 +9,12 @@ import BookGrid from '../../components/catalog/BookGrid';
 import Pagination from '../../components/catalog/Pagination';
 import CampaignModal from '../../components/campaign/CampaignModal';
 import { ErrorState, LoadingState } from '../../components/ui/State';
+import {
+  CATALOG_SCROLL_EVENT,
+  consumeScrollToCatalogProductsFlag,
+  scrollToCatalogProductsWhenReady,
+  attachHeroBannerMidSnap,
+} from '../../utils/scrollToCatalogProducts';
 
 const PAGE_SIZE = 20;
 const DEFAULT_SORT = 'relevance';
@@ -125,50 +131,28 @@ export default function CatalogPage() {
     setRetryCount((count) => count + 1);
   };
 
-  const selectedCategoryObj = categories.find((c) => String(c.id) === String(category));
-  let catalogTitle = 'Tất cả sản phẩm';
-  let catalogSubtitle = 'Khám phá hàng ngàn cuốn sách hay với giá ưu đãi tốt nhất tại BookVerse';
+  useEffect(() => {
+    const handleScrollRequest = () => {
+      consumeScrollToCatalogProductsFlag();
+      scrollToCatalogProductsWhenReady();
+    };
 
-  if (query) {
-    catalogTitle = `Kết quả tìm kiếm: "${query}"`;
-    catalogSubtitle = `Các cuốn sách phù hợp với từ khóa "${query}"`;
-  } else if (selectedCategoryObj) {
-    catalogTitle = selectedCategoryObj.name;
-    catalogSubtitle = `Khám phá các cuốn sách thuộc thể loại ${selectedCategoryObj.name}`;
-  } else if (sort === 'sold_desc') {
-    catalogTitle = 'Sách Bán Chạy';
-    catalogSubtitle = 'Top những cuốn sách được bạn đọc yêu thích và mua nhiều nhất';
-  }
+    window.addEventListener(CATALOG_SCROLL_EVENT, handleScrollRequest);
+    return () => window.removeEventListener(CATALOG_SCROLL_EVENT, handleScrollRequest);
+  }, []);
+
+  useEffect(() => {
+    if (!consumeScrollToCatalogProductsFlag()) return;
+    scrollToCatalogProductsWhenReady();
+  }, [category, sort, query]);
+
+  useEffect(() => {
+    if (banners.length === 0) return undefined;
+    return attachHeroBannerMidSnap();
+  }, [banners.length, isLoggedIn]);
 
   return (
     <div className="catalog-container">
-      <nav className="page-breadcrumb" aria-label="Breadcrumb">
-        <Link to="/">Trang chủ</Link>
-        {category && (
-          <>
-            <span>/</span>
-            <span>Thể loại</span>
-          </>
-        )}
-        {query && (
-          <>
-            <span>/</span>
-            <span>Tìm kiếm</span>
-          </>
-        )}
-        {sort === 'sold_desc' && !category && !query && (
-          <>
-            <span>/</span>
-            <span>Nổi bật</span>
-          </>
-        )}
-      </nav>
-
-      <div className="page-header">
-        <h1>{catalogTitle}</h1>
-        <p className="page-subtitle">{catalogSubtitle}</p>
-      </div>
-
       {/* Hero Banner Slider */}
       {banners.length > 0 && (
         <div className="hero-banner-slider">
@@ -218,7 +202,7 @@ export default function CatalogPage() {
 
       {/* Discrete & High-Converting Campaign Trigger Banner - Shown ONLY when Logged In */}
       {isLoggedIn && (
-        <section className="campaigns-trigger-bar">
+        <section id="catalog-snap-target" className="campaigns-trigger-bar">
           <div className="trigger-bar-left">
             <div className="trigger-icon-pulse">
               <BookOpen size={22} />
@@ -250,7 +234,7 @@ export default function CatalogPage() {
       )}
 
       {/* 2-Column Catalog Layout: Left Sidebar + Main Product Grid */}
-      <section className="catalog-layout">
+      <section id="catalog-products" className="catalog-layout">
         <aside className="catalog-sidebar">
           <CatalogFilters
             category={category}

@@ -214,13 +214,6 @@ export default function ProfilePage() {
 
     return (
       <div className="profile-content">
-        <div className="profile-page-header">
-          <h1>{tabConfig.account.title}</h1>
-          <p className="profile-page-subtitle">
-            {tabConfig.account.subtitle}
-          </p>
-        </div>
-
         <div className="profile-card profile-account-card">
           <section className="profile-personal-panel">
             <div className="profile-section-heading">
@@ -239,18 +232,6 @@ export default function ProfilePage() {
                   required
                 />
                 <Input label="Email" defaultValue={profile?.email || ''} disabled />
-
-                <label className="field">
-                  <span>Biệt danh</span>
-                  <input value="Chưa đặt" disabled />
-                </label>
-
-                <label className="field">
-                  <span>Quốc gia</span>
-                  <select defaultValue="Vietnam" disabled>
-                    <option>Vietnam</option>
-                  </select>
-                </label>
 
                 <Button type="submit" disabled={saveLoading} className="profile-save-btn">
                   {saveLoading ? 'Đang lưu...' : 'Lưu thay đổi'}

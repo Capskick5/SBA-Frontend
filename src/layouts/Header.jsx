@@ -16,6 +16,7 @@ import { useAuth } from "../context/AuthContext";
 import { bookService } from "../services/bookService";
 import { cartFacade } from "../services/cartFacade";
 import { CART_UPDATED_EVENT, getCartItemCount } from "../utils/cartEvents";
+import { requestScrollToCatalogProducts } from "../utils/scrollToCatalogProducts";
 
 const CATEGORY_NAV_LIMIT = 6;
 
@@ -330,7 +331,12 @@ export default function Header() {
       <div className="navbar-bottom-row">
         <nav className="navbar-bottom-links">
           {bottomLinks.map(({ label, to, isActive }) => (
-            <Link key={label} to={to} className={isActive ? "active" : undefined}>
+            <Link
+              key={label}
+              to={to}
+              className={isActive ? "active" : undefined}
+              onClick={requestScrollToCatalogProducts}
+            >
               {label}
             </Link>
           ))}
