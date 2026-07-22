@@ -232,19 +232,19 @@ export default function AdminVouchersPage() {
   };
 
   const columns = [
-    { key: 'code', label: 'Code', render: (v) => <strong>{v.code}</strong> },
-    { key: 'name', label: 'Name' },
-    { key: 'reward', label: 'Discount', render: formatReward },
-    { key: 'minOrderValue', label: 'Min order', render: (v) => formatCurrency(v.minOrderValue) },
+    { key: 'code', label: 'Mã voucher', render: (v) => <strong>{v.code}</strong> },
+    { key: 'name', label: 'Tên hiển thị' },
+    { key: 'reward', label: 'Mức giảm giá', render: formatReward },
+    { key: 'minOrderValue', label: 'Đơn tối thiểu', render: (v) => formatCurrency(v.minOrderValue) },
     {
       key: 'quantity',
-      label: 'Claimed / Total',
+      label: 'Đã nhận / Tổng số',
       render: (v) => `${v.claimedQuantity ?? 0} / ${v.totalQuantity ?? 0}`,
     },
-    { key: 'campaign', label: 'Campaign', render: (v) => campaignName(v.campaignId) },
+    { key: 'campaign', label: 'Chiến dịch', render: (v) => campaignName(v.campaignId) },
     {
       key: 'period',
-      label: 'Valid period',
+      label: 'Thời hạn hiệu lực',
       render: (v) => (
         <span className={styles.periodCell}>
           {formatDateTime(v.startTime)}<br />→ {formatDateTime(v.endTime)}
@@ -253,21 +253,21 @@ export default function AdminVouchersPage() {
     },
     {
       key: 'status',
-      label: 'Status',
+      label: 'Trạng thái',
       render: (v) => (
         <span className={`${styles.status} ${v.status === 'ACTIVE' ? styles.active : styles.disabled}`}>
-          {v.status}
+          {v.status === 'ACTIVE' ? 'Hoạt động' : v.status === 'EXPIRED' ? 'Hết hạn' : 'Tắt'}
         </span>
       ),
     },
     {
       key: 'actions',
-      label: 'Actions',
+      label: 'Thao tác',
       render: (v) => (
         <div className={styles.rowActions}>
-          <Button type="button" className="btn-secondary" onClick={() => openEdit(v)}>Edit</Button>
+          <Button type="button" className="btn-secondary" onClick={() => openEdit(v)}>Sửa</Button>
           <Button type="button" className={styles.disableButton} onClick={() => setDeleteTarget(v)}>
-            <Trash2 size={15} /> Delete
+            <Trash2 size={15} /> Xóa
           </Button>
         </div>
       ),
@@ -278,12 +278,12 @@ export default function AdminVouchersPage() {
     <section className={`${styles.page} stack`}>
       <header className={styles.header}>
         <div>
-          <span className={styles.kicker}>Promotions</span>
-          <h1>Vouchers</h1>
-          <p>Create and manage redeemable vouchers that customers can claim and use at checkout.</p>
+          <span className={styles.kicker}>Khuyến mãi</span>
+          <h1>Quản lý Voucher</h1>
+          <p>Tạo và quản lý các mã voucher để khách hàng thu thập và sử dụng khi thanh toán.</p>
         </div>
         <Button type="button" onClick={openCreate}>
-          <Plus size={17} /> Create voucher
+          <Plus size={17} /> Tạo voucher
         </Button>
       </header>
 
@@ -299,35 +299,35 @@ export default function AdminVouchersPage() {
               setCurrentPage(0);
             }}
           >
-            <option value="all">All statuses</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-            <option value="EXPIRED">Expired</option>
+            <option value="all">Tất cả trạng thái</option>
+            <option value="ACTIVE">Hoạt động</option>
+            <option value="INACTIVE">Không hoạt động</option>
+            <option value="EXPIRED">Đã hết hạn</option>
           </select>
         </label>
         <div className={styles.rulePolicy}>
           <TicketPercent size={18} />
-          <span>Customers claim these vouchers from the storefront, then apply them at checkout.</span>
+          <span>Khách hàng thu thập voucher từ cửa hàng và áp dụng tại bước thanh toán.</span>
         </div>
       </div>
 
       {loading ? (
-        <LoadingState text="Loading vouchers..." />
+        <LoadingState text="Đang tải danh sách voucher..." />
       ) : error ? (
         <ErrorState text={error}>
-          <Button type="button" onClick={reload}>Try again</Button>
+          <Button type="button" onClick={reload}>Thử lại</Button>
         </ErrorState>
       ) : (
         <>
-          <Table columns={columns} rows={vouchers} emptyText="No vouchers found." />
+          <Table columns={columns} rows={vouchers} emptyText="Không tìm thấy voucher nào." />
           {vouchers.length > 0 && (
             <div className={styles.pagination}>
               <Button type="button" className="btn-secondary" disabled={currentPage === 0} onClick={() => changePage(currentPage - 1)}>
-                Previous
+                Trước
               </Button>
-              <span>Page {currentPage + 1} of {totalPages}</span>
+              <span>Trang {currentPage + 1} / {totalPages}</span>
               <Button type="button" className="btn-secondary" disabled={currentPage >= totalPages - 1} onClick={() => changePage(currentPage + 1)}>
-                Next
+                Sau
               </Button>
             </div>
           )}
@@ -336,7 +336,7 @@ export default function AdminVouchersPage() {
 
       {formOpen && (
         <Modal
-          title={editingId ? 'Edit voucher' : 'Create voucher'}
+          title={editingId ? 'Sửa voucher' : 'Tạo voucher'}
           onClose={() => setFormOpen(false)}
           maxWidth="560px"
         >
@@ -344,25 +344,25 @@ export default function AdminVouchersPage() {
             {formError && <div className={styles.formError}>{formError}</div>}
             <div className={styles.formGrid}>
               <Input
-                label="Voucher code"
+                label="Mã voucher"
                 value={form.code}
                 onChange={(event) => setField('code', event.target.value.toUpperCase())}
-                placeholder="e.g. WELCOME50"
+                placeholder="VD: WELCOME50"
                 required
               />
               <Input
-                label="Display name"
+                label="Tên hiển thị"
                 value={form.name}
                 onChange={(event) => setField('name', event.target.value)}
-                placeholder="e.g. Welcome gift"
+                placeholder="VD: Quà chào mừng"
                 required
               />
             </div>
 
             <label className="field">
-              <span>Campaign (optional)</span>
+              <span>Chiến dịch (Không bắt buộc)</span>
               <select value={form.campaignId} onChange={(event) => setField('campaignId', event.target.value)}>
-                <option value="">No campaign</option>
+                <option value="">Không thuộc chiến dịch nào</option>
                 {campaigns.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -372,8 +372,8 @@ export default function AdminVouchersPage() {
             <label className="field">
               <span>Loại giảm giá</span>
               <select value={form.discountType} onChange={(event) => setField('discountType', event.target.value)}>
-                <option value="FIXED_AMOUNT">Fixed amount</option>
-                <option value="PERCENTAGE">Percentage</option>
+                <option value="FIXED_AMOUNT">Số tiền cố định</option>
+                <option value="PERCENTAGE">Phần trăm (%)</option>
               </select>
             </label>
 
@@ -388,18 +388,18 @@ export default function AdminVouchersPage() {
                 required
               />
               <Input
-                label="Max discount (VND)"
+                label="Giảm tối đa (VND)"
                 type="number"
                 min="0"
                 value={form.maxDiscountAmount}
                 onChange={(event) => setField('maxDiscountAmount', event.target.value)}
-                placeholder={form.discountType === 'PERCENTAGE' ? 'Cap for % discount' : 'Optional'}
+                placeholder={form.discountType === 'PERCENTAGE' ? 'Giới hạn giảm cho phần trăm' : 'Không bắt buộc'}
               />
             </div>
 
             <div className={styles.formGrid}>
               <Input
-                label="Minimum order value (VND)"
+                label="Đơn hàng tối thiểu (VND)"
                 type="number"
                 min="0"
                 value={form.minOrderValue}
@@ -407,7 +407,7 @@ export default function AdminVouchersPage() {
                 required
               />
               <Input
-                label="Total quantity"
+                label="Tổng số lượng phát hành"
                 type="number"
                 min="1"
                 value={form.totalQuantity}
@@ -418,14 +418,14 @@ export default function AdminVouchersPage() {
 
             <div className={styles.formGrid}>
               <Input
-                label="Start time"
+                label="Thời gian bắt đầu"
                 type="datetime-local"
                 value={form.startTime}
                 onChange={(event) => setField('startTime', event.target.value)}
                 required
               />
               <Input
-                label="End time"
+                label="Thời gian kết thúc"
                 type="datetime-local"
                 value={form.endTime}
                 onChange={(event) => setField('endTime', event.target.value)}
@@ -434,11 +434,11 @@ export default function AdminVouchersPage() {
             </div>
 
             <label className="field">
-              <span>Status</span>
+              <span>Trạng thái</span>
               <select value={form.status} onChange={(event) => setField('status', event.target.value)}>
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
-                <option value="EXPIRED">Expired</option>
+                <option value="ACTIVE">Hoạt động</option>
+                <option value="INACTIVE">Không hoạt động</option>
+                <option value="EXPIRED">Đã hết hạn</option>
               </select>
             </label>
 
@@ -447,7 +447,7 @@ export default function AdminVouchersPage() {
                 Hủy
               </Button>
               <Button type="submit" loading={submitting}>
-                {editingId ? 'Save changes' : 'Create voucher'}
+                {editingId ? 'Lưu thay đổi' : 'Tạo voucher'}
               </Button>
             </div>
           </form>
@@ -455,18 +455,17 @@ export default function AdminVouchersPage() {
       )}
 
       {deleteTarget && (
-        <Modal title="Delete voucher?" onClose={() => setDeleteTarget(null)} hideClose={deleting}>
+        <Modal title="Xóa voucher?" onClose={() => setDeleteTarget(null)} hideClose={deleting}>
           <div className={styles.confirmBody}>
             <p>
-              <strong>{deleteTarget.code}</strong> will be removed. Customers will no longer be able to
-              claim it. Vouchers already claimed are unaffected.
+              Voucher <strong>{deleteTarget.code}</strong> sẽ bị xóa khỏi hệ thống. Khách hàng sẽ không thể nhận thêm nữa. Voucher mà khách đã nhận trước đó không bị ảnh hưởng.
             </p>
             <div className={styles.modalActions}>
               <Button type="button" className="btn-secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
-                Cancel
+                Hủy
               </Button>
               <Button type="button" className={styles.disableButton} onClick={confirmDelete} loading={deleting}>
-                Delete voucher
+                Xóa voucher
               </Button>
             </div>
           </div>

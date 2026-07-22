@@ -206,30 +206,32 @@ export default function AdminOrderDetailPage() {
             const color = isRejected ? '#dc2626' : isDone ? '#047857' : '#d97706';
             const bg = isRejected ? 'rgba(239, 68, 68, 0.08)' : isDone ? 'rgba(16, 185, 129, 0.08)' : 'rgba(245, 158, 11, 0.08)';
             const border = isRejected ? 'rgba(239, 68, 68, 0.2)' : isDone ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)';
-            const icon = isRejected ? '❌' : isDone ? '✅' : '⏳';
             return (
-            <div style={{
-              margin: '12px 0',
-              padding: '14px',
-              borderRadius: '8px',
-              background: bg,
-              border: `1px solid ${border}`,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}>
-              <div>
-                <strong style={{ fontSize: '14px', color }}>
-                  {icon} ĐƠN HÀNG CÓ YÊU CẦU TRẢ HÀNG — TRẠNG THÁI: {refundRequest.status}
-                </strong>
-                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--muted)' }}>
-                  Lý do: <strong>{REFUND_REASON_LABELS[refundRequest.reason] || refundRequest.reason}</strong> · Ngân hàng: <strong>{refundRequest.bankName} ({refundRequest.bankAccountNumber})</strong>
-                </p>
+              <div style={{
+                width: '100%',
+                margin: '16px 0',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                background: bg,
+                border: `1px solid ${border}`,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '12px',
+                boxSizing: 'border-box',
+              }}>
+                <div style={{ flex: 1 }}>
+                  <strong style={{ fontSize: '14px', color }}>
+                    ĐƠN HÀNG CÓ YÊU CẦU TRẢ HÀNG — TRẠNG THÁI: {refundRequest.status}
+                  </strong>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--muted)' }}>
+                    Lý do: <strong>{REFUND_REASON_LABELS[refundRequest.reason] || refundRequest.reason}</strong> · Ngân hàng: <strong>{refundRequest.bankName} ({refundRequest.bankAccountNumber})</strong>
+                  </p>
+                </div>
+                <Link to="/admin/refunds" className="btn-secondary" style={{ fontSize: '12px', padding: '5px 10px', whiteSpace: 'nowrap', textDecoration: 'none', borderRadius: '6px' }}>
+                  Đến trang duyệt &rarr;
+                </Link>
               </div>
-              <Link to="/admin/refunds" className="btn btn-outline" style={{ fontSize: '12px', padding: '6px 12px' }}>
-                Đến trang duyệt hoàn tiền &rarr;
-              </Link>
-            </div>
             );
           })()}
 

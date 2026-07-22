@@ -22,21 +22,15 @@ const EMPTY_FORM = {
 };
 
 const TYPE_LABELS = {
-  FLASH_SALE: 'Flash sale',
-  WELCOME_GIFT: 'Welcome gift',
+  FLASH_SALE: 'Flash Sale (Giảm giá sốc)',
+  WELCOME_GIFT: 'Quà chào mừng',
 };
 
 function toLocalInput(iso) {
   if (!iso) return '';
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
   const pad = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-function toInstant(localValue) {
-  if (!localValue) return null;
-  const d = new Date(localValue);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
 function getErrorMessage(error, fallback) {
@@ -70,7 +64,7 @@ export default function AdminCampaignsPage() {
         if (!activeRequest) return;
         setCampaigns([]);
         setTotalPages(1);
-        setError(getErrorMessage(err, 'Could not load campaigns.'));
+        setError(getErrorMessage(err, 'Không thể tải danh sách chiến dịch.'));
       })
       .finally(() => {
         if (activeRequest) setLoading(false);
@@ -83,13 +77,13 @@ export default function AdminCampaignsPage() {
   const reload = () => {
     setLoading(true);
     setError('');
-    setReloadKey((key) => key + 1);
+    setReloadKey((k) => k + 1);
   };
 
-  const changePage = (nextPage) => {
+  const changePage = (next) => {
     setLoading(true);
     setError('');
-    setCurrentPage(nextPage);
+    setCurrentPage(next);
   };
 
   const openCreate = () => {
@@ -99,63 +93,50 @@ export default function AdminCampaignsPage() {
     setFormOpen(true);
   };
 
-  const openEdit = (campaign) => {
+  const openEdit = (c) => {
     setForm({
-      name: campaign.name || '',
-      campaignType: campaign.campaignType || 'FLASH_SALE',
-      isAutoDistributed: Boolean(campaign.isAutoDistributed),
-      startTime: toLocalInput(campaign.startTime),
-      endTime: toLocalInput(campaign.endTime),
-      status: campaign.status || 'ACTIVE',
+      name: c.name || '',
+      campaignType: c.campaignType || 'FLASH_SALE',
+      isAutoDistributed: Boolean(c.isAutoDistributed),
+      startTime: toLocalInput(c.startTime),
+      endTime: toLocalInput(c.endTime),
+      status: c.status || 'ACTIVE',
     });
-    setEditingId(campaign.id);
+    setEditingId(c.id);
     setFormError('');
     setFormOpen(true);
   };
 
-  const setField = (name, value) => setForm((current) => ({ ...current, [name]: value }));
+  const setField = (name, value) => setForm((curr) => ({ ...curr, [name]: value }));
 
-  const submit = async (event) => {
-    event.preventDefault();
-    if (!form.name.trim()) {
-      setFormError('Campaign name is required.');
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.startTime) {
+      setFormError('Vui lòng nhập tên chiến dịch và thời gian bắt đầu.');
       return;
     }
-    const startTime = toInstant(form.startTime);
-    if (!startTime) {
-      setFormError('Start time is required.');
-      return;
-    }
-    const endTime = toInstant(form.endTime);
-    if (endTime && new Date(endTime) <= new Date(startTime)) {
-      setFormError('End time must be after start time.');
-      return;
-    }
-
-    const payload = {
-      name: form.name.trim(),
-      campaignType: form.campaignType,
-      isAutoDistributed: form.isAutoDistributed,
-      startTime,
-      endTime,
-      status: form.status,
-    };
-
     setSubmitting(true);
     setFormError('');
     try {
+      const payload = {
+        name: form.name.trim(),
+        campaignType: form.campaignType,
+        isAutoDistributed: form.isAutoDistributed,
+        startTime: new Date(form.startTime).toISOString(),
+        endTime: form.endTime ? new Date(form.endTime).toISOString() : null,
+        status: form.status,
+      };
       if (editingId) {
         await adminService.updateCampaign(editingId, payload);
-        showToast('Campaign updated.');
+        showToast('Đã cập nhật chiến dịch.');
       } else {
         await adminService.createCampaign(payload);
-        showToast('Campaign created.');
+        showToast('Đã tạo chiến dịch mới.');
       }
       setFormOpen(false);
-      if (currentPage === 0) reload();
-      else changePage(0);
+      reload();
     } catch (err) {
-      setFormError(getErrorMessage(err, 'Could not save campaign.'));
+      setFormError(getErrorMessage(err, 'Không thể lưu chiến dịch.'));
     } finally {
       setSubmitting(false);
     }
@@ -167,49 +148,49 @@ export default function AdminCampaignsPage() {
     try {
       await adminService.deleteCampaign(deleteTarget.id);
       setDeleteTarget(null);
-      showToast('Campaign deleted.');
+      showToast('Đã xóa chiến dịch.');
       reload();
     } catch (err) {
-      showToast(getErrorMessage(err, 'Could not delete campaign.'), 'error');
+      showToast(getErrorMessage(err, 'Không thể xóa chiến dịch.'), 'error');
     } finally {
       setDeleting(false);
     }
   };
 
   const columns = [
-    { key: 'name', label: 'Name', render: (c) => <strong>{c.name}</strong> },
-    { key: 'campaignType', label: 'Type', render: (c) => TYPE_LABELS[c.campaignType] || c.campaignType },
+    { key: 'name', label: 'Tên chiến dịch', render: (c) => <strong>{c.name}</strong> },
+    { key: 'campaignType', label: 'Loại chiến dịch', render: (c) => TYPE_LABELS[c.campaignType] || c.campaignType },
     {
       key: 'isAutoDistributed',
-      label: 'Distribution',
-      render: (c) => (c.isAutoDistributed ? 'Auto-distributed' : 'Manual claim'),
+      label: 'Phân phối',
+      render: (c) => (c.isAutoDistributed ? 'Tự động phát' : 'Khách tự nhận'),
     },
     {
       key: 'period',
-      label: 'Period',
+      label: 'Thời gian',
       render: (c) => (
         <span className={styles.periodCell}>
-          {formatDateTime(c.startTime)}<br />→ {c.endTime ? formatDateTime(c.endTime) : 'No end date'}
+          {formatDateTime(c.startTime)}<br />→ {c.endTime ? formatDateTime(c.endTime) : 'Không giới hạn'}
         </span>
       ),
     },
     {
       key: 'status',
-      label: 'Status',
+      label: 'Trạng thái',
       render: (c) => (
         <span className={`${styles.status} ${c.status === 'ACTIVE' ? styles.active : styles.disabled}`}>
-          {c.status}
+          {c.status === 'ACTIVE' ? 'Hoạt động' : c.status === 'COMPLETED' ? 'Hoàn thành' : 'Tắt'}
         </span>
       ),
     },
     {
       key: 'actions',
-      label: 'Actions',
+      label: 'Thao tác',
       render: (c) => (
         <div className={styles.rowActions}>
-          <Button type="button" className="btn-secondary" onClick={() => openEdit(c)}>Edit</Button>
+          <Button type="button" className="btn-secondary" onClick={() => openEdit(c)}>Sửa</Button>
           <Button type="button" className={styles.disableButton} onClick={() => setDeleteTarget(c)}>
-            <Trash2 size={15} /> Delete
+            <Trash2 size={15} /> Xóa
           </Button>
         </div>
       ),
@@ -220,39 +201,39 @@ export default function AdminCampaignsPage() {
     <section className={`${styles.page} stack`}>
       <header className={styles.header}>
         <div>
-          <span className={styles.kicker}>Promotions</span>
-          <h1>Campaigns</h1>
-          <p>Group vouchers into promotions such as flash sales or welcome gifts for new sign-ups.</p>
+          <span className={styles.kicker}>Khuyến mãi</span>
+          <h1>Quản lý Chiến dịch</h1>
+          <p>Gom nhóm các mã voucher vào các chương trình khuyến mãi như Flash Sale hoặc Quà chào mừng.</p>
         </div>
         <Button type="button" onClick={openCreate}>
-          <Plus size={17} /> Create campaign
+          <Plus size={17} /> Tạo chiến dịch
         </Button>
       </header>
 
       <div className={styles.toolbar}>
         <div className={styles.rulePolicy}>
           <Megaphone size={18} />
-          <span>Link vouchers to a campaign on the Vouchers page. Auto-distributed campaigns hand vouchers out automatically.</span>
+          <span>Gắn voucher vào chiến dịch tại trang Quản lý Voucher. Chiến dịch phân phối tự động sẽ tự trao voucher cho khách hàng phù hợp.</span>
         </div>
       </div>
 
       {loading ? (
-        <LoadingState text="Loading campaigns..." />
+        <LoadingState text="Đang tải danh sách chiến dịch..." />
       ) : error ? (
         <ErrorState text={error}>
-          <Button type="button" onClick={reload}>Try again</Button>
+          <Button type="button" onClick={reload}>Thử lại</Button>
         </ErrorState>
       ) : (
         <>
-          <Table columns={columns} rows={campaigns} emptyText="No campaigns yet." />
+          <Table columns={columns} rows={campaigns} emptyText="Chưa có chiến dịch nào." />
           {campaigns.length > 0 && (
             <div className={styles.pagination}>
               <Button type="button" className="btn-secondary" disabled={currentPage === 0} onClick={() => changePage(currentPage - 1)}>
-                Previous
+                Trước
               </Button>
-              <span>Page {currentPage + 1} of {totalPages}</span>
+              <span>Trang {currentPage + 1} / {totalPages}</span>
               <Button type="button" className="btn-secondary" disabled={currentPage >= totalPages - 1} onClick={() => changePage(currentPage + 1)}>
-                Next
+                Sau
               </Button>
             </div>
           )}
@@ -261,47 +242,47 @@ export default function AdminCampaignsPage() {
 
       {formOpen && (
         <Modal
-          title={editingId ? 'Edit campaign' : 'Create campaign'}
+          title={editingId ? 'Sửa chiến dịch' : 'Tạo chiến dịch'}
           onClose={() => setFormOpen(false)}
           maxWidth="520px"
         >
           <form onSubmit={submit} className="stack">
             {formError && <div className={styles.formError}>{formError}</div>}
             <Input
-              label="Campaign name"
+              label="Tên chiến dịch"
               value={form.name}
               onChange={(event) => setField('name', event.target.value)}
-              placeholder="e.g. New Year Flash Sale"
+              placeholder="VD: Flash Sale Đầu Năm"
               required
             />
             <label className="field">
-              <span>Campaign type</span>
+              <span>Loại chiến dịch</span>
               <select value={form.campaignType} onChange={(event) => setField('campaignType', event.target.value)}>
-                <option value="FLASH_SALE">Flash sale</option>
-                <option value="WELCOME_GIFT">Welcome gift</option>
+                <option value="FLASH_SALE">Flash Sale (Giảm giá sốc)</option>
+                <option value="WELCOME_GIFT">Quà chào mừng</option>
               </select>
             </label>
             <div className={styles.formGrid}>
               <Input
-                label="Start time"
+                label="Thời gian bắt đầu"
                 type="datetime-local"
                 value={form.startTime}
                 onChange={(event) => setField('startTime', event.target.value)}
                 required
               />
               <Input
-                label="End time (optional)"
+                label="Thời gian kết thúc (Không bắt buộc)"
                 type="datetime-local"
                 value={form.endTime}
                 onChange={(event) => setField('endTime', event.target.value)}
               />
             </div>
             <label className="field">
-              <span>Status</span>
+              <span>Trạng thái</span>
               <select value={form.status} onChange={(event) => setField('status', event.target.value)}>
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
-                <option value="COMPLETED">Completed</option>
+                <option value="ACTIVE">Hoạt động</option>
+                <option value="INACTIVE">Không hoạt động</option>
+                <option value="COMPLETED">Đã hoàn thành</option>
               </select>
             </label>
             <label className={styles.activeCheck}>
@@ -310,14 +291,14 @@ export default function AdminCampaignsPage() {
                 checked={form.isAutoDistributed}
                 onChange={(event) => setField('isAutoDistributed', event.target.checked)}
               />
-              <span>Auto-distribute vouchers to eligible customers</span>
+              <span>Tự động phân phối voucher cho khách hàng đủ điều kiện</span>
             </label>
             <div className={styles.modalActions}>
               <Button type="button" className="btn-secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
-                Cancel
+                Hủy
               </Button>
               <Button type="submit" loading={submitting}>
-                {editingId ? 'Save changes' : 'Create campaign'}
+                {editingId ? 'Lưu thay đổi' : 'Tạo chiến dịch'}
               </Button>
             </div>
           </form>
@@ -325,18 +306,17 @@ export default function AdminCampaignsPage() {
       )}
 
       {deleteTarget && (
-        <Modal title="Delete campaign?" onClose={() => setDeleteTarget(null)} hideClose={deleting}>
+        <Modal title="Xóa chiến dịch?" onClose={() => setDeleteTarget(null)} hideClose={deleting}>
           <div className={styles.confirmBody}>
             <p>
-              <strong>{deleteTarget.name}</strong> will be removed. Vouchers linked to it will no longer
-              belong to a campaign.
+              Chiến dịch <strong>{deleteTarget.name}</strong> sẽ bị xóa khỏi hệ thống. Các voucher liên quan sẽ không còn thuộc chiến dịch này.
             </p>
             <div className={styles.modalActions}>
               <Button type="button" className="btn-secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
-                Cancel
+                Hủy
               </Button>
               <Button type="button" className={styles.disableButton} onClick={confirmDelete} loading={deleting}>
-                Delete campaign
+                Xóa chiến dịch
               </Button>
             </div>
           </div>

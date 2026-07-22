@@ -42,13 +42,14 @@ const RESOLUTION_ELIGIBILITY = {
 
 const STATUS_TABS = [
   { id: 'ALL', label: 'Tất cả', statuses: [] },
-  { id: 'PENDING_REVIEW', label: 'Chờ xử lý', statuses: ['RETURN_REQUESTED', 'WAITING_EVIDENCE', 'UNDER_REVIEW'] },
+  { id: 'PENDING_REVIEW', label: 'Chờ xử lý', statuses: ['RETURN_REQUESTED', 'WAITING_EVIDENCE', 'UNDER_REVIEW', 'PENDING'] },
   { id: 'IN_PROGRESS', label: 'Đang xử lý', statuses: ['PICKUP_PENDING', 'RETURN_RECEIVED', 'INSPECTING', 'RESHIP_PENDING', 'EXCHANGE_SHIPPING', 'REFUND_PROCESSING'] },
   { id: 'DONE', label: 'Hoàn tất', statuses: ['REFUND_COMPLETED', 'COMPLETED'] },
   { id: 'REJECTED', label: 'Từ chối', statuses: ['REJECTED'] },
 ];
 
 const STATUS_META = {
+  PENDING: { badgeClass: 'refund-requested', badgeLabel: 'CHỜ XỬ LÝ' },
   RETURN_REQUESTED: { badgeClass: 'refund-requested', badgeLabel: 'ĐÃ GỬI YÊU CẦU' },
   WAITING_EVIDENCE: { badgeClass: 'refund-requested', badgeLabel: 'CHỜ BẰNG CHỨNG' },
   UNDER_REVIEW: { badgeClass: 'refund-requested', badgeLabel: 'ĐANG XEM XÉT' },
@@ -399,8 +400,13 @@ export default function AdminRefundsPage() {
 
             {/* ---- Actions per status ---- */}
 
-            {selectedRefund.status === 'UNDER_REVIEW' && (
+            {['RETURN_REQUESTED', 'WAITING_EVIDENCE', 'UNDER_REVIEW', 'PENDING'].includes(selectedRefund.status) && (
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {selectedRefund.status === 'WAITING_EVIDENCE' && (
+                  <div style={{ padding: '10px 12px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '6px', fontSize: '13px', color: '#d97706' }}>
+                    <strong>Đang chờ bằng chứng:</strong> Khách hàng chưa nộp bằng chứng (hoặc đang bổ sung). Yêu cầu sẽ tự động chuyển sang trạng thái <em>Đang xem xét (UNDER_REVIEW)</em> sau khi khách nộp bằng chứng thành công.
+                  </div>
+                )}
                 {!showRejectInput ? (
                   <>
                     <div>
@@ -425,10 +431,15 @@ export default function AdminRefundsPage() {
                       rows={2}
                     />
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                      <Button variant="outline" style={{ borderColor: '#ef4444', color: '#ef4444' }} onClick={() => setShowRejectInput(true)} disabled={processing}>
+                      <Button className="btn-secondary" style={{ background: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#dc2626', fontWeight: 600 }} onClick={() => setShowRejectInput(true)} disabled={processing}>
                         <XCircle size={16} style={{ marginRight: '4px' }} /> Từ chối
                       </Button>
-                      <Button variant="primary" style={{ background: '#10b981', borderColor: '#10b981' }} onClick={() => handleApprove(selectedRefund.id)} disabled={processing}>
+                      <Button
+                        style={{ background: selectedRefund.status === 'WAITING_EVIDENCE' ? '#9ca3af' : '#10b981', borderColor: selectedRefund.status === 'WAITING_EVIDENCE' ? '#9ca3af' : '#10b981', color: '#ffffff', fontWeight: 600 }}
+                        onClick={() => handleApprove(selectedRefund.id)}
+                        disabled={processing || selectedRefund.status === 'WAITING_EVIDENCE'}
+                        title={selectedRefund.status === 'WAITING_EVIDENCE' ? 'Khách hàng cần nộp bằng chứng trước khi có thể duyệt' : undefined}
+                      >
                         <CheckCircle size={16} style={{ marginRight: '4px' }} /> Duyệt yêu cầu
                       </Button>
                     </div>
@@ -442,8 +453,8 @@ export default function AdminRefundsPage() {
                       rows={2}
                     />
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                      <Button variant="outline" onClick={() => setShowRejectInput(false)} disabled={processing}>Hủy</Button>
-                      <Button variant="primary" style={{ background: '#ef4444' }} onClick={() => handleReject(selectedRefund.id)} disabled={processing}>
+                      <Button className="btn-secondary" onClick={() => setShowRejectInput(false)} disabled={processing}>Hủy</Button>
+                      <Button style={{ background: '#dc2626', borderColor: '#dc2626', color: '#ffffff', fontWeight: 600 }} onClick={() => handleReject(selectedRefund.id)} disabled={processing}>
                         Xác nhận từ chối
                       </Button>
                     </div>
@@ -477,10 +488,10 @@ export default function AdminRefundsPage() {
                   rows={2}
                 />
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                  <Button variant="outline" style={{ borderColor: '#ef4444', color: '#ef4444' }} onClick={() => handleCompleteInspection(selectedRefund.id, false)} disabled={processing}>
+                  <Button className="btn-secondary" style={{ background: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#dc2626', fontWeight: 600 }} onClick={() => handleCompleteInspection(selectedRefund.id, false)} disabled={processing}>
                     Không đạt
                   </Button>
-                  <Button variant="primary" style={{ background: '#10b981', borderColor: '#10b981' }} onClick={() => handleCompleteInspection(selectedRefund.id, true)} disabled={processing}>
+                  <Button style={{ background: '#10b981', borderColor: '#10b981', color: '#ffffff', fontWeight: 600 }} onClick={() => handleCompleteInspection(selectedRefund.id, true)} disabled={processing}>
                     Đạt
                   </Button>
                 </div>
