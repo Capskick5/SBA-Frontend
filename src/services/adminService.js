@@ -120,6 +120,24 @@ export const adminService = {
     });
   },
 
+  // Refund Requests (admin)
+  getRefundRequests: (params) => {
+    const queryParams = { ...params };
+    if (Array.isArray(queryParams.statuses)) {
+      queryParams.statuses = queryParams.statuses.join(',');
+    }
+    return api.get('/admin/refund-requests', { params: queryParams }).then(res => res.data?.data || res.data);
+  },
+  getRefundRequestById: (id) => api.get(`/admin/refund-requests/${id}`).then(res => res.data?.data || res.data),
+  approveRefundRequest: (id, body) => api.put(`/admin/refund-requests/${id}/approve`, body).then(res => res.data?.data || res.data),
+  rejectRefundRequest: (id, body) => api.put(`/admin/refund-requests/${id}/reject`, body).then(res => res.data?.data || res.data),
+  confirmRefundReceived: (id) => api.put(`/admin/refund-requests/${id}/confirm-received`).then(res => res.data?.data || res.data),
+  startRefundInspection: (id) => api.put(`/admin/refund-requests/${id}/start-inspection`).then(res => res.data?.data || res.data),
+  completeRefundInspection: (id, body) => api.put(`/admin/refund-requests/${id}/complete-inspection`, body).then(res => res.data?.data || res.data),
+  submitReplacementShipment: (id, body) => api.put(`/admin/refund-requests/${id}/replacement-shipment`, body).then(res => res.data?.data || res.data),
+  markRefundProcessed: (id) => api.put(`/admin/refund-requests/${id}/mark-refund-processed`).then(res => res.data?.data || res.data),
+  closeRefundRequest: (id) => api.put(`/admin/refund-requests/${id}/close`).then(res => res.data?.data || res.data),
+
   checkRagHealth: () => api.get('/admin/rag/health').then(res => res.data),
   ingestBookContent: (bookId, chunkSize, overlapSize) => {
     const params = {};

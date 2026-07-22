@@ -41,4 +41,12 @@ export const refundService = {
     window.dispatchEvent(new Event('refund_updated'));
     return result;
   },
+
+  getRefundRequests(params) {
+    const queryParams = { ...params };
+    if (Array.isArray(queryParams.statuses)) {
+      queryParams.statuses = queryParams.statuses.join(',');
+    }
+    return apiClient.get('/admin/refund-requests', { params: queryParams }).then(res => res?.items || res?.content || res?.data?.items || res?.data || res);
+  },
 };
