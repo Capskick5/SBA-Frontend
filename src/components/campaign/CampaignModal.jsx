@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Gift, Check, X, Tag as TagIcon, ArrowRight, Search, Lock } from 'lucide-react';
+import { Sparkles, Gift, Check, X, Tag as TagIcon, ArrowRight, Lock, Layers } from 'lucide-react';
 import Button from '../ui/Button';
 import { LoadingState } from '../ui/State';
 import { campaignService } from '../../services/campaignService';
@@ -30,7 +30,6 @@ export default function CampaignModal({ isOpen, onClose }) {
   const [claimedCodes, setClaimedCodes] = useState([]);
   const [claimingId, setClaimingId] = useState(null);
   const [selectedCampaignId, setSelectedCampaignId] = useState('ALL');
-  const [searchQuery, setSearchQuery] = useState('');
 
   const currentUser = authService.getCurrentUser();
   const isLoggedIn = Boolean(currentUser);
@@ -55,7 +54,12 @@ export default function CampaignModal({ isOpen, onClose }) {
 
         if (!active) return;
 
-        setCampaigns(cList || []);
+        // Public promotional campaigns (Flash Sale)
+        const publicPromotionalCampaigns = (cList || []).filter(
+          (c) => c.campaignType === 'FLASH_SALE' || (!c.isAutoDistributed && c.campaignType !== 'WELCOME_GIFT')
+        );
+
+        setCampaigns(publicPromotionalCampaigns);
         setVouchers(vResult.items || []);
 
         const mineCodes = (mineList || []).map((v) => (v.voucherCode || '').toUpperCase());
@@ -120,24 +124,22 @@ export default function CampaignModal({ isOpen, onClose }) {
     return expiryDate > now;
   });
 
-  // Filter 2: Only 'ALL' tab and dynamic Admin Campaign tabs
-  const filteredVouchers = activeUnexpiredVouchers.filter((v) => {
-    if (selectedCampaignId !== 'ALL') {
-      const matchCampaignId = String(v.campaignId) === String(selectedCampaignId);
-      const targetCampaign = campaigns.find((c) => String(c.id) === String(selectedCampaignId));
-      const matchName = targetCampaign && (v.campaignName || '').toLowerCase() === targetCampaign.name.toLowerCase();
-      if (!matchCampaignId && !matchName) return false;
-    }
+  // Filter 2: VOUCHERS MUST BELONG TO AN ACTIVE CAMPAIGN to be displayed
+  const campaignVouchersOnly = activeUnexpiredVouchers.filter((v) => {
+    if (!v.campaignId && !v.campaignName) return false;
+    const matchCampaign = campaigns.some(
+      (c) => String(c.id) === String(v.campaignId) || (v.campaignName && c.name.toLowerCase() === v.campaignName.toLowerCase())
+    );
+    return matchCampaign;
+  });
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      const codeMatch = String(v.code || v.voucherCode || '').toLowerCase().includes(q);
-      const nameMatch = String(v.name || v.voucherName || '').toLowerCase().includes(q);
-      const campaignMatch = String(v.campaignName || '').toLowerCase().includes(q);
-      if (!codeMatch && !nameMatch && !campaignMatch) return false;
-    }
-
-    return true;
+  // Filter 3: Filter by selected Admin Campaign tab
+  const filteredVouchers = campaignVouchersOnly.filter((v) => {
+    if (selectedCampaignId === 'ALL') return true;
+    const matchCampaignId = String(v.campaignId) === String(selectedCampaignId);
+    const targetCampaign = campaigns.find((c) => String(c.id) === String(selectedCampaignId));
+    const matchName = targetCampaign && (v.campaignName || '').toLowerCase() === targetCampaign.name.toLowerCase();
+    return matchCampaignId || matchName;
   });
 
   return (
@@ -158,7 +160,7 @@ export default function CampaignModal({ isOpen, onClose }) {
         </header>
 
         {!isLoggedIn ? (
-          /* Guest Screen: Hide Vouchers and prompt to log in */
+          /* Guest Screen */
           <div className="campaign-modal-body" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 24px' }}>
             <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', maxWidth: '440px' }}>
               <div style={{ width: '68px', height: '68px', borderRadius: '50%', background: '#fef0eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fb6376', boxShadow: '0 4px 14px rgba(251, 99, 118, 0.15)' }}>
@@ -185,34 +187,18 @@ export default function CampaignModal({ isOpen, onClose }) {
         ) : (
           /* Logged In View */
           <>
-            {/* Campaign Search & Dynamic Admin Campaign Tabs */}
-            <div className="campaign-modal-toolbar" style={{ padding: '12px 28px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div className="campaign-search-box" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f1f5f9', padding: '8px 14px', borderRadius: '8px' }}>
-                <Search size={16} style={{ color: 'var(--muted)' }} />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Tìm kiếm theo tên Campaign hoặc Mã voucher..."
-                  style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.88rem' }}
-                />
-                {searchQuery && (
-                  <button type="button" onClick={() => setSearchQuery('')} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--muted)' }}>
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-
+            {/* Dynamic Admin Campaign Tabs (Only active campaigns) */}
+            <div className="campaign-modal-toolbar" style={{ padding: '12px 28px', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
               <div className="campaign-modal-tabs" style={{ padding: 0, border: 'none' }}>
                 <button
                   type="button"
                   className={`campaign-tab ${selectedCampaignId === 'ALL' ? 'active' : ''}`}
                   onClick={() => setSelectedCampaignId('ALL')}
                 >
-                  <TagIcon size={15} /> Tất cả ({activeUnexpiredVouchers.length})
+                  <Layers size={15} /> Tất cả ({campaignVouchersOnly.length})
                 </button>
 
-                {/* Dynamic Admin Campaign Tabs Only */}
+                {/* Each tag represents a Flash Sale / Promotional Admin Campaign */}
                 {campaigns.map((c) => (
                   <button
                     key={c.id}
@@ -241,7 +227,11 @@ export default function CampaignModal({ isOpen, onClose }) {
                       && voucher.claimedQuantity != null
                       && voucher.claimedQuantity >= voucher.totalQuantity;
 
-                    const campaignTag = voucher.campaignName || (campaigns.find((c) => String(c.id) === String(voucher.campaignId))?.name) || 'Mã Ưu Đãi';
+                    // Match exact Campaign Name for badge tag
+                    const parentCampaign = campaigns.find(
+                      (c) => String(c.id) === String(voucher.campaignId)
+                    );
+                    const campaignTag = parentCampaign?.name || voucher.campaignName || 'Campaign Khuyến Mãi';
 
                     return (
                       <article
@@ -303,7 +293,7 @@ export default function CampaignModal({ isOpen, onClose }) {
                 <div className="campaign-empty-inline" style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--muted)' }}>
                   <Gift size={36} style={{ marginBottom: '10px', opacity: 0.5 }} />
                   <h3>Chưa có voucher phù hợp</h3>
-                  <p>Hiện chưa có mã voucher nào thuộc danh mục này. Bạn có thể mở danh mục Tất cả!</p>
+                  <p>Hiện chưa có mã voucher nào thuộc campaign này. Bạn có thể chọn tab Tất cả!</p>
                 </div>
               )}
             </div>

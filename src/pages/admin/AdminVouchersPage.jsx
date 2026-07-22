@@ -471,7 +471,6 @@ export default function AdminVouchersPage() {
               <select value={form.status} onChange={(event) => setField('status', event.target.value)}>
                 <option value="ACTIVE">Đang hiệu lực</option>
                 <option value="INACTIVE">Ngừng</option>
-                <option value="EXPIRED">Hết hạn</option>
               </select>
             </label>
 
