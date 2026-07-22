@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { BotMessageSquare } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { aiChatService } from '../../services/aiChatService';
@@ -155,7 +156,7 @@ export default function AiChatbot() {
           <div className="ai-chatbot-messages">
             {messages.map((msg) => (
               <div key={msg.id} className={`ai-chatbot-message is-${msg.sender}`}>
-                <div className="message-text"><ReactMarkdown>{msg.text}</ReactMarkdown></div>
+                 <div className="message-text"><ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown></div>
                 {msg.books && msg.books.length > 0 && (
                   <div className="chatbot-books-list">
                     {msg.books.map((b) => (
