@@ -187,130 +187,134 @@ export default function MyReviewsPage() {
         </ConfirmDialog>
       )}
 
-      <div className="admin-filter-tabs my-reviews-tabs" role="tablist" aria-label="Lọc đánh giá">
-        {TABS.map((tab) => {
-          const count = tab.id === 'pending' ? pending.length : reviewed.length;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab.id}
-              className={`admin-filter-tab${activeTab === tab.id ? ' is-active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label} ({count})
-            </button>
-          );
-        })}
+      <div className="my-reviews-toolbar">
+        <div className="admin-filter-tabs my-reviews-tabs" role="tablist" aria-label="Lọc đánh giá">
+          {TABS.map((tab) => {
+            const count = tab.id === 'pending' ? pending.length : reviewed.length;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                className={`admin-filter-tab${activeTab === tab.id ? ' is-active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label} ({count})
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {totalBooks === 0 ? (
-        <EmptyState text="Chưa có sách nào để đánh giá. Hoàn tất đơn hàng để viết đánh giá." />
-      ) : list.length === 0 ? (
-        <EmptyState
-          text={
-            activeTab === 'pending'
-              ? 'Bạn đã đánh giá hết sách đã nhận. Cảm ơn bạn!'
-              : 'Bạn chưa viết đánh giá nào. Chọn tab Chờ đánh giá để bắt đầu.'
-          }
-        />
-      ) : (
-        <ul className="my-reviews-list">
-          {activeTab === 'pending'
-            ? pending.map((book) => (
-                <li key={book.bookId} className="my-reviews-item">
-                  <div className="my-reviews-item-main">
-                    <Link to={`/books/${book.bookId}`} className="my-reviews-cover-link">
-                      <img
-                        src={book.coverUrl || coverFallback(book.title)}
-                        alt={book.title}
-                        className="my-reviews-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = coverFallback(book.title);
-                        }}
-                      />
-                    </Link>
-                    <div className="my-reviews-item-body">
-                      <Link to={`/books/${book.bookId}`} className="my-reviews-title">
-                        {book.title}
+      <div className="my-reviews-panel-body">
+        {totalBooks === 0 ? (
+          <EmptyState text="Chưa có sách nào để đánh giá. Hoàn tất đơn hàng để viết đánh giá." />
+        ) : list.length === 0 ? (
+          <EmptyState
+            text={
+              activeTab === 'pending'
+                ? 'Bạn đã đánh giá hết sách đã nhận. Cảm ơn bạn!'
+                : 'Bạn chưa viết đánh giá nào. Chọn tab Chờ đánh giá để bắt đầu.'
+            }
+          />
+        ) : (
+          <ul className="my-reviews-list">
+            {activeTab === 'pending'
+              ? pending.map((book) => (
+                  <li key={book.bookId} className="my-reviews-item">
+                    <div className="my-reviews-item-main">
+                      <Link to={`/books/${book.bookId}`} className="my-reviews-cover-link">
+                        <img
+                          src={book.coverUrl || coverFallback(book.title)}
+                          alt={book.title}
+                          className="my-reviews-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = coverFallback(book.title);
+                          }}
+                        />
                       </Link>
-                      <p className="my-reviews-hint">Đơn đã giao — bạn có thể viết đánh giá.</p>
-                      {writingBookId !== book.bookId ? (
-                        <Button type="button" size="sm" onClick={() => setWritingBookId(book.bookId)}>
-                          Viết đánh giá
-                        </Button>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setWritingBookId(null)}
-                        >
-                          Đóng
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                  {writingBookId === book.bookId && (
-                    <div className="my-reviews-form-wrap">
-                      <ReviewForm
-                        bookId={book.bookId}
-                        onSubmitted={(review) => handleReviewSubmitted(book, review)}
-                      />
-                    </div>
-                  )}
-                </li>
-              ))
-            : reviewed.map((item) => (
-                <li key={item.bookId} className="my-reviews-item my-reviews-item-reviewed">
-                  <div className="my-reviews-item-main">
-                    <Link to={`/books/${item.bookId}`} className="my-reviews-cover-link">
-                      <img
-                        src={item.coverUrl || coverFallback(item.title)}
-                        alt={item.title}
-                        className="my-reviews-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = coverFallback(item.title);
-                        }}
-                      />
-                    </Link>
-                    <div className="my-reviews-item-body">
-                      <div className="my-reviews-item-header">
-                        <Link to={`/books/${item.bookId}`} className="my-reviews-title">
-                          {item.title}
+                      <div className="my-reviews-item-body">
+                        <Link to={`/books/${book.bookId}`} className="my-reviews-title">
+                          {book.title}
                         </Link>
-                        {item.review?.status === 'HIDDEN' && (
-                          <span className="status-badge cancelled">Đã ẩn</span>
+                        <p className="my-reviews-hint">Đơn đã giao — bạn có thể viết đánh giá.</p>
+                        {writingBookId !== book.bookId ? (
+                          <Button type="button" size="sm" onClick={() => setWritingBookId(book.bookId)}>
+                            Viết đánh giá
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setWritingBookId(null)}
+                          >
+                            Đóng
+                          </Button>
                         )}
                       </div>
-                      <div className="review-stars" aria-label={`${item.review.rating} trên 5 sao`}>
-                        {'★'.repeat(item.review.rating)}
-                        {'☆'.repeat(5 - item.review.rating)}
-                        <strong>{item.review.rating}/5</strong>
+                    </div>
+                    {writingBookId === book.bookId && (
+                      <div className="my-reviews-form-wrap">
+                        <ReviewForm
+                          bookId={book.bookId}
+                          onSubmitted={(review) => handleReviewSubmitted(book, review)}
+                        />
                       </div>
-                      <p className="my-reviews-comment">
-                        {item.review.comment || 'Bạn chỉ chấm điểm, không viết nhận xét.'}
-                      </p>
-                      <div className="my-reviews-meta">
-                        <time dateTime={item.review.createdAt}>
-                          {formatDate(item.review.createdAt)}
-                        </time>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setDeleteTarget(item)}
-                        >
-                          Xóa đánh giá
-                        </Button>
+                    )}
+                  </li>
+                ))
+              : reviewed.map((item) => (
+                  <li key={item.bookId} className="my-reviews-item my-reviews-item-reviewed">
+                    <div className="my-reviews-item-main">
+                      <Link to={`/books/${item.bookId}`} className="my-reviews-cover-link">
+                        <img
+                          src={item.coverUrl || coverFallback(item.title)}
+                          alt={item.title}
+                          className="my-reviews-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = coverFallback(item.title);
+                          }}
+                        />
+                      </Link>
+                      <div className="my-reviews-item-body">
+                        <div className="my-reviews-item-header">
+                          <Link to={`/books/${item.bookId}`} className="my-reviews-title">
+                            {item.title}
+                          </Link>
+                          {item.review?.status === 'HIDDEN' && (
+                            <span className="status-badge cancelled">Đã ẩn</span>
+                          )}
+                        </div>
+                        <div className="review-stars" aria-label={`${item.review.rating} trên 5 sao`}>
+                          {'★'.repeat(item.review.rating)}
+                          {'☆'.repeat(5 - item.review.rating)}
+                          <strong>{item.review.rating}/5</strong>
+                        </div>
+                        <p className="my-reviews-comment">
+                          {item.review.comment || 'Bạn chỉ chấm điểm, không viết nhận xét.'}
+                        </p>
+                        <div className="my-reviews-meta">
+                          <time dateTime={item.review.createdAt}>
+                            {formatDate(item.review.createdAt)}
+                          </time>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setDeleteTarget(item)}
+                          >
+                            Xóa đánh giá
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </li>
-              ))}
-        </ul>
-      )}
+                  </li>
+                ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

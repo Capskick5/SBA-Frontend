@@ -43,7 +43,6 @@ export default function ProfilePage() {
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [pendingPasswordChange, setPendingPasswordChange] = useState(null);
   const activeTab = searchParams.get('tab') || 'account';
-  const [addressTitle, setAddressTitle] = useState('Sổ địa chỉ');
 
   useEffect(() => {
     profileService.getProfile()
@@ -125,44 +124,10 @@ export default function ProfilePage() {
     { id: 'reviews', label: 'Đánh giá sản phẩm', icon: Star },
   ];
 
-  const tabConfig = {
-    account: {
-      title: 'Thông tin tài khoản',
-      subtitle: 'Quản lý thông tin cá nhân, thông tin liên hệ và cài đặt bảo mật tài khoản',
-      icon: User,
-    },
-    orders: {
-      title: 'Quản lý đơn hàng',
-      subtitle: 'Theo dõi tiến độ, chi tiết và lịch sử các đơn hàng đã đặt tại BookVerse',
-      icon: Package,
-    },
-    vouchers: {
-      title: 'Voucher của tôi',
-      subtitle: 'Danh sách các mã giảm giá và ưu đãi quà tặng dành cho bạn',
-      icon: TicketPercent,
-    },
-    addresses: {
-      title: addressTitle || 'Sổ địa chỉ',
-      subtitle: 'Quản lý danh sách địa chỉ nhận hàng và thông tin liên hệ giao hàng',
-      icon: MapPin,
-    },
-    reviews: {
-      title: 'Đánh giá sản phẩm',
-      subtitle: 'Xem lại và đóng góp ý kiến đánh giá các sản phẩm sách bạn đã trải nghiệm',
-      icon: Star,
-    },
-  };
-
-  const currentTab = tabConfig[activeTab] || tabConfig.account;
-
   const renderProfilePanel = () => {
     if (activeTab === 'vouchers') {
       return (
         <div className="profile-content">
-          <div className="profile-page-header">
-            <h1>{tabConfig.vouchers.title}</h1>
-            <p className="profile-page-subtitle">{tabConfig.vouchers.subtitle}</p>
-          </div>
           <div className="profile-card profile-embedded-card voucher-profile-card">
             <VouchersPage />
           </div>
@@ -173,10 +138,6 @@ export default function ProfilePage() {
     if (activeTab === 'orders') {
       return (
         <div className="profile-content">
-          <div className="profile-page-header">
-            <h1>{tabConfig.orders.title}</h1>
-            <p className="profile-page-subtitle">{tabConfig.orders.subtitle}</p>
-          </div>
           <div className="profile-card profile-embedded-card">
             <OrdersPage />
           </div>
@@ -187,12 +148,8 @@ export default function ProfilePage() {
     if (activeTab === 'addresses') {
       return (
         <div className="profile-content">
-          <div className="profile-page-header">
-            <h1>{currentTab.title}</h1>
-            <p className="profile-page-subtitle">{tabConfig.addresses.subtitle}</p>
-          </div>
           <div className="profile-card profile-embedded-card">
-            <AddressesPage onTitleChange={setAddressTitle} />
+            <AddressesPage onTitleChange={() => {}} />
           </div>
         </div>
       );
@@ -201,10 +158,6 @@ export default function ProfilePage() {
     if (activeTab === 'reviews') {
       return (
         <div className="profile-content">
-          <div className="profile-page-header">
-            <h1>{tabConfig.reviews.title}</h1>
-            <p className="profile-page-subtitle">{tabConfig.reviews.subtitle}</p>
-          </div>
           <div className="profile-card profile-embedded-card">
             <MyReviewsPage />
           </div>

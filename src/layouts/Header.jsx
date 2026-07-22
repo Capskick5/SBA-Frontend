@@ -9,7 +9,7 @@ import {
   LogOut,
   Search,
   TicketPercent,
-  Sparkles,
+  BotMessageSquare,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -216,7 +216,7 @@ export default function Header() {
               aria-label="Mở trợ lý đọc sách AI cho sách đã mua"
               title="Trợ lý đọc sách AI cho sách đã mua"
             >
-              <Sparkles size={16} className="header-ai-icon" />
+              <BotMessageSquare size={16} className="header-ai-icon" />
               <span>Trợ lý đọc sách AI</span>
             </Link>
           )}

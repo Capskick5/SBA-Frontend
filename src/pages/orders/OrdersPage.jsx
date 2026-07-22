@@ -227,49 +227,52 @@ export default function OrdersPage() {
   };
 
   return (
-    <section className="stack">
+    <section className="stack orders-page">
       <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--text)', margin: '0' }}>
         Đơn hàng của tôi
       </h1>
 
-      {/* Tabs list */}
-      <div className="orders-tabs-wrapper">
-        <ul className="orders-tabs">
-          {TABS.map((tab) => (
-            <li key={tab.id} style={{ flex: 1 }}>
-              <button
-                type="button"
-                className={`orders-tab ${activeTab === tab.id ? 'is-active' : ''}`}
-                onClick={() => {
-                  setActiveTab(tab.id);
-                  setAppliedSearch('');
-                  setSearchQuery('');
-                  setPage(0);
-                }}
-              >
-                {tab.label}
-              </button>
-            </li>
-          ))}
-        </ul>
+      <div className="orders-panel-toolbar">
+        {/* Tabs list */}
+        <div className="orders-tabs-wrapper">
+          <ul className="orders-tabs">
+            {TABS.map((tab) => (
+              <li key={tab.id} style={{ flex: 1 }}>
+                <button
+                  type="button"
+                  className={`orders-tab ${activeTab === tab.id ? 'is-active' : ''}`}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setAppliedSearch('');
+                    setSearchQuery('');
+                    setPage(0);
+                  }}
+                >
+                  {tab.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Search Input Bar */}
+        <form onSubmit={handleSearchSubmit} className="orders-search-wrapper">
+          <Search size={18} className="orders-search-icon" />
+          <input
+            type="text"
+            className="orders-search-input"
+            placeholder="Tìm đơn theo mã đơn hoặc tên sản phẩm"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <div className="orders-search-divider" />
+          <button type="submit" className="orders-search-btn">
+            Tìm đơn
+          </button>
+        </form>
       </div>
 
-      {/* Search Input Bar */}
-      <form onSubmit={handleSearchSubmit} className="orders-search-wrapper">
-        <Search size={18} className="orders-search-icon" />
-        <input
-          type="text"
-          className="orders-search-input"
-          placeholder="Tìm đơn theo mã đơn hoặc tên sản phẩm"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <div className="orders-search-divider" />
-        <button type="submit" className="orders-search-btn">
-          Tìm đơn
-        </button>
-      </form>
-
+      <div className="orders-panel-body">
       {/* Main Content Area */}
       {loading ? (
         <LoadingState text="Đang tải đơn hàng..." />
@@ -372,7 +375,7 @@ export default function OrdersPage() {
                           </Button>
                         </div>
                       )}
-                      <Link to={`/orders/${order.id}`} className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '8px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', fontSize: '13px', fontWeight: '500', transition: 'all 0.2s' }}>
+                      <Link to={`/orders/${order.id}`} className="btn btn-outline">
                         Xem chi tiết
                       </Link>
                       {/* Only allow Rebuying if status is completed, processing or shipped */}
@@ -381,7 +384,6 @@ export default function OrdersPage() {
                           loading={isRebuying}
                           disabled={isRebuying}
                           onClick={() => handleRebuy(order)}
-                          style={{ padding: '8px 16px', borderRadius: 'var(--radius-sm)', fontSize: '13px' }}
                         >
                           Mua lại
                         </Button>
@@ -402,6 +404,7 @@ export default function OrdersPage() {
           )}
         </>
       )}
+      </div>
 
       {cancelTarget && (
         <ConfirmDialog

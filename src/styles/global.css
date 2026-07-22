@@ -119,7 +119,7 @@ body {
 .payment-result-page {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 24px 24px 60px;
+  padding: 16px 24px 60px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -127,6 +127,20 @@ body {
 /* Catalog: pull banner tight under category nav */
 .page:has(.catalog-container) {
   padding-top: 0;
+  width: 100%;
+}
+
+/* Account/content pages: modest gap under category bar (like storefront) */
+.page:has(.profile-page),
+.page:has(.cart-page),
+.page:has(.checkout-page-wrapper),
+.page:has(.book-detail-page),
+.page:has(.book-chat-page-wrapper),
+.page:has(.order-detail-page-container),
+.page:has(.order-track-page),
+.page:has(.payment-result-page) {
+  padding-top: 0;
+  padding-bottom: 0;
   width: 100%;
 }
 
@@ -140,7 +154,7 @@ body {
   font-size: 13px;
   font-weight: 500;
   color: var(--muted);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .profile-breadcrumb a,
@@ -1639,10 +1653,6 @@ html[data-theme="dark"] .admin-shell .btn.danger-action:disabled {
 .voucher-preview-card span {
   color: var(--muted);
   font-size: 13px;
-}
-
-.voucher-profile-card {
-  max-height: none;
 }
 
 .voucher-wallet {
@@ -3943,19 +3953,13 @@ td:has(> .admin-row-actions) {
 }
 
 .profile-embedded-card {
-  display: block;
-  min-height: 640px;
-  max-height: 640px;
-  overflow: auto;
-}
-
-.profile-embedded-card::-webkit-scrollbar {
-  width: 8px;
-}
-
-.profile-embedded-card::-webkit-scrollbar-thumb {
-  background: var(--surface-light);
-  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  min-height: var(--profile-panel-height, calc(100vh - var(--profile-sticky-top, var(--header-sticky-top, 148px)) - 72px));
+  max-height: var(--profile-panel-height, calc(100vh - var(--profile-sticky-top, var(--header-sticky-top, 148px)) - 72px));
+  height: var(--profile-panel-height, calc(100vh - var(--profile-sticky-top, var(--header-sticky-top, 148px)) - 72px));
+  overflow: hidden;
+  overscroll-behavior: contain;
 }
 
 .profile-embedded-card > .stack {
@@ -3985,7 +3989,9 @@ td:has(> .admin-row-actions) {
 .my-reviews-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0;
+  min-height: 0;
+  height: 100%;
 }
 
 .my-reviews-tabs {
@@ -4362,27 +4368,54 @@ td:has(> .admin-row-actions) {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 18px;
+  gap: 12px;
   width: 100%;
-  min-height: 60px;
-  border: 1px dashed var(--border);
-  border-radius: 2px;
-  background: var(--surface);
+  min-height: 72px;
+  padding: 14px 18px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 10%, var(--surface)) 0%,
+    color-mix(in srgb, var(--brand-light) 18%, var(--surface)) 100%
+  );
   color: var(--accent);
   font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   cursor: pointer;
+  box-shadow: none;
   transition:
     border-color 0.2s ease,
-    background 0.2s ease;
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .address-book-add svg {
-  color: var(--muted);
+  color: var(--accent);
+  flex-shrink: 0;
+  padding: 8px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 .address-book-add:hover {
   border-color: var(--accent);
-  background: var(--surface-alt);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 16%, var(--surface)) 0%,
+    color-mix(in srgb, var(--brand-light) 28%, var(--surface)) 100%
+  );
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.address-book-add:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-color: var(--accent);
 }
 
 .address-book-list {
@@ -4397,9 +4430,19 @@ td:has(> .admin-row-actions) {
   align-items: start;
   min-height: 106px;
   padding: 18px 18px 16px;
-  border: 1px solid transparent;
-  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--warning) 55%, var(--border));
+  border-radius: var(--radius-md);
   background: var(--surface);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.address-book-card:hover {
+  border-color: var(--warning);
+  box-shadow: var(--shadow-sm);
+  background: color-mix(in srgb, var(--warning) 6%, var(--surface));
 }
 
 .address-book-main {
@@ -4437,12 +4480,11 @@ td:has(> .admin-row-actions) {
 }
 
 .address-book-actions {
-  display: grid;
-  grid-template-columns: 54px 64px 88px;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-items: start;
+  justify-content: flex-end;
   gap: 8px;
-  white-space: nowrap;
 }
 
 .address-book-actions button,
@@ -4455,20 +4497,89 @@ td:has(> .admin-row-actions) {
   cursor: pointer;
 }
 
-.address-book-actions button:hover,
 .address-book-form-heading button:hover {
   color: var(--accent-hover);
   text-decoration: underline;
 }
 
-.address-book-actions button.danger {
-  color: var(--error);
+.address-book-actions .address-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+.address-book-actions .address-action-edit {
+  color: var(--brand-primary);
+  background: color-mix(in srgb, var(--brand-light) 42%, var(--surface));
+  border-color: var(--accent);
+}
+
+.address-book-actions .address-action-edit:hover {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px var(--accent-glow);
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+.address-book-actions .address-action-delete {
+  color: #b45309;
+  background: color-mix(in srgb, var(--warning) 16%, var(--surface));
+  border-color: var(--warning);
+}
+
+.address-book-actions .address-action-delete:hover {
+  color: #fff;
+  background: color-mix(in srgb, var(--warning) 88%, #b45309);
+  border-color: var(--warning);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--warning) 30%, transparent);
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+html[data-theme='dark'] .address-book-actions .address-action-edit {
+  color: var(--brand-light);
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  border-color: var(--accent);
+}
+
+html[data-theme='dark'] .address-book-actions .address-action-delete {
+  color: #fbbf24;
+  background: color-mix(in srgb, var(--warning) 18%, var(--surface));
+  border-color: var(--warning);
+}
+
+.address-book-actions .address-action-default {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, var(--surface));
+  border-color: var(--success);
+  font-weight: 600;
+}
+
+.address-book-actions .address-action-default:hover {
+  color: #fff;
+  background: var(--success);
+  border-color: var(--success);
+  text-decoration: none;
 }
 
 .address-book-action-spacer {
-  display: block;
-  width: 88px;
-  height: 1px;
+  display: none;
 }
 
 .address-book-form-panel {
@@ -10960,20 +11071,105 @@ html[data-theme="dark"] .btn-open-campaign-modal:hover {
 }
 
 /* ==========================================================================
-   Customer Order Management & Profile Styles (No Inner Scrollbars)
+   Customer Order Management & Profile Styles
    ========================================================================== */
-.profile-embedded-card {
+.profile-card.profile-embedded-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: 0;
   box-shadow: var(--shadow-sm);
-  overflow: visible;
-  height: auto;
+  min-height: var(--profile-panel-height, calc(100vh - var(--profile-sticky-top, var(--header-sticky-top, 148px)) - 72px));
+  max-height: var(--profile-panel-height, calc(100vh - var(--profile-sticky-top, var(--header-sticky-top, 148px)) - 72px));
+  height: var(--profile-panel-height, calc(100vh - var(--profile-sticky-top, var(--header-sticky-top, 148px)) - 72px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.profile-card.profile-embedded-card > .stack,
+.profile-card.profile-embedded-card > .orders-page,
+.profile-card.profile-embedded-card > .my-reviews-page,
+.profile-card.profile-embedded-card > .address-book-page,
+.profile-card.profile-embedded-card > .voucher-wallet {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+}
+
+.profile-card.profile-embedded-card > .address-book-page,
+.profile-card.profile-embedded-card > .voucher-wallet {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.profile-card.profile-embedded-card > .address-book-page::-webkit-scrollbar,
+.profile-card.profile-embedded-card > .voucher-wallet::-webkit-scrollbar {
+  width: 8px;
+}
+
+.profile-card.profile-embedded-card > .address-book-page::-webkit-scrollbar-thumb,
+.profile-card.profile-embedded-card > .voucher-wallet::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted) 45%, transparent);
+  border-radius: var(--radius-sm);
+}
+
+.profile-embedded-card > .stack > h1,
+.profile-embedded-card > .orders-page > h1 {
+  display: none;
+}
+
+.orders-panel-toolbar,
+.my-reviews-toolbar {
+  flex-shrink: 0;
+  padding: 16px 20px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  z-index: 2;
+}
+
+.orders-panel-body,
+.my-reviews-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 12px 20px 20px;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.orders-panel-body::-webkit-scrollbar,
+.my-reviews-panel-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.orders-panel-body::-webkit-scrollbar-thumb,
+.my-reviews-panel-body::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted) 45%, transparent);
+  border-radius: var(--radius-sm);
+}
+
+.profile-card.profile-embedded-card::-webkit-scrollbar {
+  width: 8px;
+}
+
+.profile-card.profile-embedded-card::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted) 45%, transparent);
+  border-radius: var(--radius-sm);
 }
 
 .orders-tabs-wrapper {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   overflow-x: auto;
   padding-bottom: 4px;
   -webkit-overflow-scrolling: touch;
@@ -11075,28 +11271,29 @@ html[data-theme="dark"] .btn-open-campaign-modal:hover {
 }
 
 .orders-page-count {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--muted);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .order-cards-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
   overflow: visible;
   height: auto;
+  margin-bottom: 8px;
 }
 
 .order-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 20px;
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
   transition: all 0.2s ease;
   overflow: visible;
 }
@@ -11110,32 +11307,34 @@ html[data-theme="dark"] .btn-open-campaign-modal:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 12px;
+  gap: 8px;
+  padding-bottom: 6px;
   border-bottom: 1px solid var(--border);
 }
 
 .order-card-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .order-card-id {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text);
 }
 
 .order-card-date {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--muted);
 }
 
 .order-card-gift-badge {
   display: inline-flex;
-  padding: 2px 8px;
-  font-size: 11px;
+  padding: 1px 7px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--accent);
   background: var(--rose-glow);
@@ -11145,18 +11344,18 @@ html[data-theme="dark"] .btn-open-campaign-modal:hover {
 .order-card-body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .order-item-row {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 
 .order-item-cover-wrapper {
-  width: 44px;
-  height: 60px;
+  width: 36px;
+  height: 48px;
   border-radius: var(--radius-sm);
   overflow: hidden;
   background: var(--surface-alt);
@@ -11175,56 +11374,64 @@ html[data-theme="dark"] .btn-open-campaign-modal:hover {
 }
 
 .order-item-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text);
-  margin: 0 0 4px;
+  margin: 0;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .order-item-qty {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
 }
 
 .order-item-price {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--accent);
+  white-space: nowrap;
 }
 
 .order-card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 14px;
+  padding-top: 6px;
   border-top: 1px solid var(--border);
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 }
 
 .order-card-shipping {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--muted);
 }
 
 .order-card-summary {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   margin-left: auto;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .order-card-total-row {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  font-size: 14px;
+  gap: 6px;
+  font-size: 12px;
   color: var(--text);
+  white-space: nowrap;
 }
 
 .order-card-total-price {
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 800;
   color: var(--accent);
 }
@@ -11232,17 +11439,27 @@ html[data-theme="dark"] .btn-open-campaign-modal:hover {
 .order-card-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.order-card-actions .btn,
+.order-card-actions a.btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
 }
 
 .pending-payment-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .pending-payment-countdown {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--warning);
 }
@@ -11253,9 +11470,12 @@ html[data-theme="dark"] .btn-open-campaign-modal:hover {
 .profile-page {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 24px 24px 60px;
+  padding: 16px 24px 60px;
   width: 100%;
   box-sizing: border-box;
+  --profile-panel-height: calc(
+    100vh - var(--profile-sticky-top, var(--header-sticky-top, 148px)) - 72px
+  );
 }
 
 .profile-breadcrumb {
@@ -11265,7 +11485,7 @@ html[data-theme="dark"] .btn-open-campaign-modal:hover {
   font-size: 13px;
   font-weight: 500;
   color: var(--muted);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .profile-breadcrumb a {
@@ -11431,6 +11651,22 @@ html[data-theme="dark"] .btn-open-campaign-modal:hover {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-height: var(--profile-panel-height);
+  height: var(--profile-panel-height);
+}
+
+.profile-content > .profile-card {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Account Info Card Split Layout */
+.profile-account-card {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  min-height: var(--profile-panel-height);
+  height: var(--profile-panel-height);
+  align-self: stretch;
 }
 
 .profile-page-header {
@@ -11470,11 +11706,7 @@ html[data-theme="dark"] .btn-open-campaign-modal:hover {
   overflow: hidden;
 }
 
-/* Account Info Card Split Layout */
-.profile-account-card {
-  display: grid;
-  grid-template-columns: 1.15fr 1fr;
-}
+/* Account Info Card Split Layout — height set above with .profile-content */
 
 .profile-personal-panel {
   padding: 32px;
@@ -11482,6 +11714,8 @@ html[data-theme="dark"] .btn-open-campaign-modal:hover {
   flex-direction: column;
   gap: 24px;
   background: var(--surface);
+  min-height: 0;
+  height: 100%;
 }
 
 .profile-section-heading h2 {
@@ -11605,6 +11839,8 @@ html[data-theme="dark"] .btn-open-campaign-modal:hover {
   flex-direction: column;
   gap: 28px;
   background: linear-gradient(180deg, var(--surface) 0%, var(--surface-alt) 100%);
+  min-height: 0;
+  height: 100%;
 }
 
 .profile-side-section {
@@ -11734,11 +11970,18 @@ html[data-theme="dark"] .btn-open-campaign-modal:hover {
   .profile-sidebar {
     position: static;
   }
+  .profile-content {
+    min-height: 0;
+    height: auto;
+  }
   .profile-account-card {
     grid-template-columns: 1fr;
+    min-height: 0;
+    height: auto;
   }
   .profile-side-panel {
     border-left: none;
     border-top: 1px solid var(--border);
+    height: auto;
   }
 }

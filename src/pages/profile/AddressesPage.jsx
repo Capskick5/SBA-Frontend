@@ -1,6 +1,6 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { CheckCircle2, Plus } from 'lucide-react';
+import { CheckCircle2, Pencil, Plus, Trash2 } from 'lucide-react';
 import AddressForm from '../../components/checkout/AddressForm';
 import { AuthFormMessage } from '../../components/auth/AuthFormFooter';
 import { captureFormError } from '../../utils/formErrorUtils';
@@ -213,12 +213,32 @@ export default function AddressesPage({ onTitleChange }) {
             </div>
 
             <div className="address-book-actions">
-              <button type="button" onClick={() => startEdit(address)}>Sửa</button>
-              <button type="button" className="danger" onClick={() => handleDelete(address.id)}>Xóa</button>
+              <button
+                type="button"
+                className="address-action-btn address-action-edit"
+                onClick={() => startEdit(address)}
+              >
+                <Pencil size={14} aria-hidden="true" />
+                Sửa
+              </button>
+              <button
+                type="button"
+                className="address-action-btn address-action-delete"
+                onClick={() => handleDelete(address.id)}
+              >
+                <Trash2 size={14} aria-hidden="true" />
+                Xóa
+              </button>
               {address.isDefault ? (
                 <span className="address-book-action-spacer" aria-hidden="true" />
               ) : (
-                <button type="button" onClick={() => handleSetDefault(address.id)}>Đặt làm mặc định</button>
+                <button
+                  type="button"
+                  className="address-action-btn address-action-default"
+                  onClick={() => handleSetDefault(address.id)}
+                >
+                  Đặt mặc định
+                </button>
               )}
             </div>
           </article>
