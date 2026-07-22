@@ -8,8 +8,6 @@ import {
   Shield,
   LogOut,
   Search,
-  HelpCircle,
-  Crown,
   TicketPercent,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -272,13 +270,6 @@ export default function Header() {
                         <span>Voucher của tôi</span>
                       </Link>
                     )}
-                    {user.role !== "ADMIN" && (
-                      <div className="dropdown-item dropdown-item-disabled">
-                        <Crown size={16} />
-                        <span>Thành viên</span>
-                        <span className="dropdown-badge-soon">Sắp ra mắt</span>
-                      </div>
-                    )}
                     {user.role === "ADMIN" && (
                       <Link
                         to="/admin"
@@ -289,14 +280,6 @@ export default function Header() {
                         <span>Bảng điều khiển quản trị</span>
                       </Link>
                     )}
-                    <Link
-                      to="/support"
-                      onClick={() => setDropdownOpen(false)}
-                      className="dropdown-item"
-                    >
-                      <HelpCircle size={16} />
-                      <span>Trung tâm hỗ trợ</span>
-                    </Link>
                     <div className="dropdown-divider"></div>
                     <button
                       type="button"
