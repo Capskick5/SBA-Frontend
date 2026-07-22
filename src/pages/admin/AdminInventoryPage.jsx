@@ -11,7 +11,7 @@ export default function AdminInventoryPage() {
   };
 
   const formatReason = (reason) => {
-    if (!reason) return 'Unknown';
+    if (!reason) return 'Không xác định';
     return reason
       .toLowerCase()
       .split('_')
@@ -68,11 +68,11 @@ export default function AdminInventoryPage() {
     return () => { active = false; };
   }, [reloadKey]);
 
-  if (loading) return <LoadingState text="Loading inventory logs..." />;
+  if (loading) return <LoadingState text="Đang tải nhật ký kho..." />;
   if (error) {
     return (
-      <ErrorState text={`Could not load inventory logs. ${error}`}>
-        <Button type="button" onClick={() => setReloadKey((value) => value + 1)}>Try again</Button>
+      <ErrorState text={`Không thể tải nhật ký kho. ${error}`}>
+        <Button type="button" onClick={() => setReloadKey((value) => value + 1)}>Thử lại</Button>
       </ErrorState>
     );
   }
@@ -110,13 +110,13 @@ export default function AdminInventoryPage() {
     <section>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px' }}>
         <div>
-          <h1>Inventory Management</h1>
-          <p style={{ color: '#666', marginTop: '8px' }}>Global log of all book stock movements.</p>
+          <h1>Quản lý kho</h1>
+          <p style={{ color: '#666', marginTop: '8px' }}>Nhật ký toàn cục mọi biến động tồn kho sách.</p>
         </div>
         <div style={{ width: '300px' }}>
           <input
             type="text"
-            placeholder="Search logs (book, note, user...)"
+            placeholder="Tìm kiếm nhật ký (sách, ghi chú, người dùng...)"
             value={searchQuery}
             onChange={handleSearchChange}
             style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
@@ -125,25 +125,25 @@ export default function AdminInventoryPage() {
       </div>
 
       {movements.length === 0 ? (
-        <EmptyState title="No inventory activity" text="Stock changes will appear here after orders or manual adjustments." />
+        <EmptyState title="Chưa có hoạt động kho" text="Thay đổi tồn kho sẽ hiển thị tại đây sau đơn hàng hoặc điều chỉnh thủ công." />
       ) : (
         <>
           <table className="table">
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Book ID</th>
-                <th>Reason</th>
-                <th>Order ID</th>
-                <th>Quantity Change</th>
-                <th>Note</th>
-                <th>Created By</th>
-                <th>Date</th>
+                <th>Mã sách</th>
+                <th>Lý do</th>
+                <th>Mã đơn</th>
+                <th>Thay đổi số lượng</th>
+                <th>Ghi chú</th>
+                <th>Người tạo</th>
+                <th>Ngày</th>
               </tr>
             </thead>
             <tbody>
               {paginatedMovements.length === 0 ? (
-                <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>No matches found for "{searchQuery}"</td></tr>
+                <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>Không tìm thấy kết quả cho &quot;{searchQuery}&quot;</td></tr>
               ) : (
                 paginatedMovements.map((mov) => (
                   <tr key={mov.id}>
@@ -153,7 +153,7 @@ export default function AdminInventoryPage() {
                     <td>
                       {mov.orderId
                         ? <Link className="inventory-order-link" to={`/admin/orders/${mov.orderId}`}>#{mov.orderId}</Link>
-                        : <span className="muted">Manual</span>}
+                        : <span className="muted">Thủ công</span>}
                     </td>
                     <td>
                       {(() => {
@@ -166,7 +166,7 @@ export default function AdminInventoryPage() {
                       })()}
                     </td>
                     <td>{mov.note}</td>
-                    <td>{mov.createdByName || usersMap[mov.createdBy] || mov.createdBy || 'System'}</td>
+                    <td>{mov.createdByName || usersMap[mov.createdBy] || mov.createdBy || 'Hệ thống'}</td>
                     <td>{formatDateTime(mov.createdAt)}</td>
                   </tr>
                 ))
@@ -181,16 +181,16 @@ export default function AdminInventoryPage() {
                 disabled={currentPage === 0}
                 onClick={() => setCurrentPage(currentPage - 1)}
               >
-                Previous
+                Trước
               </Button>
-              <span>Page {currentPage + 1} of {totalPages}</span>
+              <span>Trang {currentPage + 1} / {totalPages}</span>
               <Button
                 type="button"
                 className="btn-secondary"
                 disabled={currentPage >= totalPages - 1}
                 onClick={() => setCurrentPage(currentPage + 1)}
               >
-                Next
+                Sau
               </Button>
             </div>
           )}

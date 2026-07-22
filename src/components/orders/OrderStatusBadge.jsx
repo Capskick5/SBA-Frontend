@@ -1,3 +1,5 @@
+import { getOrderStatusLabel } from '../../utils/orderLabels';
+
 export default function OrderStatusBadge({ status, size = 'small' }) {
   const statusClasses = {
     PENDING: 'pending-payment',
@@ -15,7 +17,7 @@ export default function OrderStatusBadge({ status, size = 'small' }) {
   };
 
   const statusClass = statusClasses[status] || 'unknown';
-  const label = status ? status.replaceAll('_', ' ') : 'UNKNOWN';
+  const label = getOrderStatusLabel(status) || 'Không rõ';
 
   return (
     <span className={`status-badge ${statusClass} ${size === 'large' ? 'status-badge-large' : ''}`}>

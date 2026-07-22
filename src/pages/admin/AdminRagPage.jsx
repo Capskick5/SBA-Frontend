@@ -142,12 +142,12 @@ export default function AdminRagPage() {
     setMessage({ type: '', text: '' });
     try {
       await adminService.ingestBookContent(bookId, chunkSize, overlapSize);
-      setMessage({ type: 'success', text: 'Ingested book successfully.' });
+      setMessage({ type: 'success', text: 'Đã lập chỉ mục sách thành công.' });
       loadBooks(currentPage, searchQuery);
     } catch (err) {
       setMessage({
         type: 'error',
-        text: 'Failed to ingest book: ' + (err.response?.data?.message || err.message)
+        text: 'Không thể lập chỉ mục sách: ' + (err.response?.data?.message || err.message)
       });
     } finally {
       setActionLoading(prev => ({ ...prev, [bookId]: null }));
@@ -159,12 +159,12 @@ export default function AdminRagPage() {
     setMessage({ type: '', text: '' });
     try {
       await adminService.upsertBookCatalog(bookId);
-      setMessage({ type: 'success', text: 'Catalog synced successfully.' });
+      setMessage({ type: 'success', text: 'Đồng bộ danh mục thành công.' });
       loadBooks(currentPage, searchQuery);
     } catch (err) {
       setMessage({
         type: 'error',
-        text: 'Failed to sync catalog: ' + (err.response?.data?.message || err.message)
+        text: 'Không thể đồng bộ danh mục: ' + (err.response?.data?.message || err.message)
       });
     } finally {
       setActionLoading(prev => ({ ...prev, [bookId]: null }));
@@ -172,17 +172,17 @@ export default function AdminRagPage() {
   };
 
   const handleDeleteIndex = async (bookId) => {
-    if (!window.confirm('Are you sure you want to delete this RAG index?')) return;
+    if (!window.confirm('Bạn có chắc muốn xóa chỉ mục RAG này?')) return;
     setActionLoading(prev => ({ ...prev, [bookId]: 'delete' }));
     setMessage({ type: '', text: '' });
     try {
       await adminService.deleteBookIndex(bookId);
-      setMessage({ type: 'success', text: 'Deleted RAG index successfully.' });
+      setMessage({ type: 'success', text: 'Đã xóa chỉ mục RAG thành công.' });
       loadBooks(currentPage, searchQuery);
     } catch (err) {
       setMessage({
         type: 'error',
-        text: 'Failed to delete index: ' + (err.response?.data?.message || err.message)
+        text: 'Không thể xóa chỉ mục: ' + (err.response?.data?.message || err.message)
       });
     } finally {
       setActionLoading(prev => ({ ...prev, [bookId]: null }));
@@ -197,7 +197,7 @@ export default function AdminRagPage() {
     });
 
     if (ingestableIds.length === 0) {
-      setMessage({ type: 'error', text: 'None of the selected books have a PDF/EPUB file uploaded for ingestion.' });
+      setMessage({ type: 'error', text: 'Không có sách nào được chọn có tệp PDF/EPUB để lập chỉ mục.' });
       return;
     }
 
@@ -205,13 +205,13 @@ export default function AdminRagPage() {
     setMessage({ type: '', text: '' });
     try {
       await adminService.ingestBooksBulk(ingestableIds, chunkSize, overlapSize);
-      setMessage({ type: 'success', text: `Successfully processed bulk ingestion for ${ingestableIds.length} books.` });
+      setMessage({ type: 'success', text: `Đã xử lý lập chỉ mục hàng loạt cho ${ingestableIds.length} sách.` });
       setSelectedIds([]);
       loadBooks(currentPage, searchQuery);
     } catch (err) {
       setMessage({
         type: 'error',
-        text: 'Bulk ingestion failed: ' + (err.response?.data?.message || err.message)
+        text: 'Lập chỉ mục hàng loạt thất bại: ' + (err.response?.data?.message || err.message)
       });
     } finally {
       setBulkProcessing(false);
@@ -224,13 +224,13 @@ export default function AdminRagPage() {
     setMessage({ type: '', text: '' });
     try {
       await adminService.upsertBooksCatalogBulk(selectedIds);
-      setMessage({ type: 'success', text: `Successfully synced catalog for ${selectedIds.length} books.` });
+      setMessage({ type: 'success', text: `Đã đồng bộ danh mục cho ${selectedIds.length} sách.` });
       setSelectedIds([]);
       loadBooks(currentPage, searchQuery);
     } catch (err) {
       setMessage({
         type: 'error',
-        text: 'Bulk catalog sync failed: ' + (err.response?.data?.message || err.message)
+        text: 'Đồng bộ danh mục hàng loạt thất bại: ' + (err.response?.data?.message || err.message)
       });
     } finally {
       setBulkProcessing(false);
@@ -239,20 +239,20 @@ export default function AdminRagPage() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (!window.confirm(`Are you sure you want to delete indexing and metadata for ${selectedIds.length} selected books?`)) {
+    if (!window.confirm(`Bạn có chắc muốn xóa chỉ mục và siêu dữ liệu cho ${selectedIds.length} sách đã chọn?`)) {
       return;
     }
     setBulkProcessing(true);
     setMessage({ type: '', text: '' });
     try {
       await adminService.deleteBooksIndicesBulk(selectedIds);
-      setMessage({ type: 'success', text: `Successfully deleted RAG index for ${selectedIds.length} books.` });
+      setMessage({ type: 'success', text: `Đã xóa chỉ mục RAG cho ${selectedIds.length} sách.` });
       setSelectedIds([]);
       loadBooks(currentPage, searchQuery);
     } catch (err) {
       setMessage({
         type: 'error',
-        text: 'Bulk delete failed: ' + (err.response?.data?.message || err.message)
+        text: 'Xóa hàng loạt thất bại: ' + (err.response?.data?.message || err.message)
       });
     } finally {
       setBulkProcessing(false);
@@ -261,51 +261,51 @@ export default function AdminRagPage() {
 
   const renderStatus = (row) => {
     if (!row.fileKey) {
-      return <span style={{ color: '#888', fontWeight: 'bold' }}>No PDF/EPUB File</span>;
+      return <span style={{ color: '#888', fontWeight: 'bold' }}>Không có tệp PDF/EPUB</span>;
     }
     const info = ragStatuses[row.id];
     if (!info) {
-      return <span className="muted">Checking...</span>;
+      return <span className="muted">Đang kiểm tra...</span>;
     }
     if (info.loading) {
-      return <span className="muted">Loading RAG Info...</span>;
+      return <span className="muted">Đang tải thông tin RAG...</span>;
     }
     if (info.status?.toLowerCase() === 'indexed' || info.chunkCount > 0) {
       return (
         <div>
-          <span style={{ color: 'green', fontWeight: 'bold' }}>Indexed</span>
+          <span style={{ color: 'green', fontWeight: 'bold' }}>Đã lập chỉ mục</span>
           <div style={{ fontSize: '12px', color: '#555' }}>
-            Chunks: <strong>{info.chunkCount}</strong>
+            Khối: <strong>{info.chunkCount}</strong>
           </div>
         </div>
       );
     }
-    return <span style={{ color: '#c00' }}>Not Indexed</span>;
+    return <span style={{ color: '#c00' }}>Chưa lập chỉ mục</span>;
   };
 
   const renderCatalogStatus = (row) => {
     const info = ragStatuses[row.id];
     if (!info) {
-      return <span className="muted">Checking...</span>;
+      return <span className="muted">Đang kiểm tra...</span>;
     }
     if (info.catalogLoading) {
-      return <span className="muted">Loading...</span>;
+      return <span className="muted">Đang tải...</span>;
     }
     if (info.catalogStatus?.toLowerCase() === 'indexed') {
-      return <span style={{ color: 'green', fontWeight: 'bold' }}>Synced</span>;
+      return <span style={{ color: 'green', fontWeight: 'bold' }}>Đã đồng bộ</span>;
     }
-    return <span style={{ color: '#c00' }}>Not Synced</span>;
+    return <span style={{ color: '#c00' }}>Chưa đồng bộ</span>;
   };
 
   const renderHealth = () => {
     if (healthLoading) {
-      return <span className="muted">Checking health...</span>;
+      return <span className="muted">Đang kiểm tra trạng thái...</span>;
     }
     if (!health || health.status !== 'ok') {
       return (
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', background: '#d9534f' }}></span>
-          <strong style={{ color: '#d9534f' }}>Offline (Cannot connect to Port 8000)</strong>
+          <strong style={{ color: '#d9534f' }}>Ngoại tuyến (Không kết nối được cổng 8000)</strong>
         </div>
       );
     }
@@ -313,10 +313,10 @@ export default function AdminRagPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', background: '#5cb85c' }}></span>
-          <strong style={{ color: '#5cb85c' }}>Online</strong>
+          <strong style={{ color: '#5cb85c' }}>Trực tuyến</strong>
         </div>
         <div style={{ fontSize: '12px', color: '#666' }}>
-          Database: MongoDB: {health.mongo} | Qdrant: {health.qdrant} | MinIO: {health.minio || 'ok'}
+          Cơ sở dữ liệu: MongoDB: {health.mongo} | Qdrant: {health.qdrant} | MinIO: {health.minio || 'ok'}
         </div>
       </div>
     );
@@ -326,11 +326,11 @@ export default function AdminRagPage() {
     <section className="stack">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <h1>RAG Catalog Management</h1>
-          <p className="muted">Index book PDF/EPUB content and metadata to serve AI Search and Chat services.</p>
+          <h1>Quản lý danh mục RAG</h1>
+          <p className="muted">Lập chỉ mục nội dung PDF/EPUB và siêu dữ liệu sách để phục vụ Tìm kiếm AI và Chat.</p>
         </div>
         <div className="panel" style={{ padding: '12px 20px', margin: 0 }}>
-          <strong style={{ display: 'block', marginBottom: '4px', fontSize: '12px', textTransform: 'uppercase', color: '#666' }}>RAG Service Status</strong>
+          <strong style={{ display: 'block', marginBottom: '4px', fontSize: '12px', textTransform: 'uppercase', color: '#666' }}>Trạng thái dịch vụ RAG</strong>
           {renderHealth()}
         </div>
       </div>
@@ -357,10 +357,10 @@ export default function AdminRagPage() {
         alignItems: 'center'
       }}>
         <div style={{ fontWeight: '600', color: '#334155', fontSize: '15px' }}>
-          Ingestion Settings
+          Cài đặt lập chỉ mục
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <label style={{ fontSize: '14px', color: '#475569', fontWeight: '500' }}>Chunk Size:</label>
+          <label style={{ fontSize: '14px', color: '#475569', fontWeight: '500' }}>Kích thước khối:</label>
           <input
             type="number"
             value={chunkSize}
@@ -375,7 +375,7 @@ export default function AdminRagPage() {
           />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <label style={{ fontSize: '14px', color: '#475569', fontWeight: '500' }}>Overlap Size:</label>
+          <label style={{ fontSize: '14px', color: '#475569', fontWeight: '500' }}>Kích thước chồng lấn:</label>
           <input
             type="number"
             value={overlapSize}
@@ -395,12 +395,12 @@ export default function AdminRagPage() {
         <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '8px', flex: 1 }}>
           <input
             type="text"
-            placeholder="Search by title or author"
+            placeholder="Tìm kiếm theo tiêu đề hoặc tác giả"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', flex: 1 }}
           />
-          <Button type="submit">Search</Button>
+          <Button type="submit">Tìm kiếm</Button>
         </form>
 
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -420,7 +420,7 @@ export default function AdminRagPage() {
               minHeight: '40px'
             }}
           >
-            {bulkProcessing ? 'Ingesting...' : `Ingest Content (${selectedIds.length})`}
+            {bulkProcessing ? 'Đang lập chỉ mục...' : `Lập chỉ mục nội dung (${selectedIds.length})`}
           </button>
           <button
             type="button"
@@ -438,7 +438,7 @@ export default function AdminRagPage() {
               minHeight: '40px'
             }}
           >
-            Sync Catalog ({selectedIds.length})
+            Đồng bộ danh mục ({selectedIds.length})
           </button>
           <button
             type="button"
@@ -456,17 +456,17 @@ export default function AdminRagPage() {
               minHeight: '40px'
             }}
           >
-            Delete ({selectedIds.length})
+            Xóa ({selectedIds.length})
           </button>
         </div>
       </div>
 
       {loading ? (
-        <LoadingState text="Loading books..." />
+        <LoadingState text="Đang tải sách..." />
       ) : (
         <>
           <Table
-            emptyText="No books found."
+            emptyText="Không tìm thấy sách nào."
             columns={[
               {
                 key: 'select',
@@ -487,44 +487,44 @@ export default function AdminRagPage() {
               },
               {
                 key: 'coverUrl',
-                label: 'Cover',
+                label: 'Bìa',
                 render: (row) => (
                   row.coverUrl ? (
                     <img src={row.coverUrl} alt={row.title} style={{ width: '40px', height: '60px', objectFit: 'cover', borderRadius: '2px' }} />
                   ) : (
-                    <div style={{ width: '40px', height: '60px', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: '#999' }}>No Cover</div>
+                    <div style={{ width: '40px', height: '60px', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: '#999' }}>Không có bìa</div>
                   )
                 )
               },
               {
                 key: 'details',
-                label: 'Book Details',
+                label: 'Chi tiết sách',
                 render: (row) => (
                   <div>
                     <strong style={{ fontSize: '15px' }}>{row.title}</strong>
-                    <div style={{ fontSize: '13px', color: '#666' }}>Author: {row.author}</div>
-                    <div style={{ fontSize: '12px', color: '#888' }}>Publisher: {row.publisher || 'N/A'} ({row.publicationYear || 'N/A'})</div>
+                    <div style={{ fontSize: '13px', color: '#666' }}>Tác giả: {row.author}</div>
+                    <div style={{ fontSize: '12px', color: '#888' }}>NXB: {row.publisher || 'N/A'} ({row.publicationYear || 'N/A'})</div>
                   </div>
                 )
               },
               {
                 key: 'category',
-                label: 'Category',
+                label: 'Danh mục',
                 render: (row) => row.category?.name || 'N/A'
               },
               {
                 key: 'status',
-                label: 'Content Index',
+                label: 'Chỉ mục nội dung',
                 render: (row) => renderStatus(row)
               },
               {
                 key: 'catalogStatus',
-                label: 'Catalog Status',
+                label: 'Trạng thái danh mục',
                 render: (row) => renderCatalogStatus(row)
               },
               {
                 key: 'actions',
-                label: 'Actions',
+                label: 'Thao tác',
                 render: (row) => {
                   const state = actionLoading[row.id];
                   const info = ragStatuses[row.id];
@@ -537,7 +537,7 @@ export default function AdminRagPage() {
                         disabled={!!state || !row.fileKey}
                         size="sm"
                       >
-                        {state === 'ingest' ? 'Ingesting...' : 'Ingest'}
+                        {state === 'ingest' ? 'Đang lập chỉ mục...' : 'Lập chỉ mục'}
                       </Button>
                       
                       <Button
@@ -545,7 +545,7 @@ export default function AdminRagPage() {
                         disabled={!!state || !row.fileKey}
                         size="sm"
                       >
-                        {state === 'catalog' ? 'Syncing...' : 'Sync Catalog'}
+                        {state === 'catalog' ? 'Đang đồng bộ...' : 'Đồng bộ danh mục'}
                       </Button>
                       
                       {hasIndex && (
@@ -555,7 +555,7 @@ export default function AdminRagPage() {
                           size="sm"
                           style={{ background: '#d9534f', color: 'white' }}
                         >
-                          {state === 'delete' ? 'Deleting...' : 'Delete Index'}
+                          {state === 'delete' ? 'Đang xóa...' : 'Xóa chỉ mục'}
                         </Button>
                       )}
                     </div>
@@ -568,20 +568,20 @@ export default function AdminRagPage() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
             <span className="muted">
-              Page {currentPage + 1} of {totalPages}
+              Trang {currentPage + 1} / {totalPages}
             </span>
             <div style={{ display: 'flex', gap: '8px' }}>
               <Button
                 disabled={currentPage === 0}
                 onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
               >
-                Previous
+                Trước
               </Button>
               <Button
                 disabled={currentPage >= totalPages - 1}
                 onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
               >
-                Next
+                Sau
               </Button>
             </div>
           </div>

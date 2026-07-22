@@ -2,7 +2,7 @@ import { authService } from '../services/authService';
 import { orderService } from '../services/orderService';
 
 export const PENDING_PAYMENT_MESSAGE =
-  'You have a pending payment order. Please complete or cancel it before continuing to shop.';
+  'Bạn đang có đơn chờ thanh toán. Vui lòng hoàn tất hoặc hủy đơn trước khi tiếp tục mua sắm.';
 
 const CACHE_TTL_MS = 45_000;
 

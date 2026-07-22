@@ -54,7 +54,7 @@ export default function LoginPage() {
       });
       if (loggedIn.role === 'ADMIN') {
         await authService.logout();
-        setError({ message: 'Invalid email or password.' });
+        setError({ message: 'Email hoặc mật khẩu không hợp lệ.' });
         return;
       }
 
@@ -75,11 +75,11 @@ export default function LoginPage() {
         const mergedCart = await cartFacade.mergeGuestCartAfterLogin();
         if (mergedCart) {
           notifyCartUpdated(mergedCart);
-          showToast('Your guest cart was moved to your account.');
+          showToast('Giỏ hàng khách đã được chuyển vào tài khoản của bạn.');
         }
       } catch {
         showToast(
-          'Signed in, but your guest cart could not be merged. Its items were kept for you.',
+          'Đã đăng nhập, nhưng không thể gộp giỏ hàng khách. Các sản phẩm vẫn được giữ lại cho bạn.',
           'error',
         );
       }
@@ -96,12 +96,12 @@ export default function LoginPage() {
 
   return (
     <section className="narrow">
-      <h1>Login</h1>
+      <h1>Đăng nhập</h1>
       {registered && (
-        <p className="form-message form-message-success">Registration completed. Please verify your email before logging in.</p>
+        <p className="form-message form-message-success">Đăng ký thành công. Vui lòng xác minh email trước khi đăng nhập.</p>
       )}
       {reset && (
-        <p className="form-message form-message-success">Password reset completed. Please log in.</p>
+        <p className="form-message form-message-success">Đặt lại mật khẩu thành công. Vui lòng đăng nhập.</p>
       )}
       {location.state?.message && (
         <p className="form-message form-message-success">{location.state.message}</p>
@@ -109,7 +109,7 @@ export default function LoginPage() {
       <AuthFormMessage error={error} />
       {unverifiedEmail && (
         <p className="auth-footer">
-          <Link to={`/verify-email?email=${encodeURIComponent(unverifiedEmail)}`}>Verify email</Link>
+          <Link to={`/verify-email?email=${encodeURIComponent(unverifiedEmail)}`}>Xác minh email</Link>
         </p>
       )}
       <form className="form" onSubmit={handleSubmit}>
@@ -122,19 +122,19 @@ export default function LoginPage() {
           required
         />
         <Input
-          label="Password"
+          label="Mật khẩu"
           name="password"
           type="password"
-          placeholder="Enter your password"
+          placeholder="Nhập mật khẩu của bạn"
           error={fieldErrors.password}
           required
         />
-        <Button type="submit" disabled={loading}>{loading ? 'Processing...' : 'Login'}</Button>
+        <Button type="submit" disabled={loading}>{loading ? 'Đang xử lý...' : 'Đăng nhập'}</Button>
       </form>
       <AuthFormFooter>
-        <Link to="/register">Need an account? Register</Link>
+        <Link to="/register">Chưa có tài khoản? Đăng ký</Link>
         {' · '}
-        <Link to="/forgot-password">Forgot password?</Link>
+        <Link to="/forgot-password">Quên mật khẩu?</Link>
       </AuthFormFooter>
     </section>
   );

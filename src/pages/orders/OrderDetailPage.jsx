@@ -17,15 +17,7 @@ import {
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useAuth } from '../../context/AuthContext';
-
-const STATUS_MAP = {
-  'PENDING_PAYMENT': { text: 'Pending payment', class: 'warning' },
-  'PAID': { text: 'Processing', class: 'info' },
-  'PROCESSING': { text: 'Processing', class: 'info' },
-  'SHIPPED': { text: 'Shipping', class: 'info' },
-  'DELIVERED': { text: 'Delivered', class: 'success' },
-  'CANCELLED': { text: 'Cancelled', class: 'error' },
-};
+import { getOrderStatusConfig, getPaymentMethodLabel } from '../../utils/orderLabels';
 
 export default function OrderDetailPage({ adminView = false }) {
   const { id } = useParams();
@@ -83,7 +75,7 @@ export default function OrderDetailPage({ adminView = false }) {
        })
        .catch(err => {
          console.error('Failed to load order detail:', err);
-         setError('Could not load order details. Please try again later.');
+         setError('Không thể tải chi tiết đơn hàng. Vui lòng thử lại sau.');
        });
    }, [id]);
 
@@ -96,13 +88,13 @@ export default function OrderDetailPage({ adminView = false }) {
     return (
       <section className="stack">
         <ErrorState text={error}>
-          <Link to={isLoggedIn ? '/orders' : '/'}><Button>Back to {isLoggedIn ? 'orders' : 'home'}</Button></Link>
+          <Link to={isLoggedIn ? '/orders' : '/'}><Button>Quay lại {isLoggedIn ? 'đơn hàng' : 'trang chủ'}</Button></Link>
         </ErrorState>
       </section>
     );
   }
 
-  if (!order) return <LoadingState text="Loading order details..." />;
+  if (!order) return <LoadingState text="Đang tải chi tiết đơn hàng..." />;
 
   const address = typeof order.addressSnapshot === 'string'
     ? JSON.parse(order.addressSnapshot)
@@ -114,7 +106,7 @@ export default function OrderDetailPage({ adminView = false }) {
   const discount = order.discountAmount ?? Math.max(0, subtotal + shippingFee + giftWrapFee - order.total);
 
 
-  const statusConfig = STATUS_MAP[order.status] || {text: order.status, class: 'info' };
+  const statusConfig = getOrderStatusConfig(order.status);
 
   const handleRebuy = async (bookId) => {
     if (rebuyingItemIds[bookId]) return;
@@ -123,10 +115,10 @@ export default function OrderDetailPage({ adminView = false }) {
       const book = await bookService.getBook(bookId);
       const updated = await cartFacade.addItem(book, 1);
       notifyCartUpdated(updated);
-      showToast('Added to cart successfully!');
+      showToast('Đã thêm vào giỏ!');
     } catch (err) {
       showToast(
-        err?.message || 'Failed to add item to cart. Please try again.',
+        err?.message || 'Không thể thêm sản phẩm vào giỏ. Vui lòng thử lại.',
         'error'
       );
     } finally {
@@ -153,7 +145,7 @@ export default function OrderDetailPage({ adminView = false }) {
       clearPendingPaymentCache();
       setOrder((current) => ({ ...current, ...cancelledOrder }));
       setShowCancelConfirm(false);
-      showToast(`Order #${cancelledOrder.id} was cancelled.`, 'success');
+      showToast(`Đơn hàng #${cancelledOrder.id} đã được hủy.`, 'success');
 
       if (user?.id) {
         const { checkServerOrderHistoryAndLock } = await import('../../utils/userLockGuard');
@@ -164,7 +156,7 @@ export default function OrderDetailPage({ adminView = false }) {
         }
       }
     } catch (err) {
-      showToast(err?.message || 'Could not cancel this order. Please try again.', 'error');
+      showToast(err?.message || 'Không thể hủy đơn hàng này. Vui lòng thử lại.', 'error');
     } finally {
       setCancelling(false);
     }
@@ -178,7 +170,7 @@ export default function OrderDetailPage({ adminView = false }) {
       const paymentLink = await orderService.getPendingPaymentLink(order.id);
       window.location.assign(paymentLink.checkoutUrl);
     } catch (err) {
-      showToast(err?.message || 'Could not continue this payment. Please try again.', 'error');
+      showToast(err?.message || 'Không thể tiếp tục thanh toán. Vui lòng thử lại.', 'error');
       setResuming(false);
     }
   };
@@ -187,7 +179,7 @@ export default function OrderDetailPage({ adminView = false }) {
     if (!dateStr) return '';
     const date = new Date(dateStr);
     date.setDate(date.getDate() + 3);
-    const weekday = date.toLocaleDateString('en-GB', { weekday: 'long' });
+    const weekday = date.toLocaleDateString('vi-VN', { weekday: 'long' });
     return `${weekday}, ${formatDate(date)}`;
   };
 
@@ -199,7 +191,7 @@ export default function OrderDetailPage({ adminView = false }) {
         <div className="order-detail-header">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
             <h1>
-              Order #{order.id} - <span className={`highlight ${statusConfig.class}`}>{statusConfig.text}</span>
+              Đơn #{order.id} - <span className={`highlight ${statusConfig.class}`}>{statusConfig.text}</span>
             </h1>
             {!adminView && (['DELIVERED', 'PAID', 'PROCESSING', 'SHIPPED'].includes(order.status) || refundRequest) && (
               <div>
@@ -216,13 +208,13 @@ export default function OrderDetailPage({ adminView = false }) {
             )}
           </div>
           <div className="order-detail-date">
-            Placed on {formatDateTime(order.createdAt)}
+            Đặt ngày {formatDateTime(order.createdAt)}
             {adminView && (
               <span>
                 {' · '}
                 {order.userId
-                  ? `Placed by user #${order.userId}`
-                  : `Placed by guest${order.guestEmail ? ` (${order.guestEmail})` : ''}`}
+                  ? `Đặt bởi người dùng #${order.userId}`
+                  : `Đặt bởi khách${order.guestEmail ? ` (${order.guestEmail})` : ''}`}
               </span>
             )}
           </div>
@@ -254,47 +246,47 @@ export default function OrderDetailPage({ adminView = false }) {
         <div className="order-detail-info-grid">
           {/* Col 1: Recipient address */}
           <div className="order-detail-info-card">
-            <h3>Recipient address</h3>
+            <h3>Địa chỉ người nhận</h3>
             <div className="card-content">
-              <strong>{address.recipient || 'N/A'}</strong>
-              <p>Address: {[address.line, address.ward, address.district, address.city].filter(Boolean).join(', ') || 'N/A'}</p>
-              <p style={{ marginTop: '8px' }}>Phone: {address.phone || 'N/A'}</p>
+              <strong>{address.recipient || 'Không có'}</strong>
+              <p>Địa chỉ: {[address.line, address.ward, address.district, address.city].filter(Boolean).join(', ') || 'Không có'}</p>
+              <p style={{ marginTop: '8px' }}>Điện thoại: {address.phone || 'Không có'}</p>
             </div>
           </div>
 
           {/* Col 2: Delivery method */}
           <div className="order-detail-info-card">
-            <h3>Delivery method</h3>
+            <h3>Phương thức giao hàng</h3>
             <div className="card-content">
-              <strong><span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>FAST</span> Standard Delivery</strong>
-              <p style={{ margin: '6px 0' }}>Estimated delivery on {expectedDateText}</p>
+              <strong><span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>NHANH</span> Giao hàng tiêu chuẩn</strong>
+              <p style={{ margin: '6px 0' }}>Dự kiến giao vào {expectedDateText}</p>
               <p style={{ fontSize: '12px', color: 'var(--muted)' }}>
                 {order.status === 'SHIPPED' || order.status === 'DELIVERED'
-                  ? 'Delivered by GHTK'
-                  : 'Delivered by BookVerse Logistics'}
+                  ? 'Giao bởi GHTK'
+                  : 'Giao bởi BookVerse Logistics'}
               </p>
               <p style={{ marginTop: '8px', fontWeight: '500' }}>
-                {shippingFee === 0 ? 'Free shipping' : `Shipping fee: ${formatCurrency(shippingFee)}`}
+                {shippingFee === 0 ? 'Miễn phí vận chuyển' : `Phí vận chuyển: ${formatCurrency(shippingFee)}`}
               </p>
               {order.deliveryType === 'GIFT' && (
-                <p style={{ marginTop: '8px' }}>Gift delivery with wrapping</p>
+                <p style={{ marginTop: '8px' }}>Giao quà kèm gói quà</p>
               )}
             </div>
           </div>
 
           {/* Col 3: Payment method */}
           <div className="order-detail-info-card">
-            <h3>Payment method</h3>
+            <h3>Phương thức thanh toán</h3>
             <div className="card-content">
-              <p>{order.paymentMethod === 'COD' ? 'Cash on delivery' : 'Payment through VNPay'}</p>
+              <p>{getPaymentMethodLabel(order.paymentMethod)}</p>
               <p style={{ marginTop: '10px' }} className={`highlight ${statusConfig.class}`}>
                 {order.status === 'PENDING_PAYMENT'
-                  ? 'Waiting for payment.'
+                  ? 'Đang chờ thanh toán.'
                   : order.status === 'CANCELLED'
-                    ? 'This order has been cancelled.'
+                    ? 'Đơn hàng này đã bị hủy.'
                     : order.paymentMethod === 'COD'
-                      ? 'Pay with cash when your order arrives.'
-                      : 'Payment completed.'}
+                      ? 'Thanh toán tiền mặt khi nhận hàng.'
+                      : 'Đã thanh toán.'}
               </p>
               {!adminView && order.status === 'PENDING_PAYMENT' && (
                 <div className="order-detail-pending-payment">
@@ -305,7 +297,7 @@ export default function OrderDetailPage({ adminView = false }) {
                     disabled={cancelling}
                     onClick={handleContinuePayment}
                   >
-                    Continue payment
+                    Tiếp tục thanh toán
                   </Button>
                   <Button
                     type="button"
@@ -313,7 +305,7 @@ export default function OrderDetailPage({ adminView = false }) {
                     disabled={resuming || cancelling}
                     onClick={() => setShowCancelConfirm(true)}
                   >
-                    Cancel order
+                    Hủy đơn
                   </Button>
                 </div>
               )}
@@ -326,11 +318,11 @@ export default function OrderDetailPage({ adminView = false }) {
           <table className="order-detail-table">
             <thead>
               <tr>
-                <th style={{ width: '45%' }}>Product</th>
-                <th style={{ width: '15%' }}>Price</th>
-                <th style={{ width: '10%' }}>Quantity</th>
-                <th style={{ width: '15%' }}>Discount</th>
-                <th style={{ width: '15%', textAlign: 'right' }}>Subtotal</th>
+                <th style={{ width: '45%' }}>Sản phẩm</th>
+                <th style={{ width: '15%' }}>Giá</th>
+                <th style={{ width: '10%' }}>Số lượng</th>
+                <th style={{ width: '15%' }}>Giảm giá</th>
+                <th style={{ width: '15%', textAlign: 'right' }}>Tạm tính</th>
               </tr>
             </thead>
             <tbody>
@@ -340,23 +332,23 @@ export default function OrderDetailPage({ adminView = false }) {
                     <div className="order-detail-item-cell">
                       <div className="order-detail-item-cover-wrapper">
                         <img
-                          src={item.coverUrl || `https://placehold.co/120x170?text=${encodeURIComponent(item.title || 'Book')}`}
+                          src={item.coverUrl || `https://placehold.co/120x170?text=${encodeURIComponent(item.title || 'Sách')}`}
                           alt={item.title}
                           className="order-detail-item-cover"
                           onError={(e) => {
-                            e.target.src = `https://placehold.co/120x170?text=${encodeURIComponent(item.title || 'Book')}`;
+                            e.target.src = `https://placehold.co/120x170?text=${encodeURIComponent(item.title || 'Sách')}`;
                           }}
                         />
                       </div>
                       <div className="order-detail-item-info">
                         <h4 className="order-detail-item-title">{item.title}</h4>
-                        <span className="order-detail-item-meta">Sku: 395962609{item.bookId || 'N/A'}</span>
+                        <span className="order-detail-item-meta">Mã SKU: 395962609{item.bookId || 'Không có'}</span>
                         {!adminView && (
                           <div className="order-detail-item-actions">
-                            <Link to="/books/chat" className="btn-action">Chat with AI</Link>
+                            <Link to="/books/chat" className="btn-action">Chat với AI</Link>
                             {order.status === 'DELIVERED' && (
                               <Link to={`/books/${item.bookId}?review=1#reviews`} className="btn-action btn-action-review">
-                                Write a review
+                                Viết đánh giá
                               </Link>
                             )}
                             <button
@@ -365,7 +357,7 @@ export default function OrderDetailPage({ adminView = false }) {
                               disabled={rebuyingItemIds[item.bookId]}
                               onClick={() => handleRebuy(item.bookId)}
                             >
-                              {rebuyingItemIds[item.bookId] ? 'Adding...' : 'Buy again'}
+                              {rebuyingItemIds[item.bookId] ? 'Đang thêm...' : 'Mua lại'}
                             </button>
                           </div>
                         )}
@@ -385,36 +377,36 @@ export default function OrderDetailPage({ adminView = false }) {
           <div className="order-detail-summary-section">
             <div className="order-detail-summary-box">
               <div className="order-detail-summary-row">
-                <span>Subtotal</span>
+                <span>Tạm tính</span>
                 <strong>{formatCurrency(subtotal)}</strong>
               </div>
               <div className="order-detail-summary-row">
-                <span>Shipping fee</span>
+                <span>Phí vận chuyển</span>
                 <strong>{formatCurrency(shippingFee)}</strong>
               </div>
               {giftWrapFee > 0 && (
                 <div className="order-detail-summary-row">
-                  <span>Gift wrap fee{order.giftWrapName ? ` (${order.giftWrapName})` : ''}</span>
+                  <span>Phí gói quà{order.giftWrapName ? ` (${order.giftWrapName})` : ''}</span>
                   <strong>{formatCurrency(giftWrapFee)}</strong>
                 </div>
               )}
               {shippingFee > 0 && (
                 <div className="order-detail-summary-row">
-                  <span>Shipping discount</span>
+                  <span>Giảm phí vận chuyển</span>
                   <strong style={{ color: 'var(--success)' }}>0 VND</strong>
                 </div>
               )}
               {discount > 0 && (
                 <div className="order-detail-summary-row">
-                  <span>Discount</span>
+                  <span>Giảm giá</span>
                   <strong style={{ color: 'var(--success)' }}>-{formatCurrency(discount)}</strong>
                 </div>
               )}
               <div className="order-detail-summary-row total">
-                <strong>Total</strong>
+                <strong>Tổng cộng</strong>
                 <span className="order-detail-total-price">{formatCurrency(order.total || 0)}</span>
               </div>
-              <a href="#" onClick={(e) => { e.preventDefault(); window.print(); }} className="order-detail-invoice-link">View invoice</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); window.print(); }} className="order-detail-invoice-link">Xem hóa đơn</a>
             </div>
           </div>
         </div>
@@ -423,14 +415,14 @@ export default function OrderDetailPage({ adminView = false }) {
         {!adminView && (
           <div className="order-detail-footer-actions">
             <Link to={isLoggedIn ? '/orders' : '/'} className="order-detail-back-link">
-              &lt;&lt; {isLoggedIn ? 'Back to my orders' : 'Back to home'}
+              &lt;&lt; {isLoggedIn ? 'Quay lại đơn hàng' : 'Quay lại trang chủ'}
             </Link>
             <button
               type="button"
               onClick={() => setShowTimeline(!showTimeline)}
               style={{ padding: '10px 20px', borderRadius: 'var(--radius-sm)', fontSize: '14px', background: '#ffd814', color: '#111', border: '1px solid #fcd200', fontWeight: '500', cursor: 'pointer' }}
             >
-              {showTimeline ? 'Hide timeline' : 'Track order'}
+              {showTimeline ? 'Ẩn tiến trình' : 'Theo dõi đơn hàng'}
             </button>
           </div>
         )}
@@ -438,20 +430,20 @@ export default function OrderDetailPage({ adminView = false }) {
         {/* Order Timeline (Track Order history) */}
         {showTimeline && (
           <div className="order-detail-timeline-panel">
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold' }}>Order timeline</h3>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold' }}>Tiến trình đơn hàng</h3>
             <OrderTimeline history={order.statusHistory || []} />
           </div>
         )}
 
         {!adminView && showCancelConfirm && (
           <ConfirmDialog
-            title="Cancel pending order?"
+            title="Hủy đơn chờ thanh toán?"
             onCancel={() => {
               if (!cancelling) setShowCancelConfirm(false);
             }}
             onConfirm={handleCancelPendingOrder}
           >
-            Order #{order.id} will be cancelled and its reserved stock will be released. This action cannot be undone.
+            Đơn #{order.id} sẽ bị hủy và số lượng đã giữ sẽ được trả lại kho. Thao tác này không thể hoàn tác.
           </ConfirmDialog>
         )}
 

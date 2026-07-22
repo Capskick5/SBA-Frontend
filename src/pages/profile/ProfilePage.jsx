@@ -47,7 +47,7 @@ export default function ProfilePage() {
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [pendingPasswordChange, setPendingPasswordChange] = useState(null);
   const activeTab = searchParams.get('tab') || 'account';
-  const [addressTitle, setAddressTitle] = useState('Address book');
+  const [addressTitle, setAddressTitle] = useState('Sổ địa chỉ');
 
   useEffect(() => {
     profileService.getProfile()
@@ -67,7 +67,7 @@ export default function ProfilePage() {
       const updated = await profileService.updateProfile({ fullName: form.get('fullName') });
       setProfile(updated);
       refreshUser();
-      setSaveSuccess('Profile updated successfully.');
+      setSaveSuccess('Cập nhật hồ sơ thành công.');
     } catch (err) {
       captureFormError(err, setSaveError, setSaveFieldErrors);
     } finally {
@@ -84,7 +84,7 @@ export default function ProfilePage() {
     const newPassword = form.get('newPassword');
     const confirmPassword = form.get('confirmPassword');
     if (newPassword !== confirmPassword) {
-      setPwdFieldErrors({ confirmPassword: 'Password confirmation does not match.' });
+      setPwdFieldErrors({ confirmPassword: 'Xác nhận mật khẩu không khớp.' });
       return;
     }
     setPendingPasswordChange({
@@ -106,7 +106,7 @@ export default function ProfilePage() {
       await logout();
       navigate('/login', {
         replace: true,
-        state: { message: 'Password changed successfully. Please log in again.' },
+        state: { message: 'Đổi mật khẩu thành công. Vui lòng đăng nhập lại.' },
       });
     } catch (err) {
       setShowPasswordConfirm(false);
@@ -119,7 +119,7 @@ export default function ProfilePage() {
   if (loading) return <LoadingState />;
   if (loadError) return <ErrorState text={loadError} />;
 
-  const displayName = profile?.fullName || 'BookVerse customer';
+  const displayName = profile?.fullName || 'Khách hàng BookVerse';
   const initials = displayName
     .split(' ')
     .filter(Boolean)
@@ -129,37 +129,37 @@ export default function ProfilePage() {
     .toUpperCase();
 
   const menuItems = [
-    { id: 'account', label: 'Account information', icon: User },
-    { id: 'notifications', label: 'My notifications', icon: Bell },
-    { id: 'orders', label: 'Order management', icon: Package },
-    { id: 'vouchers', label: 'My vouchers', icon: TicketPercent },
-    { id: 'addresses', label: 'Address book', icon: MapPin },
-    { id: 'payments', label: 'Payment information', icon: CreditCard },
-    { id: 'reviews', label: 'Product reviews', icon: Star },
-    { id: 'viewed', label: 'Viewed products', icon: Eye },
-    { id: 'favorites', label: 'Favorite products', icon: Heart },
+    { id: 'account', label: 'Thông tin tài khoản', icon: User },
+    { id: 'notifications', label: 'Thông báo của tôi', icon: Bell },
+    { id: 'orders', label: 'Quản lý đơn hàng', icon: Package },
+    { id: 'vouchers', label: 'Voucher của tôi', icon: TicketPercent },
+    { id: 'addresses', label: 'Sổ địa chỉ', icon: MapPin },
+    { id: 'payments', label: 'Thông tin thanh toán', icon: CreditCard },
+    { id: 'reviews', label: 'Đánh giá sản phẩm', icon: Star },
+    { id: 'viewed', label: 'Sản phẩm đã xem', icon: Eye },
+    { id: 'favorites', label: 'Sản phẩm yêu thích', icon: Heart },
   ];
 
   const placeholderContent = {
     notifications: {
-      title: 'My notifications',
-      text: 'Notification preferences will appear here when this feature is available.',
+      title: 'Thông báo của tôi',
+      text: 'Tùy chọn thông báo sẽ hiển thị tại đây khi tính năng này được hỗ trợ.',
     },
     payments: {
-      title: 'Payment information',
-      text: 'Saved payment methods will appear here when payment profile storage is available.',
+      title: 'Thông tin thanh toán',
+      text: 'Phương thức thanh toán đã lưu sẽ hiển thị tại đây khi tính năng lưu thông tin thanh toán được hỗ trợ.',
     },
     reviews: {
-      title: 'Product reviews',
-      text: 'Your product reviews will appear here after you review purchased books.',
+      title: 'Đánh giá sản phẩm',
+      text: 'Đánh giá sản phẩm của bạn sẽ hiển thị tại đây sau khi bạn đánh giá sách đã mua.',
     },
     viewed: {
-      title: 'Viewed products',
-      text: 'Recently viewed books will appear here when browsing history is available.',
+      title: 'Sản phẩm đã xem',
+      text: 'Sách xem gần đây sẽ hiển thị tại đây khi lịch sử duyệt được hỗ trợ.',
     },
     favorites: {
-      title: 'Favorite products',
-      text: 'Favorite books will appear here when wishlist support is available.',
+      title: 'Sản phẩm yêu thích',
+      text: 'Sách yêu thích sẽ hiển thị tại đây khi tính năng danh sách yêu thích được hỗ trợ.',
     },
   };
 
@@ -167,7 +167,7 @@ export default function ProfilePage() {
     if (activeTab === 'vouchers') {
       return (
         <div className="profile-content">
-          <h1>My vouchers</h1>
+          <h1>Voucher của tôi</h1>
           <div className="profile-card profile-embedded-card voucher-profile-card">
             <VouchersPage />
           </div>
@@ -178,7 +178,7 @@ export default function ProfilePage() {
     if (activeTab === 'orders') {
       return (
         <div className="profile-content">
-          <h1>Order management</h1>
+          <h1>Quản lý đơn hàng</h1>
           <div className="profile-card profile-embedded-card">
             <OrdersPage />
           </div>
@@ -214,12 +214,12 @@ export default function ProfilePage() {
 
     return (
       <div className="profile-content">
-        <h1>Account information</h1>
+        <h1>Thông tin tài khoản</h1>
 
         <div className="profile-card profile-account-card">
           <section className="profile-personal-panel">
             <div className="profile-section-heading">
-              <h2>Personal information</h2>
+              <h2>Thông tin cá nhân</h2>
             </div>
 
             <AuthFormMessage error={saveError} success={saveSuccess} />
@@ -227,14 +227,14 @@ export default function ProfilePage() {
             <form className="profile-form" onSubmit={handleSaveProfile} key={profile?.updatedAt}>
               <div className="profile-avatar-panel">
                 <div className="profile-avatar profile-avatar-lg">{initials || 'BV'}</div>
-                <button type="button" className="profile-avatar-edit" aria-label="Edit avatar" disabled>
+                <button type="button" className="profile-avatar-edit" aria-label="Sửa ảnh đại diện" disabled>
                   <Pencil size={14} />
                 </button>
               </div>
 
               <div className="profile-fields">
                 <Input
-                  label="Full name"
+                  label="Họ và tên"
                   name="fullName"
                   defaultValue={profile?.fullName || ''}
                   error={saveFieldErrors.fullName}
@@ -243,19 +243,19 @@ export default function ProfilePage() {
                 <Input label="Email" defaultValue={profile?.email || ''} disabled />
 
                 <label className="field">
-                  <span>Nickname</span>
-                  <input value="Not set" disabled />
+                  <span>Biệt danh</span>
+                  <input value="Chưa đặt" disabled />
                 </label>
 
                 <label className="field">
-                  <span>Country</span>
+                  <span>Quốc gia</span>
                   <select defaultValue="Vietnam" disabled>
                     <option>Vietnam</option>
                   </select>
                 </label>
 
                 <Button type="submit" disabled={saveLoading} className="profile-save-btn">
-                  {saveLoading ? 'Saving...' : 'Save changes'}
+                  {saveLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
                 </Button>
               </div>
             </form>
@@ -263,31 +263,31 @@ export default function ProfilePage() {
 
           <aside className="profile-side-panel">
             <section className="profile-side-section">
-              <h2>Phone and email</h2>
+              <h2>Điện thoại và email</h2>
               <div className="profile-info-row">
                 <Mail size={18} />
                 <div>
-                  <span>Email address</span>
-                  <strong>{profile?.email || 'Not available'}</strong>
+                  <span>Địa chỉ email</span>
+                  <strong>{profile?.email || 'Không có'}</strong>
                 </div>
-                <button type="button" className="profile-outline-btn" disabled>Update</button>
+                <button type="button" className="profile-outline-btn" disabled>Cập nhật</button>
               </div>
             </section>
 
             <section className="profile-side-section">
-              <h2>Security</h2>
+              <h2>Bảo mật</h2>
               <div className="profile-info-row">
                 <Lock size={18} />
                 <div>
-                  <span>Password</span>
-                  <strong>Change account password</strong>
+                  <span>Mật khẩu</span>
+                  <strong>Đổi mật khẩu tài khoản</strong>
                 </div>
                 <button
                   type="button"
                   className="profile-outline-btn"
                   onClick={() => setShowPasswordForm((current) => !current)}
                 >
-                  {showPasswordForm ? 'Cancel' : 'Update'}
+                  {showPasswordForm ? 'Hủy' : 'Cập nhật'}
                 </button>
               </div>
 
@@ -296,28 +296,28 @@ export default function ProfilePage() {
               {showPasswordForm && (
                 <form className="profile-password-form" onSubmit={handleChangePassword}>
                   <Input
-                    label="Current password"
+                    label="Mật khẩu hiện tại"
                     name="currentPassword"
                     type="password"
                     error={pwdFieldErrors.currentPassword}
                     required
                   />
                   <Input
-                    label="New password"
+                    label="Mật khẩu mới"
                     name="newPassword"
                     type="password"
                     error={pwdFieldErrors.newPassword}
                     required
                   />
                   <Input
-                    label="Confirm password"
+                    label="Xác nhận mật khẩu"
                     name="confirmPassword"
                     type="password"
                     error={pwdFieldErrors.confirmPassword}
                     required
                   />
                   <Button type="submit" disabled={pwdLoading} className="profile-password-btn">
-                    {pwdLoading ? 'Processing...' : 'Confirm'}
+                    {pwdLoading ? 'Đang xử lý...' : 'Xác nhận'}
                   </Button>
                 </form>
               )}
@@ -333,7 +333,7 @@ export default function ProfilePage() {
     <>
       {showPasswordConfirm && (
         <ConfirmDialog
-          title="Change password?"
+          title="Đổi mật khẩu?"
           onCancel={() => {
             if (pwdLoading) return;
             setShowPasswordConfirm(false);
@@ -341,15 +341,15 @@ export default function ProfilePage() {
           }}
           onConfirm={applyPasswordChange}
         >
-          Change your password? You will be signed out.
+          Bạn có muốn đổi mật khẩu? Bạn sẽ bị đăng xuất sau khi đổi.
         </ConfirmDialog>
       )}
 
       <section className="profile-page">
       <nav className="profile-breadcrumb" aria-label="Breadcrumb">
-        <Link to="/">Home</Link>
+        <Link to="/">Trang chủ</Link>
         <span>/</span>
-        <span>Account information</span>
+        <span>Thông tin tài khoản</span>
       </nav>
 
       <div className="profile-layout">
@@ -357,7 +357,7 @@ export default function ProfilePage() {
           <div className="profile-sidebar-user">
             <div className="profile-avatar profile-avatar-sm">{initials || 'BV'}</div>
             <div>
-              <span>Your account</span>
+              <span>Tài khoản của bạn</span>
               <strong>{displayName}</strong>
             </div>
           </div>

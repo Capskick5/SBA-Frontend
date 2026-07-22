@@ -25,7 +25,7 @@ export default function AdminCategoriesPage() {
       })
       .catch((err) => {
         console.error('Failed to load categories:', err);
-        setError('Could not load categories.');
+        setError('Không thể tải danh mục.');
       })
       .finally(() => setLoading(false));
   };
@@ -55,11 +55,11 @@ export default function AdminCategoriesPage() {
         active: true
       });
 
-      alert('Category created successfully.');
+      alert('Tạo danh mục thành công.');
       setNewCatName('');
       fetchCategories();
     } catch (err) {
-      alert('Failed to create category: ' + (err.response?.data?.message || err.message));
+      alert('Không thể tạo danh mục: ' + (err.response?.data?.message || err.message));
     } finally {
       setSubmitting(false);
     }
@@ -70,32 +70,32 @@ export default function AdminCategoriesPage() {
 
   return (
     <section className="stack">
-      <h1>Category Management</h1>
+      <h1>Quản lý danh mục</h1>
       
       <form onSubmit={handleAddCategory} style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', marginBottom: '20px', maxWidth: '500px' }}>
         <div style={{ flex: 1 }}>
           <Input 
-            label="New Category Name" 
-            placeholder="Enter category name"
+            label="Tên danh mục mới" 
+            placeholder="Nhập tên danh mục"
             value={newCatName}
             onChange={(e) => setNewCatName(e.target.value)}
             required
           />
         </div>
         <Button type="submit" variant="primary" loading={submitting} style={{ height: '42px' }}>
-          Add
+          Thêm
         </Button>
       </form>
 
-      {loading ? <LoadingState text="Loading categories..." /> : error ? (
-        <ErrorState text={error}><Button onClick={fetchCategories}>Try again</Button></ErrorState>
+      {loading ? <LoadingState text="Đang tải danh mục..." /> : error ? (
+        <ErrorState text={error}><Button onClick={fetchCategories}>Thử lại</Button></ErrorState>
       ) : (
         <>
           <Table
-            emptyText="No categories found."
+            emptyText="Không tìm thấy danh mục nào."
             columns={[
               { key: 'id', label: 'ID' },
-              { key: 'name', label: 'Category Name' },
+              { key: 'name', label: 'Tên danh mục' },
               { key: 'slug', label: 'Slug' },
             ]}
             rows={paginatedCategories}
@@ -108,16 +108,16 @@ export default function AdminCategoriesPage() {
                 disabled={currentPage === 0}
                 onClick={() => setCurrentPage(currentPage - 1)}
               >
-                Previous
+                Trước
               </Button>
-              <span>Page {currentPage + 1} of {totalPages}</span>
+              <span>Trang {currentPage + 1} / {totalPages}</span>
               <Button
                 type="button"
                 className="btn-secondary"
                 disabled={currentPage >= totalPages - 1}
                 onClick={() => setCurrentPage(currentPage + 1)}
               >
-                Next
+                Sau
               </Button>
             </div>
           )}

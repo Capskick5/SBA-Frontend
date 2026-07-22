@@ -34,9 +34,9 @@ const normalizeCartOrder = (cart) => ({
 function formatVoucherDiscount(voucher) {
   if (!voucher) return '';
   if (voucher.discountType === 'PERCENTAGE') {
-    return `${voucher.discountValue}% off`;
+    return `${voucher.discountValue}% giảm`;
   }
-  return `${formatCurrency(voucher.discountValue)} off`;
+  return `Giảm ${formatCurrency(voucher.discountValue)}`;
 }
 
 export default function CartPage() {
@@ -145,13 +145,13 @@ export default function CartPage() {
     return () => window.removeEventListener('resize', updateStickyTop);
   }, []);
 
-  if (loading) return <LoadingState text="Loading cart..." />;
+  if (loading) return <LoadingState text="Đang tải giỏ hàng..." />;
   if (!cart.items || cart.items.length === 0) {
     return (
       <div className="cart-page">
         <div className="cart-empty-wrap">
-          <EmptyState text="Your cart is empty." />
-          <button className="btn" onClick={() => navigate('/')}>Continue Shopping</button>
+          <EmptyState text="Giỏ hàng của bạn đang trống." />
+          <button className="btn" onClick={() => navigate('/')}>Tiếp tục mua sắm</button>
         </div>
       </div>
     );
@@ -189,8 +189,8 @@ export default function CartPage() {
       .then((nextCart) => { syncCart(nextCart); clearItemError(item.itemId); })
       .catch(() => {
         const message = quantity > item.quantity
-          ? 'Maximum available stock reached for this book.'
-          : 'Could not update quantity. Please try again.';
+          ? 'Đã đạt số lượng tối đa còn trong kho cho cuốn sách này.'
+          : 'Không thể cập nhật số lượng. Vui lòng thử lại.';
         setItemError(item.itemId, message);
       });
   };
@@ -207,7 +207,7 @@ export default function CartPage() {
     setItemToRemove(null);
     cartFacade.removeItem(itemId)
       .then((nextCart) => { syncCart(nextCart); clearItemError(itemId); })
-      .catch(() => setItemError(itemId, 'Could not remove this item. Please try again.'));
+      .catch(() => setItemError(itemId, 'Không thể xóa sản phẩm này. Vui lòng thử lại.'));
   };
 
   const goToCheckout = async () => {
@@ -249,7 +249,7 @@ export default function CartPage() {
     <div className="cart-page">
       <h1 className="cart-page-title">
         <ShoppingCart size={26} />
-        Shopping Cart
+        Giỏ hàng
       </h1>
 
       <div className="cart-layout">
@@ -263,16 +263,16 @@ export default function CartPage() {
                 className="cart-checkbox"
                 checked={allSelected}
                 onChange={toggleAll}
-                aria-label="Select all items"
+                aria-label="Chọn tất cả sản phẩm"
                 id="cart-select-all"
               />
               <label htmlFor="cart-select-all" className="cart-select-all-label">
-                All ({cart.items.length} items)
+                Tất cả ({cart.items.length} sản phẩm)
               </label>
             </div>
-            <span className="cart-col-label cart-col-price">Unit Price</span>
-            <span className="cart-col-label cart-col-qty">Quantity</span>
-            <span className="cart-col-label cart-col-total">Subtotal</span>
+            <span className="cart-col-label cart-col-price">Đơn giá</span>
+            <span className="cart-col-label cart-col-qty">Số lượng</span>
+            <span className="cart-col-label cart-col-total">Tạm tính</span>
             <span className="cart-col-label cart-col-del"></span>
           </div>
 
@@ -298,7 +298,7 @@ export default function CartPage() {
           <div className="cart-summary-section">
             <div className="cart-summary-section-title">
               <MapPin size={16} />
-              Delivery Address
+              Địa chỉ giao hàng
               {isLoggedIn && (
                 <button
                   type="button"
@@ -307,19 +307,19 @@ export default function CartPage() {
                   disabled={addressLoading || addresses.length === 0}
                 >
                   <Pencil size={12} />
-                  Change
+                  Thay đổi
                 </button>
               )}
             </div>
             {isGuest ? (
               <div className="cart-address-empty">
-                Enter your delivery address at checkout. Guests do not need an account.
+                Nhập địa chỉ giao hàng khi thanh toán. Khách không cần tài khoản.
               </div>
             ) : addressLoading ? (
-              <div className="cart-address-empty">Loading address...</div>
+              <div className="cart-address-empty">Đang tải địa chỉ...</div>
             ) : !isLoggedIn ? (
               <div className="cart-address-empty">
-                You will enter delivery address at checkout
+                Bạn sẽ nhập địa chỉ giao hàng khi thanh toán
               </div>
             ) : defaultAddress ? (
               <div className="cart-address-box">
@@ -335,7 +335,7 @@ export default function CartPage() {
               </div>
             ) : (
               <Link to="/profile/addresses?redirect=/cart" className="cart-address-empty">
-                + Add a delivery address
+                + Thêm địa chỉ giao hàng
               </Link>
             )}
           </div>
@@ -346,10 +346,10 @@ export default function CartPage() {
             <div className="cart-summary-section">
               <div className="cart-summary-section-title">
                 <TicketPercent size={16} />
-                Voucher
+                Mã giảm giá
               </div>
               {voucherLoading ? (
-                <div className="cart-address-empty">Loading vouchers...</div>
+                <div className="cart-address-empty">Đang tải mã giảm giá...</div>
               ) : vouchers.length > 0 ? (
                 <div className="cart-voucher-box">
                   <select
@@ -357,7 +357,7 @@ export default function CartPage() {
                     value={selectedVoucherId}
                     onChange={(event) => setSelectedVoucherId(event.target.value)}
                   >
-                    <option value="">No voucher selected</option>
+                    <option value="">Chưa chọn mã giảm giá</option>
                     {vouchers.map((voucher) => (
                       <option key={voucher.id} value={voucher.id}>
                         {voucher.code} - {formatVoucherDiscount(voucher)}
@@ -366,15 +366,15 @@ export default function CartPage() {
                   </select>
                   {selectedVoucher ? (
                     <p>
-                      {selectedVoucher.code} will be checked again at checkout.
+                      {selectedVoucher.code} sẽ được kiểm tra lại khi thanh toán.
                     </p>
                   ) : (
-                    <p>Select a voucher now, then confirm the discount at checkout.</p>
+                    <p>Chọn mã giảm giá ngay, sau đó xác nhận giảm giá khi thanh toán.</p>
                   )}
                 </div>
               ) : (
                 <Link to="/profile?tab=vouchers" className="cart-address-empty">
-                  No voucher available. View voucher wallet
+                  Không có mã giảm giá. Xem ví voucher
                 </Link>
               )}
             </div>
@@ -384,23 +384,23 @@ export default function CartPage() {
           {/* Price breakdown */}
           <div className="cart-summary-section">
             <div className="cart-summary-row">
-              <span>Merchandise Total</span>
+              <span>Tổng hàng hóa</span>
               <span>{formatCurrency(selectedTotal)}</span>
             </div>
             {selectedVoucher && (
               <div className="cart-summary-row cart-summary-discount">
-                <span>Selected voucher</span>
+                <span>Mã giảm giá đã chọn</span>
                 <span>{selectedVoucher.code}</span>
               </div>
             )}
             <div className="cart-summary-divider" />
             <div className="cart-summary-row cart-summary-total">
-              <span>Order Total</span>
+              <span>Tổng đơn hàng</span>
               <span className="cart-total-amount">{formatCurrency(finalTotal)}</span>
             </div>
             {selectedVoucher && (
               <p className="cart-summary-savings">
-                Final discount will be calculated on the checkout page.
+                Giảm giá cuối cùng sẽ được tính ở trang thanh toán.
               </p>
             )}
           </div>
@@ -412,7 +412,7 @@ export default function CartPage() {
             onClick={goToCheckout}
             disabled={selectedItemIds.length === 0}
           >
-            Checkout ({selectedItemIds.length})
+            Thanh toán ({selectedItemIds.length})
             <ArrowRight size={18} />
           </button>
 
@@ -422,7 +422,7 @@ export default function CartPage() {
             onClick={() => navigate('/')}
           >
             <ChevronRight size={14} />
-            Continue Shopping
+            Tiếp tục mua sắm
           </button>
         </aside>
       </div>
@@ -436,14 +436,14 @@ export default function CartPage() {
         >
           <div className="modal" role="dialog" aria-modal="true" aria-labelledby="remove-cart-title">
             <div className="modal-header">
-              <h2 id="remove-cart-title">Remove item?</h2>
-              <button type="button" className="modal-close" onClick={() => setItemToRemove(null)} aria-label="Close">✕</button>
+              <h2 id="remove-cart-title">Xóa sản phẩm?</h2>
+              <button type="button" className="modal-close" onClick={() => setItemToRemove(null)} aria-label="Đóng">✕</button>
             </div>
             <p className="cart-modal-book-title">{itemToRemove.title}</p>
-            <p className="muted">Are you sure you want to remove this book from your cart?</p>
+            <p className="muted">Bạn có chắc muốn xóa cuốn sách này khỏi giỏ hàng?</p>
             <div className="cart-modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setItemToRemove(null)}>Cancel</button>
-              <button type="button" className="btn cart-modal-remove-btn" onClick={confirmRemove}>Remove</button>
+              <button type="button" className="btn btn-secondary" onClick={() => setItemToRemove(null)}>Hủy</button>
+              <button type="button" className="btn cart-modal-remove-btn" onClick={confirmRemove}>Xóa</button>
             </div>
           </div>
         </div>
@@ -457,8 +457,8 @@ export default function CartPage() {
         >
           <div className="modal cart-address-picker-modal" role="dialog" aria-modal="true" aria-labelledby="cart-address-picker-title">
             <div className="modal-header">
-              <h2 id="cart-address-picker-title">Select delivery address</h2>
-              <button type="button" className="modal-close" onClick={() => setAddressPickerOpen(false)} aria-label="Close">x</button>
+              <h2 id="cart-address-picker-title">Chọn địa chỉ giao hàng</h2>
+              <button type="button" className="modal-close" onClick={() => setAddressPickerOpen(false)} aria-label="Đóng">x</button>
             </div>
 
             <div className="cart-address-picker-list">
@@ -489,7 +489,7 @@ export default function CartPage() {
             </div>
 
             <button type="button" className="cart-address-manage-btn" onClick={() => navigate('/profile/addresses?redirect=/cart')}>
-              Manage addresses
+              Quản lý địa chỉ
             </button>
           </div>
         </div>

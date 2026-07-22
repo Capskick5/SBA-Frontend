@@ -34,7 +34,7 @@ export default function AdminOrdersPage() {
       })
       .catch((err) => {
         console.error('Failed to load orders:', err);
-        setError('Failed to load orders. Please try again later.');
+        setError('Không thể tải đơn hàng. Vui lòng thử lại sau.');
         setOrders([]);
         setTotalPages(1);
       })
@@ -48,9 +48,9 @@ export default function AdminOrdersPage() {
   return (
     <section className="stack">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Order Management</h1>
+        <h1>Quản lý đơn hàng</h1>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-          <label htmlFor="sortOrders" style={{ fontWeight: 'bold' }}>Sort:</label>
+          <label htmlFor="sortOrders" style={{ fontWeight: 'bold' }}>Sắp xếp:</label>
           <select
             id="sortOrders"
             value={sortBy}
@@ -60,43 +60,43 @@ export default function AdminOrdersPage() {
             }}
             style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ccc' }}
           >
-            <option value="id,desc">Order ID: Newest first</option>
-            <option value="id,asc">Order ID: Oldest first</option>
-            <option value="total,desc">Value: High to low</option>
-            <option value="total,asc">Value: Low to high</option>
+            <option value="id,desc">Mã đơn: Mới nhất trước</option>
+            <option value="id,asc">Mã đơn: Cũ nhất trước</option>
+            <option value="total,desc">Giá trị: Cao đến thấp</option>
+            <option value="total,asc">Giá trị: Thấp đến cao</option>
           </select>
         </div>
       </div>
 
       {loading ? (
-        <LoadingState text="Loading orders..." />
+        <LoadingState text="Đang tải đơn hàng..." />
       ) : error ? (
         <ErrorState text={error}>
-          <Button onClick={() => loadOrders(currentPage, sortBy)}>Retry</Button>
+          <Button onClick={() => loadOrders(currentPage, sortBy)}>Thử lại</Button>
         </ErrorState>
       ) : (
         <>
           <Table
-            emptyText="No orders found."
+            emptyText="Không tìm thấy đơn hàng nào."
             columns={[
-              { key: 'id', label: 'Order ID' },
+              { key: 'id', label: 'Mã đơn' },
               {
                 key: 'userId',
-                label: 'Customer',
+                label: 'Khách hàng',
                 render: (row) => (
                   row.userId
                     ? `#${row.userId}`
-                    : (row.guestEmail ? `Guest · ${row.guestEmail}` : 'Guest')
+                    : (row.guestEmail ? `Khách · ${row.guestEmail}` : 'Khách')
                 ),
               },
               {
                 key: 'createdAt',
-                label: 'Order Date',
+                label: 'Ngày đặt',
                 render: (row) => formatDate(row.createdAt),
               },
-              { key: 'status', label: 'Status', render: (row) => <OrderStatusBadge status={row.status} /> },
-              { key: 'total', label: 'Total', render: (row) => <strong style={{ color: '#e53e3e' }}>{formatCurrency(row.total)}</strong> },
-              { key: 'action', label: 'Actions', render: (row) => <Link to={`/admin/orders/${row.id}`} className="btn-link">View</Link> },
+              { key: 'status', label: 'Trạng thái', render: (row) => <OrderStatusBadge status={row.status} /> },
+              { key: 'total', label: 'Tổng tiền', render: (row) => <strong style={{ color: '#e53e3e' }}>{formatCurrency(row.total)}</strong> },
+              { key: 'action', label: 'Thao tác', render: (row) => <Link to={`/admin/orders/${row.id}`} className="btn-link">Xem</Link> },
             ]}
             rows={orders}
           />
@@ -104,13 +104,13 @@ export default function AdminOrdersPage() {
           {orders.length > 0 && (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '20px' }}>
               <Button type="button" disabled={currentPage === 0} onClick={() => setCurrentPage((prev) => prev - 1)}>
-                &laquo; Previous
+                &laquo; Trước
               </Button>
               <span style={{ fontWeight: 'bold' }}>
-                Page {currentPage + 1} / {totalPages}
+                Trang {currentPage + 1} / {totalPages}
               </span>
               <Button type="button" disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage((prev) => prev + 1)}>
-                Next &raquo;
+                Sau &raquo;
               </Button>
             </div>
           )}

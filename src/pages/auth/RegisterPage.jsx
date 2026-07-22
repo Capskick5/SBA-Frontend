@@ -35,16 +35,16 @@ export default function RegisterPage() {
 
   return (
     <section className="narrow">
-      <h1>Register</h1>
+      <h1>Đăng ký</h1>
       <AuthFormMessage error={error} />
       <form className="form" onSubmit={handleSubmit}>
-        <Input label="Full name" name="fullName" error={fieldErrors.fullName} required />
+        <Input label="Họ và tên" name="fullName" error={fieldErrors.fullName} required />
         <Input label="Email" name="email" type="email" error={fieldErrors.email} required />
-        <Input label="Password" name="password" type="password" error={fieldErrors.password} required />
-        <Button type="submit" disabled={loading}>{loading ? 'Processing...' : 'Create account'}</Button>
+        <Input label="Mật khẩu" name="password" type="password" error={fieldErrors.password} required />
+        <Button type="submit" disabled={loading}>{loading ? 'Đang xử lý...' : 'Tạo tài khoản'}</Button>
       </form>
       <AuthFormFooter>
-        <Link to="/login">Already have an account? Log in</Link>
+        <Link to="/login">Đã có tài khoản? Đăng nhập</Link>
       </AuthFormFooter>
     </section>
   );

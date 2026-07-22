@@ -21,18 +21,18 @@ import {
 } from 'lucide-react';
 
 const links = [
-  ['/admin', 'Dashboard', LayoutDashboard],
-  ['/admin/books', 'Books', BookOpen],
-  ['/admin/categories', 'Categories', FolderOpen],
-  ['/admin/banners', 'Banners', Image],
-  ['/admin/gift-wraps', 'Gift Wraps', Gift],
-  ['/admin/orders', 'Orders', ShoppingBag, 'orders'],
-  ['/admin/refunds', 'Refund Requests', RotateCcw, 'refunds'],
-  ['/admin/vouchers', 'Voucher Rules', Ticket],
-  ['/admin/users', 'Users', Users],
-  ['/admin/reviews', 'Reviews', MessageSquare],
-  ['/admin/inventory', 'Inventory Management', ClipboardList],
-  ['/admin/rag', 'RAG Catalog', Database],
+  ['/admin', 'Bảng điều khiển', LayoutDashboard],
+  ['/admin/books', 'Sách', BookOpen],
+  ['/admin/categories', 'Danh mục', FolderOpen],
+  ['/admin/banners', 'Banner', Image],
+  ['/admin/gift-wraps', 'Gói quà', Gift],
+  ['/admin/orders', 'Đơn hàng', ShoppingBag, 'orders'],
+  ['/admin/refunds', 'Yêu cầu hoàn tiền', RotateCcw, 'refunds'],
+  ['/admin/vouchers', 'Quy tắc voucher', Ticket],
+  ['/admin/users', 'Người dùng', Users],
+  ['/admin/reviews', 'Đánh giá', MessageSquare],
+  ['/admin/inventory', 'Quản lý kho', ClipboardList],
+  ['/admin/rag', 'Danh mục RAG', Database],
 ];
 
 export default function AdminLayout({ children }) {
@@ -93,7 +93,7 @@ export default function AdminLayout({ children }) {
     <div className={`admin-shell ${collapsed ? 'sidebar-collapsed' : ''}`}>
       <aside className="admin-sidebar">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', marginBottom: '20px' }}>
-          {!collapsed && <h2 style={{ margin: 0 }}>Admin</h2>}
+          {!collapsed && <h2 style={{ margin: 0 }}>Quản trị</h2>}
           <button 
             onClick={toggleSidebar} 
             style={{
@@ -156,7 +156,7 @@ export default function AdminLayout({ children }) {
         <div style={{ padding: '20px 0', borderTop: '1px solid var(--border)' }}>
           <button 
             onClick={handleLogout}
-            title={collapsed ? 'Logout' : undefined}
+            title={collapsed ? 'Đăng xuất' : undefined}
             style={{
               display: 'flex', alignItems: 'center', gap: collapsed ? '0' : '8px', 
               justifyContent: collapsed ? 'center' : 'flex-start',
@@ -169,7 +169,7 @@ export default function AdminLayout({ children }) {
             onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
           >
             <LogOut size={18} />
-            {!collapsed && <span>Logout</span>}
+            {!collapsed && <span>Đăng xuất</span>}
           </button>
         </div>
       </aside>

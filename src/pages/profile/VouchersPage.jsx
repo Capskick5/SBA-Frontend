@@ -8,13 +8,13 @@ import { formatCurrency, formatDateTime } from '../../utils/formatters';
 
 function formatVoucherDiscount(voucher) {
   if (voucher.discountType === 'PERCENTAGE') {
-    return `${voucher.discountValue}% off`;
+    return `Giảm ${voucher.discountValue}%`;
   }
-  return `${formatCurrency(voucher.discountValue)} off`;
+  return `Giảm ${formatCurrency(voucher.discountValue)}`;
 }
 
 function formatVoucherDate(value) {
-  return formatDateTime(value, 'No expiry date');
+  return formatDateTime(value, 'Không có hạn sử dụng');
 }
 
 export default function VouchersPage() {
@@ -41,7 +41,7 @@ export default function VouchersPage() {
           setTotalItems(result.totalItems || 0);
         })
         .catch((err) => {
-          if (active) setLoadError(err.message || 'Could not load vouchers.');
+          if (active) setLoadError(err.message || 'Không thể tải voucher.');
         })
         .finally(() => {
           if (active) setLoading(false);
@@ -53,8 +53,8 @@ export default function VouchersPage() {
     };
   }, [page, reloadKey]);
 
-  if (loading) return <LoadingState text="Loading your vouchers..." />;
-  if (loadError) return <ErrorState text={loadError}><button className="btn" onClick={() => setReloadKey((value) => value + 1)}>Try again</button></ErrorState>;
+  if (loading) return <LoadingState text="Đang tải voucher của bạn..." />;
+  if (loadError) return <ErrorState text={loadError}><button className="btn" onClick={() => setReloadKey((value) => value + 1)}>Thử lại</button></ErrorState>;
 
   return (
     <section className="voucher-wallet">
@@ -63,12 +63,12 @@ export default function VouchersPage() {
           <TicketPercent size={28} />
         </div>
         <div>
-          <h2>My vouchers</h2>
+          <h2>Voucher của tôi</h2>
           <p>
-            Vouchers are awarded after eligible paid orders. Use them on your next checkout
-            before proceeding to payment.
+            Voucher được tặng sau các đơn hàng đủ điều kiện đã thanh toán. Sử dụng voucher
+            khi thanh toán lần tiếp theo trước khi tiến hành thanh toán.
           </p>
-          <span className="voucher-wallet-count">{totalItems} available</span>
+          <span className="voucher-wallet-count">{totalItems} voucher khả dụng</span>
         </div>
       </div>
 
@@ -78,26 +78,26 @@ export default function VouchersPage() {
             {vouchers.map((voucher) => (
             <article className="voucher-wallet-card" key={voucher.id}>
               <div className="voucher-card-main">
-                <span className="voucher-card-label">Available voucher</span>
+                <span className="voucher-card-label">Voucher khả dụng</span>
                 <strong>{formatVoucherDiscount(voucher)}</strong>
                 <p>{voucher.name}</p>
               </div>
               <div className="voucher-card-code">
-                <span>Voucher code</span>
+                <span>Mã voucher</span>
                 <strong>{voucher.code}</strong>
               </div>
               <dl className="voucher-card-details">
                 <div>
-                  <dt>Minimum subtotal</dt>
+                  <dt>Tổng phụ tối thiểu</dt>
                   <dd>{formatCurrency(voucher.tierMinAmount)}</dd>
                 </div>
                 <div>
-                  <dt>Expires</dt>
+                  <dt>Hết hạn</dt>
                   <dd>{formatVoucherDate(voucher.expiresAt)}</dd>
                 </div>
               </dl>
               <Link className="voucher-use-link" to="/cart">
-                Use at checkout
+                Dùng khi thanh toán
               </Link>
             </article>
             ))}
@@ -111,12 +111,12 @@ export default function VouchersPage() {
       ) : (
         <div className="voucher-empty-card">
           <TicketPercent size={34} />
-          <h2>No vouchers yet</h2>
+          <h2>Chưa có voucher</h2>
           <p>
-            Complete a paid order first. If the order is eligible, your voucher will appear
-            here and can be selected during your next checkout.
+            Hoàn tất thanh toán đơn hàng trước. Nếu đơn hàng đủ điều kiện, voucher sẽ xuất hiện
+            tại đây và có thể được chọn khi thanh toán lần tiếp theo.
           </p>
-          <Link to="/orders">View my orders</Link>
+          <Link to="/orders">Xem đơn hàng của tôi</Link>
         </div>
       )}
     </section>

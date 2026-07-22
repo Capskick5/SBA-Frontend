@@ -14,11 +14,11 @@ export default function CartItemRow({ item, selected, error, onSelect, onQuantit
           checked={selected}
           onChange={onSelect}
           disabled={!item.available}
-          aria-label={`Select ${item.title}`}
+          aria-label={`Chọn ${item.title}`}
         />
       </div>
 
-      <Link className="cart-item-cover" to={`/books/${item.bookId}`} aria-label={`View ${item.title}`}>
+      <Link className="cart-item-cover" to={`/books/${item.bookId}`} aria-label={`Xem ${item.title}`}>
         <img src={item.coverUrl} alt={item.title} loading="lazy" />
       </Link>
 
@@ -26,7 +26,7 @@ export default function CartItemRow({ item, selected, error, onSelect, onQuantit
         <Link className="cart-item-title" to={`/books/${item.bookId}`}>
           {item.title}
         </Link>
-        {!item.available && <span className="cart-item-oos">Out of stock</span>}
+        {!item.available && <span className="cart-item-oos">Hết hàng</span>}
         {error && <p className="cart-item-error">{error}</p>}
       </div>
 
@@ -44,7 +44,7 @@ export default function CartItemRow({ item, selected, error, onSelect, onQuantit
             className="cart-qty-btn"
             onClick={() => onQuantity(item.itemId, item.quantity - 1)}
             disabled={item.quantity <= 1 || !item.available}
-            aria-label="Decrease quantity"
+            aria-label="Giảm số lượng"
           >
             <Minus size={12} />
           </button>
@@ -54,7 +54,7 @@ export default function CartItemRow({ item, selected, error, onSelect, onQuantit
             className="cart-qty-btn"
             onClick={() => onQuantity(item.itemId, item.quantity + 1)}
             disabled={!item.available}
-            aria-label="Increase quantity"
+            aria-label="Tăng số lượng"
           >
             <Plus size={12} />
           </button>
@@ -70,7 +70,7 @@ export default function CartItemRow({ item, selected, error, onSelect, onQuantit
           type="button"
           className="cart-remove-btn"
           onClick={() => onRemove(item.itemId)}
-          aria-label={`Remove ${item.title}`}
+          aria-label={`Xóa ${item.title}`}
         >
           <Trash2 size={18} />
         </button>

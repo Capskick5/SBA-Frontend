@@ -17,7 +17,7 @@ export default function PricingFields({
       <input type="hidden" name="originalPrice" value={originalPrice} />
       <input type="hidden" name="price" value={computedPrice} />
       <Input
-        label="Original Price"
+        label="Giá gốc"
         type="number"
         min="0"
         required
@@ -25,7 +25,7 @@ export default function PricingFields({
         onChange={(event) => setOriginalPrice(event.target.value)}
       />
       <Input
-        label="Discount (%)"
+        label="Giảm giá (%)"
         type="number"
         min="0"
         max="100"
@@ -33,7 +33,7 @@ export default function PricingFields({
         onChange={(event) => setDiscountPercent(event.target.value)}
       />
       <label className="field">
-        <span>Price</span>
+        <span>Giá</span>
         <input type="text" readOnly value={formatCurrency(computedPrice)} />
       </label>
     </>

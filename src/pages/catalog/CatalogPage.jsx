@@ -66,7 +66,7 @@ export default function CatalogPage() {
         setBooks([]);
         setTotalItems(0);
         setTotalPages(0);
-        setError('Could not load books from backend.');
+        setError('Không thể tải danh sách sách từ máy chủ.');
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -156,7 +156,7 @@ export default function CatalogPage() {
                   key={banner.id}
                   className={`banner-dot ${index === activeBanner ? 'active' : ''}`}
                   onClick={() => setActiveBanner(index)}
-                  aria-label={`Go to slide ${index + 1}`}
+                  aria-label={`Chuyển đến slide ${index + 1}`}
                 />
               ))}
             </div>
@@ -175,14 +175,14 @@ export default function CatalogPage() {
         />
         {!loading && !error && (
           <p className="muted">
-            Showing {showingStart}-{showingEnd} of {totalItems} books
+            Hiển thị {showingStart}-{showingEnd} trong tổng số {totalItems} sách
           </p>
         )}
-        {loading && <LoadingState text="Loading books..." />}
+        {loading && <LoadingState text="Đang tải sách..." />}
         {!loading && error && (
           <ErrorState text={error}>
             <button className="btn" type="button" onClick={retryLoadBooks}>
-              Retry
+              Thử lại
             </button>
           </ErrorState>
         )}

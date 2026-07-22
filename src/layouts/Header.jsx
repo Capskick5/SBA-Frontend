@@ -22,15 +22,17 @@ const CATEGORY_NAV_LIMIT = 6;
 
 function compactCategoryName(name) {
   const compactNames = {
-    'Business & Finance': 'Finance',
-    'Technology & Computing': 'Technology',
-    'Psychology & Self-Help': 'Self-Help',
-    'Science & Mathematics': 'Science',
-    "Children's Books": 'Kids',
-    'History, Politics & International Relations': 'History',
-    'Fiction & Literature': 'Fiction',
-    'Religion & Spirituality': 'Spirituality',
-    'Health & Fitness': 'Health',
+    'Business & Finance': 'Tài chính',
+    'Technology & Computing': 'Công nghệ',
+    'Psychology & Self-Help': 'Phát triển bản thân',
+    'Science & Mathematics': 'Khoa học',
+    "Children's Books": 'Thiếu nhi',
+    'History, Politics & International Relations': 'Lịch sử',
+    'Fiction & Literature': 'Văn học',
+    'Religion & Spirituality': 'Tâm linh',
+    'Health & Fitness': 'Sức khỏe',
+    'Education': 'Giáo dục',
+    'Social Sciences': 'Xã hội',
   };
 
   return compactNames[name] || name.replace(/\s*&\s*/g, ' & ').split(':')[0];
@@ -58,8 +60,8 @@ export default function Header() {
     location.pathname === "/login" || location.pathname === "/register";
 
   const bottomLinks = [
-    { label: "All Books", to: "/", isActive: location.pathname === "/" && !activeCategory && !queryParam && !activeSort },
-    { label: "Best Sellers", to: "/?sort=sold_desc", isActive: activeSort === "sold_desc" },
+    { label: "Tất cả sách", to: "/", isActive: location.pathname === "/" && !activeCategory && !queryParam && !activeSort },
+    { label: "Bán chạy", to: "/?sort=sold_desc", isActive: activeSort === "sold_desc" },
     ...navCategories.map((category) => ({
       label: compactCategoryName(category.name),
       to: `/?category=${category.id}`,
@@ -176,12 +178,12 @@ export default function Header() {
         <form onSubmit={handleSearchSubmit} className="search-form-pill">
           <input
             type="text"
-            placeholder="Search books, authors, ISBNs"
+            placeholder="Tìm kiếm sách, tác giả, ISBN"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="search-pill-input"
           />
-          <button type="submit" className="search-pill-btn" aria-label="Search">
+          <button type="submit" className="search-pill-btn" aria-label="Tìm kiếm">
             <Search size={18} />
           </button>
         </form>
@@ -193,10 +195,10 @@ export default function Header() {
             <Link
               to={user ? "/books/chat" : "/login"}
               className="header-secondary-link"
-              aria-label="Open AI reading assistant for purchased books"
-              title="AI reading assistant for purchased books"
+              aria-label="Mở trợ lý đọc sách AI cho sách đã mua"
+              title="Trợ lý đọc sách AI cho sách đã mua"
             >
-              AI Reading Assistant
+              Trợ lý đọc sách AI
             </Link>
           )}
 
@@ -206,7 +208,7 @@ export default function Header() {
               to={`/login?redirect=${encodeURIComponent(location.pathname)}`}
               className="header-secondary-link"
             >
-              Sign In
+              Đăng nhập
             </Link>
           )}
 
@@ -216,7 +218,7 @@ export default function Header() {
               <Link
                 className="control-btn"
                 to="/cart"
-                aria-label={`Cart${visibleCartItemCount ? `, ${visibleCartItemCount} items` : ""}`}
+                aria-label={`Giỏ hàng${visibleCartItemCount ? `, ${visibleCartItemCount} sản phẩm` : ""}`}
               >
                 <ShoppingBag size={20} aria-hidden="true" />
                 {visibleCartItemCount > 0 && (
@@ -231,7 +233,7 @@ export default function Header() {
                   type="button"
                   className="control-btn profile-trigger-btn"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  aria-label="User profile"
+                  aria-label="Hồ sơ người dùng"
                 >
                   <User size={20} />
                 </button>
@@ -248,7 +250,7 @@ export default function Header() {
                       className="dropdown-item"
                     >
                       <User size={16} />
-                      <span>Account Information</span>
+                      <span>Thông tin tài khoản</span>
                     </Link>
                     {user.role !== "ADMIN" && (
                       <Link
@@ -257,7 +259,7 @@ export default function Header() {
                         className="dropdown-item"
                       >
                         <ShoppingBag size={16} />
-                        <span>My Orders</span>
+                        <span>Đơn hàng của tôi</span>
                       </Link>
                     )}
                     {user.role !== "ADMIN" && (
@@ -267,14 +269,14 @@ export default function Header() {
                         className="dropdown-item"
                       >
                         <TicketPercent size={16} />
-                        <span>My Vouchers</span>
+                        <span>Voucher của tôi</span>
                       </Link>
                     )}
                     {user.role !== "ADMIN" && (
                       <div className="dropdown-item dropdown-item-disabled">
                         <Crown size={16} />
-                        <span>Membership</span>
-                        <span className="dropdown-badge-soon">Soon</span>
+                        <span>Thành viên</span>
+                        <span className="dropdown-badge-soon">Sắp ra mắt</span>
                       </div>
                     )}
                     {user.role === "ADMIN" && (
@@ -284,7 +286,7 @@ export default function Header() {
                         className="dropdown-item"
                       >
                         <Shield size={16} />
-                        <span>Admin Dashboard</span>
+                        <span>Bảng điều khiển quản trị</span>
                       </Link>
                     )}
                     <Link
@@ -293,7 +295,7 @@ export default function Header() {
                       className="dropdown-item"
                     >
                       <HelpCircle size={16} />
-                      <span>Support Center</span>
+                      <span>Trung tâm hỗ trợ</span>
                     </Link>
                     <div className="dropdown-divider"></div>
                     <button
@@ -302,7 +304,7 @@ export default function Header() {
                       className="dropdown-item logout-item"
                     >
                       <LogOut size={16} />
-                      <span>Log Out</span>
+                      <span>Đăng xuất</span>
                     </button>
                   </div>
                 )}
@@ -312,7 +314,7 @@ export default function Header() {
             <button
               type="button"
               onClick={toggleTheme}
-              aria-label="Toggle theme"
+              aria-label="Chuyển giao diện"
               className="control-btn"
             >
               {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}

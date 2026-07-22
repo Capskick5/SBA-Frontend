@@ -38,7 +38,7 @@ export default function AdminLoginPage() {
 
       if (loggedIn.role !== 'ADMIN') {
         await authService.logout();
-        setError({ message: 'This portal is for administrators only. Please use the customer login page.' });
+        setError({ message: 'Cổng này chỉ dành cho quản trị viên. Vui lòng sử dụng trang đăng nhập khách hàng.' });
         return;
       }
 
@@ -56,14 +56,14 @@ export default function AdminLoginPage() {
       <section className="admin-login-card">
         <div className="admin-login-heading">
           <span>BookVerse Admin</span>
-          <h1>Admin Portal</h1>
+          <h1>Cổng quản trị</h1>
         </div>
 
         <AuthFormMessage error={error} />
 
         <form className="form" onSubmit={handleSubmit}>
           <Input
-            label="Admin email"
+            label="Email quản trị viên"
             name="email"
             type="email"
             placeholder="admin@bookverse.local"
@@ -71,15 +71,15 @@ export default function AdminLoginPage() {
             required
           />
           <Input
-            label="Password"
+            label="Mật khẩu"
             name="password"
             type="password"
-            placeholder="Enter admin password"
+            placeholder="Nhập mật khẩu quản trị"
             error={fieldErrors.password}
             required
           />
           <Button type="submit" variant="primary" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign in to admin'}
+            {loading ? 'Đang đăng nhập...' : 'Đăng nhập quản trị'}
           </Button>
         </form>
       </section>

@@ -6,13 +6,13 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
 
   return (
-    <nav className="pagination" aria-label="Catalog pagination">
+    <nav className="pagination" aria-label="Phân trang danh mục">
       <Button
         type="button"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
       >
-        Previous
+        Trước
       </Button>
       <div className="pagination-pages">
         {pages.map((page) => (
@@ -32,7 +32,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
       >
-        Next
+        Sau
       </Button>
     </nav>
   );

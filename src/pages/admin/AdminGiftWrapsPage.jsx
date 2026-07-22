@@ -59,7 +59,7 @@ export default function AdminGiftWrapsPage() {
       .catch((err) => {
         if (!active) return;
         setGiftWraps([]);
-        setError(getErrorMessage(err, 'Could not load gift wrap options.'));
+        setError(getErrorMessage(err, 'Không thể tải tùy chọn giấy gói quà.'));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -114,7 +114,7 @@ export default function AdminGiftWrapsPage() {
       setField('imageKey', key);
       setImagePreviewUrl(URL.createObjectURL(file));
     } catch (err) {
-      showToast(getErrorMessage(err, 'Failed to upload gift wrap image.'), 'error');
+      showToast(getErrorMessage(err, 'Không thể tải ảnh giấy gói quà lên.'), 'error');
     } finally {
       setUploadingImage(false);
     }
@@ -123,21 +123,21 @@ export default function AdminGiftWrapsPage() {
   const submitGiftWrap = async (event) => {
     event.preventDefault();
     if (!form.name.trim()) {
-      setFormError('Enter a gift wrap name.');
+      setFormError('Nhập tên giấy gói quà.');
       return;
     }
     if (!form.imageKey) {
-      setFormError('Upload a gift wrap image.');
+      setFormError('Tải ảnh giấy gói quà lên.');
       return;
     }
     const feeVnd = Number(form.feeVnd);
     if (!Number.isFinite(feeVnd) || feeVnd < 0) {
-      setFormError('Fee must be a non-negative number.');
+      setFormError('Phí phải là số không âm.');
       return;
     }
     const displayOrder = Number(form.displayOrder);
     if (!Number.isFinite(displayOrder)) {
-      setFormError('Display order must be a number.');
+      setFormError('Thứ tự hiển thị phải là số.');
       return;
     }
 
@@ -154,15 +154,15 @@ export default function AdminGiftWrapsPage() {
     try {
       if (editingId) {
         await updateGiftWrap(editingId, payload, { imageUrl: imagePreviewUrl });
-        showToast('Gift wrap updated.');
+        showToast('Đã cập nhật giấy gói quà.');
       } else {
         await createGiftWrap(payload, { imageUrl: imagePreviewUrl });
-        showToast('Gift wrap created.');
+        showToast('Đã tạo giấy gói quà.');
       }
       setFormOpen(false);
       reloadGiftWraps();
     } catch (err) {
-      setFormError(getErrorMessage(err, 'Could not save this gift wrap.'));
+      setFormError(getErrorMessage(err, 'Không thể lưu giấy gói quà này.'));
     } finally {
       setSubmitting(false);
     }
@@ -171,10 +171,10 @@ export default function AdminGiftWrapsPage() {
   const toggleActive = async (giftWrap) => {
     try {
       await setGiftWrapActive(giftWrap.id, !giftWrap.active);
-      showToast(giftWrap.active ? 'Gift wrap deactivated.' : 'Gift wrap activated.');
+      showToast(giftWrap.active ? 'Đã tắt giấy gói quà.' : 'Đã bật giấy gói quà.');
       reloadGiftWraps();
     } catch (err) {
-      showToast(getErrorMessage(err, 'Could not update gift wrap status.'), 'error');
+      showToast(getErrorMessage(err, 'Không thể cập nhật trạng thái giấy gói quà.'), 'error');
     }
   };
 
@@ -183,11 +183,11 @@ export default function AdminGiftWrapsPage() {
     setDeleting(true);
     try {
       await deleteGiftWrap(deleteTarget.id);
-      showToast('Gift wrap deleted.');
+      showToast('Đã xóa giấy gói quà.');
       setDeleteTarget(null);
       reloadGiftWraps();
     } catch (err) {
-      showToast(getErrorMessage(err, 'Could not delete this gift wrap. If it was already used in an order, deactivate it instead.'), 'error');
+      showToast(getErrorMessage(err, 'Không thể xóa giấy gói quà này. Nếu đã được dùng trong đơn hàng, hãy tắt thay vì xóa.'), 'error');
     } finally {
       setDeleting(false);
     }
@@ -196,42 +196,42 @@ export default function AdminGiftWrapsPage() {
   const columns = [
     {
       key: 'imageUrl',
-      label: 'Preview',
+      label: 'Xem trước',
       render: (giftWrap) => (
         <div className="banner-thumb-cell">
           {giftWrap.imageUrl ? (
             <img src={giftWrap.imageUrl} alt={giftWrap.name} />
           ) : (
-            <span className="muted">No image</span>
+            <span className="muted">Chưa có ảnh</span>
           )}
         </div>
       ),
     },
-    { key: 'name', label: 'Name' },
-    { key: 'feeVnd', label: 'Fee', render: (giftWrap) => formatCurrency(giftWrap.feeVnd) },
-    { key: 'displayOrder', label: 'Order' },
+    { key: 'name', label: 'Tên' },
+    { key: 'feeVnd', label: 'Phí', render: (giftWrap) => formatCurrency(giftWrap.feeVnd) },
+    { key: 'displayOrder', label: 'Thứ tự' },
     {
       key: 'active',
-      label: 'Status',
+      label: 'Trạng thái',
       render: (giftWrap) => (
         <span className={`status-badge ${giftWrap.active ? 'delivered' : 'unknown'}`}>
-          {giftWrap.active ? 'Active' : 'Inactive'}
+          {giftWrap.active ? 'Đang hiện' : 'Không hoạt động'}
         </span>
       ),
     },
     {
       key: 'actions',
-      label: 'Actions',
+      label: 'Thao tác',
       render: (giftWrap) => (
         <div className="banner-row-actions">
           <Button type="button" className="btn-secondary" onClick={() => openEdit(giftWrap)}>
-            Edit
+            Sửa
           </Button>
           <Button type="button" className="btn-secondary" onClick={() => toggleActive(giftWrap)}>
-            {giftWrap.active ? 'Deactivate' : 'Activate'}
+            {giftWrap.active ? 'Tắt' : 'Bật'}
           </Button>
           <Button type="button" className="btn-secondary danger-action" onClick={() => setDeleteTarget(giftWrap)}>
-            <Trash2 size={15} /> Delete
+            <Trash2 size={15} /> Xóa
           </Button>
         </div>
       ),
@@ -242,56 +242,56 @@ export default function AdminGiftWrapsPage() {
     <section className="stack">
       <header className="admin-banners-header">
         <div>
-          <h1>Gift wraps</h1>
-          <p>Configure the gift wrap options and fees shown during checkout.</p>
+          <h1>Giấy gói quà</h1>
+          <p>Cấu hình tùy chọn giấy gói quà và phí hiển thị khi thanh toán.</p>
         </div>
         <Button type="button" onClick={openCreate}>
-          <Plus size={17} /> Add gift wrap
+          <Plus size={17} /> Thêm giấy gói quà
         </Button>
       </header>
 
       <div className="admin-banners-subheader">
-        <h2>Gift wrap options</h2>
+        <h2>Tùy chọn giấy gói quà</h2>
         {usingMockGiftWraps && (
-          <span className="status-badge unknown">Offline mock fallback</span>
+          <span className="status-badge unknown">Dữ liệu mẫu ngoại tuyến</span>
         )}
       </div>
 
       {loading ? (
-        <LoadingState text="Loading gift wraps..." />
+        <LoadingState text="Đang tải giấy gói quà..." />
       ) : error ? (
         <ErrorState text={error}>
-          <Button type="button" onClick={reloadGiftWraps}>Try again</Button>
+          <Button type="button" onClick={reloadGiftWraps}>Thử lại</Button>
         </ErrorState>
       ) : (
-        <Table columns={columns} rows={giftWraps} emptyText="No gift wrap options yet. Add one so customers can choose it at checkout." />
+        <Table columns={columns} rows={giftWraps} emptyText="Chưa có tùy chọn giấy gói quà nào. Thêm một tùy chọn để khách hàng chọn khi thanh toán." />
       )}
 
       {formOpen && (
-        <Modal title={editingId ? 'Edit gift wrap' : 'Add gift wrap'} onClose={() => setFormOpen(false)}>
+        <Modal title={editingId ? 'Sửa giấy gói quà' : 'Thêm giấy gói quà'} onClose={() => setFormOpen(false)}>
           <form className="form" onSubmit={submitGiftWrap}>
             {formError && <p className="form-message form-message-error">{formError}</p>}
 
             <div className="field">
-              <span>Gift wrap image</span>
+              <span>Ảnh giấy gói quà</span>
               <input type="file" accept="image/*" onChange={handleImageChange} />
-              {uploadingImage && <p className="muted">Uploading...</p>}
+              {uploadingImage && <p className="muted">Đang tải lên...</p>}
               {imagePreviewUrl && (
                 <div className="banner-thumb-cell banner-form-preview">
-                  <img src={imagePreviewUrl} alt="Gift wrap preview" />
+                  <img src={imagePreviewUrl} alt="Xem trước giấy gói quà" />
                 </div>
               )}
             </div>
 
             <Input
-              label="Name"
+              label="Tên"
               value={form.name}
               onChange={(event) => setField('name', event.target.value)}
-              placeholder="e.g. Giấy hoa văn đỏ"
+              placeholder="vd. Giấy hoa văn đỏ"
               required
             />
             <Input
-              label="Fee (VND)"
+              label="Phí (VND)"
               type="number"
               min="0"
               step="1000"
@@ -300,7 +300,7 @@ export default function AdminGiftWrapsPage() {
               required
             />
             <Input
-              label="Display order"
+              label="Thứ tự hiển thị"
               type="number"
               value={form.displayOrder}
               onChange={(event) => setField('displayOrder', event.target.value)}
@@ -311,15 +311,15 @@ export default function AdminGiftWrapsPage() {
                 checked={form.active}
                 onChange={(event) => setField('active', event.target.checked)}
               />
-              <span>Show this gift wrap option at checkout</span>
+              <span>Hiển thị tùy chọn giấy gói quà này khi thanh toán</span>
             </label>
 
             <div className="confirm-dialog-actions">
               <Button type="button" className="btn-secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
-                Cancel
+                Hủy
               </Button>
               <Button type="submit" loading={submitting} disabled={uploadingImage}>
-                {editingId ? 'Save changes' : 'Create gift wrap'}
+                {editingId ? 'Lưu thay đổi' : 'Tạo giấy gói quà'}
               </Button>
             </div>
           </form>
@@ -327,17 +327,17 @@ export default function AdminGiftWrapsPage() {
       )}
 
       {deleteTarget && (
-        <Modal title="Delete gift wrap?" onClose={() => setDeleteTarget(null)} hideClose={deleting}>
+        <Modal title="Xóa giấy gói quà?" onClose={() => setDeleteTarget(null)} hideClose={deleting}>
           <div className="stack">
             <p>
-              <strong>{deleteTarget.name}</strong> will be permanently removed from checkout options.
+              <strong>{deleteTarget.name}</strong> sẽ bị xóa vĩnh viễn khỏi tùy chọn thanh toán.
             </p>
             <div className="confirm-dialog-actions">
               <Button type="button" className="btn-secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
-                Cancel
+                Hủy
               </Button>
               <Button type="button" className="danger-action" onClick={confirmDelete} loading={deleting}>
-                Delete gift wrap
+                Xóa giấy gói quà
               </Button>
             </div>
           </div>

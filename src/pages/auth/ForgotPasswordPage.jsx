@@ -31,14 +31,14 @@ export default function ForgotPasswordPage() {
 
   return (
     <section className="narrow">
-      <h1>Forgot Password</h1>
+      <h1>Quên mật khẩu</h1>
       <AuthFormMessage error={error} />
       <form className="form" onSubmit={handleSubmit}>
         <Input label="Email" name="email" type="email" error={fieldErrors.email} required />
-        <Button type="submit" disabled={loading}>{loading ? 'Processing...' : 'Send OTP'}</Button>
+        <Button type="submit" disabled={loading}>{loading ? 'Đang xử lý...' : 'Gửi OTP'}</Button>
       </form>
       <AuthFormFooter>
-        <Link to="/login">Back to login</Link>
+        <Link to="/login">Quay lại đăng nhập</Link>
       </AuthFormFooter>
     </section>
   );

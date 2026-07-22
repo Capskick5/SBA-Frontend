@@ -6,7 +6,7 @@ import Textarea from '../ui/Textarea';
 import { formatCurrency } from '../../utils/formatters';
 import { showToast } from '../../utils/toast';
 import { refundService } from '../../services/refundService';
-import { Upload, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 const REASON_OPTIONS = [
   { value: 'DAMAGED', label: 'Sản phẩm bị hư hỏng / rách' },

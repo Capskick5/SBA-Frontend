@@ -69,7 +69,7 @@ export default function AdminDashboardPage() {
       if (!active) return;
 
       if (!overviewResult.ok) {
-        setError('Could not load dashboard statistics.');
+        setError('Không thể tải thống kê bảng điều khiển.');
         setLoading(false);
         return;
       }
@@ -98,13 +98,13 @@ export default function AdminDashboardPage() {
       if (ordersResult.ok) {
         setDailySeries(buildDailySeries(ordersResult.items, CHART_DAYS));
       } else {
-        nextErrors.orders = 'Could not load chart data.';
+        nextErrors.orders = 'Không thể tải dữ liệu biểu đồ.';
         setDailySeries(buildDailySeries([], CHART_DAYS));
       }
 
       const hasStatusFailure = statusResults.some((item) => item.count === null);
       if (hasStatusFailure) {
-        nextErrors.status = 'Some order status totals could not be loaded.';
+        nextErrors.status = 'Không thể tải một số tổng trạng thái đơn hàng.';
       }
       setStatusCounts(
         statusResults.map((item) => ({
@@ -132,11 +132,11 @@ export default function AdminDashboardPage() {
   const topBooks = stats?.topSellingBooks || [];
   const booksSoldTotal = sumBooksSold(topBooks);
 
-  if (loading) return <LoadingState text="Loading dashboard..." />;
+  if (loading) return <LoadingState text="Đang tải bảng điều khiển..." />;
   if (error) {
     return (
       <ErrorState text={error}>
-        <Button onClick={() => setReloadKey((value) => value + 1)}>Try again</Button>
+        <Button onClick={() => setReloadKey((value) => value + 1)}>Thử lại</Button>
       </ErrorState>
     );
   }
@@ -144,35 +144,35 @@ export default function AdminDashboardPage() {
   return (
     <section className="stack admin-dashboard">
       <div className="admin-dashboard-header">
-        <h1>Admin Dashboard</h1>
+        <h1>Bảng điều khiển quản trị</h1>
         <Button
           type="button"
           className="btn-secondary"
           onClick={() => setReloadKey((value) => value + 1)}
         >
-          Refresh
+          Làm mới
         </Button>
       </div>
 
       <div className="admin-dashboard-kpis">
         <KpiCard
-          label="Revenue"
+          label="Doanh thu"
           value={formatCurrency(stats?.recognizedRevenue || 0)}
         />
         <KpiCard
-          label="Orders"
+          label="Đơn hàng"
           value={stats?.totalOrders ?? 0}
         />
         <KpiCard
-          label="System accounts"
+          label="Tài khoản hệ thống"
           value={stats?.totalUsers ?? 0}
         />
         <KpiCard
-          label="Books sold"
+          label="Sách đã bán"
           value={booksSoldTotal}
         />
         <KpiCard
-          label="Books"
+          label="Sách"
           value={stats?.totalBooks ?? 0}
         />
       </div>
@@ -180,7 +180,7 @@ export default function AdminDashboardPage() {
       <div className="admin-dashboard-charts">
         <div className="panel admin-dashboard-chart-panel">
           <div className="panel-heading compact">
-            <h3>Revenue (last {CHART_DAYS} days)</h3>
+            <h3>Doanh thu ({CHART_DAYS} ngày gần nhất)</h3>
           </div>
           {sectionErrors.orders ? (
             <PanelMessage text={sectionErrors.orders} />
@@ -201,7 +201,7 @@ export default function AdminDashboardPage() {
                     stroke="var(--accent)"
                     strokeWidth={2}
                     dot={false}
-                    name="Revenue"
+                    name="Doanh thu"
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -211,7 +211,7 @@ export default function AdminDashboardPage() {
 
         <div className="panel admin-dashboard-chart-panel">
           <div className="panel-heading compact">
-            <h3>Orders (last {CHART_DAYS} days)</h3>
+            <h3>Đơn hàng ({CHART_DAYS} ngày gần nhất)</h3>
           </div>
           {sectionErrors.orders ? (
             <PanelMessage text={sectionErrors.orders} />
@@ -223,7 +223,7 @@ export default function AdminDashboardPage() {
                   <XAxis dataKey="label" tick={{ fontSize: 12 }} />
                   <YAxis allowDecimals={false} tick={{ fontSize: 12 }} width={40} />
                   <Tooltip labelFormatter={(_, payload) => payload?.[0]?.payload?.date || ''} />
-                  <Bar dataKey="orderCount" fill="var(--accent)" radius={[4, 4, 0, 0]} name="Orders" />
+                  <Bar dataKey="orderCount" fill="var(--accent)" radius={[4, 4, 0, 0]} name="Đơn hàng" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -234,8 +234,8 @@ export default function AdminDashboardPage() {
       <div className="admin-dashboard-grid">
         <div className="panel">
           <div className="panel-heading compact">
-            <h3>Order status</h3>
-            <Link to="/admin/orders">View all</Link>
+            <h3>Trạng thái đơn hàng</h3>
+            <Link to="/admin/orders">Xem tất cả</Link>
           </div>
           {sectionErrors.status ? <PanelMessage text={sectionErrors.status} /> : null}
           <ul className="admin-dashboard-status-list">
@@ -258,11 +258,11 @@ export default function AdminDashboardPage() {
 
         <div className="panel">
           <div className="panel-heading compact">
-            <h3>Top selling books</h3>
-            <Link to="/admin/books">Catalog</Link>
+            <h3>Sách bán chạy nhất</h3>
+            <Link to="/admin/books">Danh mục sách</Link>
           </div>
           {topBooks.length === 0 ? (
-            <PanelMessage text="No sales data yet." />
+            <PanelMessage text="Chưa có dữ liệu bán hàng." />
           ) : (
             <ul className="admin-dashboard-top-books">
               {topBooks.slice(0, 8).map((book, index) => (
@@ -270,9 +270,9 @@ export default function AdminDashboardPage() {
                   <span className="admin-dashboard-rank">{index + 1}</span>
                   <div>
                     <Link to={`/admin/books/${book.id}`}>{book.title}</Link>
-                    <p className="muted">{book.author || 'Unknown author'}</p>
+                    <p className="muted">{book.author || 'Tác giả không xác định'}</p>
                   </div>
-                  <strong>{book.soldCount || 0} sold</strong>
+                  <strong>{book.soldCount || 0} đã bán</strong>
                 </li>
               ))}
             </ul>

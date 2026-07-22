@@ -42,7 +42,7 @@ export const authService = {
       { email: normalizeEmail(email), otp: otp?.trim() },
       { auth: false },
     );
-    return { message: 'Email verified successfully' };
+    return { message: 'Xác minh email thành công.' };
   },
 
   async resendVerification({ email }) {
@@ -51,7 +51,7 @@ export const authService = {
       { email: normalizeEmail(email) },
       { auth: false },
     );
-    return { message: 'If the email exists, a new OTP has been sent.' };
+    return { message: 'Nếu email tồn tại, mã OTP mới đã được gửi.' };
   },
 
   async login({ email, password }) {
@@ -87,7 +87,7 @@ export const authService = {
       { email: normalizeEmail(email) },
       { auth: false },
     );
-    return { message: 'If the email exists, an OTP has been sent.' };
+    return { message: 'Nếu email tồn tại, mã OTP đã được gửi.' };
   },
 
   async resetPassword({ email, otp, newPassword }) {
@@ -100,6 +100,6 @@ export const authService = {
       },
       { auth: false },
     );
-    return { message: 'Password reset successfully.' };
+    return { message: 'Đặt lại mật khẩu thành công.' };
   },
 };

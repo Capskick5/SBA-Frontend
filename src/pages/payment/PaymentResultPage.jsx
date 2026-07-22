@@ -11,9 +11,9 @@ import { useAuth } from '../../context/AuthContext';
 function formatVoucherDiscount(voucher) {
   if (!voucher) return '';
   if (voucher.discountType === 'PERCENTAGE') {
-    return `${voucher.discountValue}% off`;
+    return `${voucher.discountValue}% giảm`;
   }
-  return `${formatCurrency(voucher.discountValue)} off`;
+  return `Giảm ${formatCurrency(voucher.discountValue)}`;
 }
 
 export default function PaymentResultPage() {
@@ -70,8 +70,8 @@ export default function PaymentResultPage() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
             <Loader2 size={56} color="#3b82f6" className="animate-spin" />
             <div>
-              <h2 style={{ fontSize: '1.5rem', color: '#1f2937', margin: '0 0 8px 0' }}>Verifying Payment</h2>
-              <p style={{ color: '#6b7280', margin: 0 }}>Please wait a moment while we confirm your transaction...</p>
+              <h2 style={{ fontSize: '1.5rem', color: '#1f2937', margin: '0 0 8px 0' }}>Đang xác minh thanh toán</h2>
+              <p style={{ color: '#6b7280', margin: 0 }}>Vui lòng đợi trong giây lát, chúng tôi đang xác nhận giao dịch của bạn...</p>
             </div>
           </div>
         )}
@@ -80,9 +80,9 @@ export default function PaymentResultPage() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
             <CheckCircle size={72} color="#10b981" />
             <div>
-              <h2 style={{ fontSize: '1.8rem', color: '#10b981', margin: '0 0 8px 0' }}>Payment Successful!</h2>
-              <p style={{ color: '#374151', margin: '0 0 4px 0', fontSize: '1.1rem' }}>Thank you for shopping at BookVerse.</p>
-              <p style={{ color: '#6b7280', margin: 0, fontSize: '0.95rem' }}>Your order has been processed and is now being prepared.</p>
+              <h2 style={{ fontSize: '1.8rem', color: '#10b981', margin: '0 0 8px 0' }}>Thanh toán thành công!</h2>
+              <p style={{ color: '#374151', margin: '0 0 4px 0', fontSize: '1.1rem' }}>Cảm ơn bạn đã mua sắm tại BookVerse.</p>
+              <p style={{ color: '#6b7280', margin: 0, fontSize: '0.95rem' }}>Đơn hàng của bạn đã được xử lý và đang được chuẩn bị.</p>
             </div>
             {isLoggedIn && (
               <div className="payment-voucher-reward">
@@ -90,35 +90,35 @@ export default function PaymentResultPage() {
                   <TicketPercent size={22} />
                 </div>
                 <div>
-                  <span>Next order reward</span>
+                  <span>Ưu đãi cho đơn tiếp theo</span>
                   {availableVoucher ? (
                     <>
                       <strong>{availableVoucher.code}</strong>
                       <p>
-                        {formatVoucherDiscount(availableVoucher)} for your next eligible checkout.
+                        {formatVoucherDiscount(availableVoucher)} cho lần thanh toán đủ điều kiện tiếp theo.
                       </p>
                     </>
                   ) : (
                     <>
-                      <strong>Check your voucher wallet</strong>
+                      <strong>Kiểm tra ví mã giảm giá</strong>
                       <p>
-                        If this order is eligible, your next-order voucher will appear in My Vouchers.
+                        Nếu đơn này đủ điều kiện, mã giảm giá cho đơn tiếp theo sẽ xuất hiện trong Mã giảm giá của tôi.
                       </p>
                     </>
                   )}
                 </div>
-                <Link to="/profile?tab=vouchers">View vouchers</Link>
+                <Link to="/profile?tab=vouchers">Xem mã giảm giá</Link>
               </div>
             )}
             <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', width: '100%', marginTop: '12px' }}>
               <Link to="/" style={{ flex: 1, textDecoration: 'none' }}>
                 <Button className="payment-btn-secondary" style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                  <Home size={18} /> Home
+                  <Home size={18} /> Trang chủ
                 </Button>
               </Link>
               <Link to={isLoggedIn ? '/orders' : '/'} style={{ flex: 1, textDecoration: 'none' }}>
                 <Button style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                  <ShoppingBag size={18} /> {isLoggedIn ? 'Orders' : 'Shop Now'}
+                  <ShoppingBag size={18} /> {isLoggedIn ? 'Đơn hàng' : 'Mua ngay'}
                 </Button>
               </Link>
             </div>
@@ -129,19 +129,19 @@ export default function PaymentResultPage() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
             <XCircle size={72} color="#ef4444" />
             <div>
-              <h2 style={{ fontSize: '1.8rem', color: '#ef4444', margin: '0 0 8px 0' }}>Payment Failed</h2>
-              <p style={{ color: '#374151', margin: '0 0 4px 0', fontSize: '1.1rem' }}>We couldn't process your payment.</p>
-              <p style={{ color: '#6b7280', margin: 0, fontSize: '0.95rem' }}>Please check your payment method or try again later.</p>
+              <h2 style={{ fontSize: '1.8rem', color: '#ef4444', margin: '0 0 8px 0' }}>Thanh toán thất bại</h2>
+              <p style={{ color: '#374151', margin: '0 0 4px 0', fontSize: '1.1rem' }}>Chúng tôi không thể xử lý thanh toán của bạn.</p>
+              <p style={{ color: '#6b7280', margin: 0, fontSize: '0.95rem' }}>Vui lòng kiểm tra phương thức thanh toán hoặc thử lại sau.</p>
             </div>
             <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', width: '100%', marginTop: '12px' }}>
               <Link to="/" style={{ flex: 1, textDecoration: 'none' }}>
                 <Button className="payment-btn-secondary" style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                  <Home size={18} /> Home
+                  <Home size={18} /> Trang chủ
                 </Button>
               </Link>
               <Link to={isLoggedIn ? '/orders' : '/'} style={{ flex: 1, textDecoration: 'none' }}>
                 <Button style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                  <ShoppingBag size={18} /> {isLoggedIn ? 'Orders' : 'Shop Now'}
+                  <ShoppingBag size={18} /> {isLoggedIn ? 'Đơn hàng' : 'Mua ngay'}
                 </Button>
               </Link>
             </div>

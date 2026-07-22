@@ -46,7 +46,7 @@ async function parseErrorResponse(response) {
     if (err?.error_type) throw err;
     throw createError({
       code: response.status,
-      message: response.statusText || 'Something went wrong.',
+      message: response.statusText || 'Đã xảy ra lỗi.',
       error_type: inferErrorType(response.status),
     });
   }

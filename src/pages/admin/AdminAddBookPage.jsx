@@ -26,7 +26,7 @@ export default function AdminAddBookPage() {
             .then(setCategories)
             .catch((err) => {
                 console.error('Failed to load categories:', err);
-                setLoadError('Could not load categories for the book form.');
+                setLoadError('Không thể tải danh mục cho biểu mẫu sách.');
             })
             .finally(() => setLoading(false));
     }, [reloadKey]);
@@ -42,9 +42,9 @@ export default function AdminAddBookPage() {
             const key = res.data?.data?.coverKey || res.data?.coverKey;
             if (!key) throw new Error('Invalid upload response');
             setCoverKey(key);
-            alert('Cover uploaded to MinIO.');
+            alert('Đã tải bìa lên MinIO.');
         } catch (err) {
-            alert('Failed to upload cover: ' + err.message);
+            alert('Không thể tải bìa lên: ' + err.message);
         } finally {
             setUploadingCover(false);
         }
@@ -61,9 +61,9 @@ export default function AdminAddBookPage() {
             const key = res.data?.data?.fileKey || res.data?.fileKey;
             if (!key) throw new Error('Invalid upload response');
             setFileKey(key);
-            alert('Book file uploaded to MinIO.');
+            alert('Đã tải tệp sách lên MinIO.');
         } catch (err) {
-            alert('Failed to upload book file: ' + err.message);
+            alert('Không thể tải tệp sách lên: ' + err.message);
         } finally {
             setUploadingFile(false);
         }
@@ -74,12 +74,12 @@ export default function AdminAddBookPage() {
         setSubmitting(true);
 
         if (!coverKey) {
-            alert('Please upload a cover image first.');
+            alert('Vui lòng tải ảnh bìa trước.');
             setSubmitting(false);
             return;
         }
         if (!fileKey) {
-            alert('Please upload a book file first.');
+            alert('Vui lòng tải tệp sách trước.');
             setSubmitting(false);
             return;
         }
@@ -106,24 +106,24 @@ export default function AdminAddBookPage() {
             };
 
             await adminService.addBook(payload);
-            alert('Book created successfully.');
+            alert('Tạo sách thành công.');
             navigate('/admin/books');
         } catch (err) {
             const errorMsg = err.response?.data?.message || err.message;
             const isRagError = /rag|vector|embedding|timeout|ai/i.test(errorMsg);
 
             if (isRagError) {
-                alert('Book created successfully. AI search sync is running in the background.');
+                alert('Tạo sách thành công. Đồng bộ tìm kiếm AI đang chạy nền.');
                 navigate('/admin/books');
             } else {
-                alert('Failed to create book: ' + errorMsg);
+                alert('Không thể tạo sách: ' + errorMsg);
             }
         } finally {
             setSubmitting(false);
         }
     };
 
-    if (loading) return <LoadingState text="Loading data..." />;
+    if (loading) return <LoadingState text="Đang tải dữ liệu..." />;
     if (loadError) {
         return (
             <ErrorState text={loadError}>
@@ -131,27 +131,27 @@ export default function AdminAddBookPage() {
                     setLoadError('');
                     setLoading(true);
                     setReloadKey((value) => value + 1);
-                }}>Try again</Button>
+                }}>Thử lại</Button>
             </ErrorState>
         );
     }
 
     return (
         <section className="narrow">
-            <h1>Add New Book</h1>
+            <h1>Thêm sách mới</h1>
             <form className="form" onSubmit={handleSubmit}>
-                <Input name="title" label="Title" required placeholder="Enter book title" />
-                <Input name="author" label="Author" required placeholder="Enter author name" />
+                <Input name="title" label="Tiêu đề" required placeholder="Nhập tiêu đề sách" />
+                <Input name="author" label="Tác giả" required placeholder="Nhập tên tác giả" />
 
                 <div className="input-group" style={{ marginBottom: '16px' }}>
-                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>Category</label>
+                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '8px' }}>Danh mục</label>
                     <select
                         name="categoryId"
                         required
                         defaultValue=""
                         style={{ width: '100%', padding: '10px' }}
                     >
-                        <option value="" disabled>-- Select category --</option>
+                        <option value="" disabled>-- Chọn danh mục --</option>
                         {categories.map(cat => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
                         ))}
@@ -159,31 +159,31 @@ export default function AdminAddBookPage() {
                 </div>
 
                 <div className="input-group" style={{ marginBottom: '16px' }}>
-                    <label style={{ display: 'block', fontWeight: 'bold' }}>Cover Image</label>
+                    <label style={{ display: 'block', fontWeight: 'bold' }}>Ảnh bìa</label>
                     <input type="file" accept="image/*" onChange={handleCoverChange} />
-                    {uploadingCover && <p style={{ color: 'blue' }}>Uploading cover...</p>}
+                    {uploadingCover && <p style={{ color: 'blue' }}>Đang tải bìa lên...</p>}
                 </div>
 
                 <div className="input-group" style={{ marginBottom: '16px' }}>
-                    <label style={{ display: 'block', fontWeight: 'bold' }}>Book File (PDF/EPUB)</label>
+                    <label style={{ display: 'block', fontWeight: 'bold' }}>Tệp sách (PDF/EPUB)</label>
                     <input type="file" accept=".pdf,.epub" onChange={handleBookFileChange} />
-                    {uploadingFile && <p style={{ color: 'blue' }}>Uploading book file...</p>}
+                    {uploadingFile && <p style={{ color: 'blue' }}>Đang tải tệp sách lên...</p>}
                 </div>
 
                 <div style={{ display: 'flex', gap: '16px' }}>
                     <div style={{ flex: 1 }}>
                         <PricingFields />
                     </div>
-                    <Input name="stock" label="Stock" type="number" required placeholder="Initial stock quantity" />
+                    <Input name="stock" label="Tồn kho" type="number" required placeholder="Số lượng tồn kho ban đầu" />
                 </div>
 
-                <Input name="isbn" label="ISBN" placeholder="Enter ISBN" />
-                <Textarea name="description" label="Description" rows={5} />
+                <Input name="isbn" label="ISBN" placeholder="Nhập ISBN" />
+                <Textarea name="description" label="Mô tả" rows={5} />
 
                 <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-                    <Button type="button" onClick={() => navigate('/admin/books')}>Cancel</Button>
+                    <Button type="button" onClick={() => navigate('/admin/books')}>Hủy</Button>
                     <Button type="submit" variant="primary" loading={submitting} disabled={uploadingCover || uploadingFile}>
-                        Save
+                        Lưu
                     </Button>
                 </div>
             </form>

@@ -30,9 +30,9 @@ import { showToast } from '../../utils/toast';
 import { getPendingPaymentUserMessage } from '../../utils/pendingOrderGuard';
 
 const POLICIES = [
-  { icon: Truck, label: 'Delivery time: 2 - 5 business days' },
-  { icon: RotateCcw, label: '7-day return policy' },
-  { icon: Users, label: 'Wholesale and bulk order policy' },
+  { icon: Truck, label: 'Thời gian giao hàng: 2 - 5 ngày làm việc' },
+  { icon: RotateCcw, label: 'Chính sách đổi trả trong 7 ngày' },
+  { icon: Users, label: 'Chính sách đặt sách số lượng lớn / bán buôn' },
 ];
 
 function SpecRow({ label, value, link }) {
@@ -66,7 +66,7 @@ function MetaItem({ label, value }) {
 function StarBreakdownRow({ stars, percent = 0 }) {
   return (
     <div className="book-detail-review-bar-row">
-      <span>{stars} {stars === 1 ? 'star' : 'stars'}</span>
+      <span>{stars} sao</span>
       <div className="book-detail-review-bar">
         <span style={{ width: `${percent}%` }} />
       </div>
@@ -204,7 +204,7 @@ export default function BookDetailPage() {
       .catch(() => {
         if (!active) return;
         setBook(null);
-        setError('Could not load book detail from backend.');
+        setError('Không thể tải chi tiết sách từ máy chủ.');
       });
 
     return () => {
@@ -254,7 +254,7 @@ export default function BookDetailPage() {
         if (!active) return;
         setReviews([]);
         setReviewTotal(0);
-        setReviewsError(err?.message || 'Could not load customer reviews.');
+        setReviewsError(err?.message || 'Không thể tải đánh giá từ khách hàng.');
       })
       .finally(() => {
         if (active) setReviewsLoading(false);
@@ -309,7 +309,7 @@ export default function BookDetailPage() {
   const discountRate = onSale ? deriveDiscountPercent(book.originalPrice, book.price) : 0;
   const isOutOfStock = !book || book.stock <= 0;
   const maxQuantity = book ? Math.max(1, book.stock) : 1;
-  const description = book?.description || 'No description available for this book.';
+  const description = book?.description || 'Chưa có mô tả cho cuốn sách này.';
   const isLongDescription = description.length > 480 || description.split('\n').length > 4;
   // Prefer live review list/summary over denormalized book fields (those can be stale).
   const reviewCount = Math.max(
@@ -335,15 +335,15 @@ export default function BookDetailPage() {
 
     return [
       { label: 'SKU', value: book.isbn },
-      { label: 'Publisher', value: book.publisher },
-      { label: 'Author', value: book.author },
-      { label: 'Publication year', value: book.publicationYear },
-      { label: 'Language', value: book.language },
-      { label: 'Pages', value: book.pages },
-      { label: 'Category', value: book.category, link: categoryCatalogUrl(book.categoryId) },
+      { label: 'Nhà xuất bản', value: book.publisher },
+      { label: 'Tác giả', value: book.author },
+      { label: 'Năm xuất bản', value: book.publicationYear },
+      { label: 'Ngôn ngữ', value: book.language },
+      { label: 'Số trang', value: book.pages },
+      { label: 'Danh mục', value: book.category, link: categoryCatalogUrl(book.categoryId) },
       {
-        label: 'Stock status',
-        value: book.stock > 0 ? `In stock (${book.stock} copies)` : 'Out of stock',
+        label: 'Tình trạng kho',
+        value: book.stock > 0 ? `Còn hàng (${book.stock} cuốn)` : 'Hết hàng',
       },
     ].filter((item) => item.value !== null && item.value !== undefined && item.value !== '');
   }, [book]);
@@ -382,10 +382,10 @@ export default function BookDetailPage() {
         }
       }
 
-      showToast(`Added "${book.title}" to cart!`);
+      showToast(`Đã thêm "${book.title}" vào giỏ!`);
     } catch (err) {
       showToast(
-        getPendingPaymentUserMessage(err) || err?.message || 'Failed to add book to cart.',
+        getPendingPaymentUserMessage(err) || err?.message || 'Không thể thêm sách vào giỏ.',
         'error',
       );
     } finally {
@@ -435,30 +435,30 @@ export default function BookDetailPage() {
     });
   };
 
-  if (!error && String(book?.id || '') !== String(id)) return <LoadingState text="Loading book..." />;
+  if (!error && String(book?.id || '') !== String(id)) return <LoadingState text="Đang tải sách..." />;
   if (error) {
     return (
       <ErrorState text={error}>
         <button className="btn" type="button" onClick={retryLoadBook}>
-          Retry
+          Thử lại
         </button>
       </ErrorState>
     );
   }
-  if (!book) return <ErrorState text="Book not found." />;
+  if (!book) return <ErrorState text="Không tìm thấy sách." />;
 
   return (
     <section className="book-detail-page">
-      <nav className="book-detail-breadcrumb" aria-label="Breadcrumb">
-        <Link to="/">BOOKS</Link>
+      <nav className="book-detail-breadcrumb" aria-label="Đường dẫn">
+        <Link to="/">SÁCH</Link>
         <span aria-hidden="true">&gt;</span>
-        <Link to={categoryCatalogUrl(book.categoryId)}>{book.category?.toUpperCase() || 'CATEGORY'}</Link>
+        <Link to={categoryCatalogUrl(book.categoryId)}>{book.category?.toUpperCase() || 'DANH MỤC'}</Link>
         <span aria-hidden="true">&gt;</span>
         <span className="book-detail-breadcrumb-current">{book.title}</span>
       </nav>
 
       <div className="book-detail-layout">
-        <aside className="book-detail-aside" aria-label="Product images and purchase actions">
+        <aside className="book-detail-aside" aria-label="Hình ảnh sản phẩm và thao tác mua hàng">
           <div className="book-detail-card book-detail-media-card book-detail-sticky">
             <div className="book-detail-cover-wrap">
               <img
@@ -469,14 +469,14 @@ export default function BookDetailPage() {
               {onSale && <span className="book-detail-discount-badge">-{discountRate}%</span>}
             </div>
 
-            <div className="book-detail-thumbs" aria-label="Preview images">
+            <div className="book-detail-thumbs" aria-label="Ảnh xem trước">
               {thumbnails.map((thumb, index) => (
                 <button
                   key={`${thumb}-${index}`}
                   type="button"
                   className={`book-detail-thumb ${index === activeThumb ? 'is-active' : ''}`}
                   onClick={() => setActiveThumb(index)}
-                  aria-label={`View image ${index + 1}`}
+                  aria-label={`Xem ảnh ${index + 1}`}
                 >
                   <img src={thumb} alt="" />
                 </button>
@@ -491,7 +491,7 @@ export default function BookDetailPage() {
                 onClick={() => addToCart(false)}
               >
                 <ShoppingCart size={18} />
-                Add to cart
+                Thêm vào giỏ
               </Button>
               <Button
                 type="button"
@@ -499,12 +499,12 @@ export default function BookDetailPage() {
                 disabled={isOutOfStock || cartLoading}
                 onClick={() => addToCart(true)}
               >
-                Buy now
+                Mua ngay
               </Button>
             </div>
 
             <div className="book-detail-policies">
-              <h3>BookVerse benefits</h3>
+              <h3>Quyền lợi BookVerse</h3>
               <ul>
                 {POLICIES.map(({ icon: Icon, label }) => (
                   <li key={label}>
@@ -525,17 +525,17 @@ export default function BookDetailPage() {
             <h1 className="book-detail-title">{book.title}</h1>
 
             <div className="book-detail-meta-grid">
-              <MetaItem label="Publisher" value={book.publisher} />
-              <MetaItem label="Author" value={book.author} />
-              <MetaItem label="Category" value={book.category} />
-              <MetaItem label="Language" value={book.language} />
+              <MetaItem label="Nhà xuất bản" value={book.publisher} />
+              <MetaItem label="Tác giả" value={book.author} />
+              <MetaItem label="Danh mục" value={book.category} />
+              <MetaItem label="Ngôn ngữ" value={book.language} />
             </div>
 
             <div className="book-detail-rating-row">
               <StarRating value={ratingValue} size={15} className="book-detail-rating" />
-              <span>({reviewCount} reviews)</span>
+              <span>({reviewCount} đánh giá)</span>
               <span className="book-detail-meta-divider">|</span>
-              <span>{book.soldCount || 0} sold</span>
+              <span>Đã bán {book.soldCount || 0}</span>
             </div>
 
             <div className="book-detail-price-row">
@@ -547,47 +547,47 @@ export default function BookDetailPage() {
 
             {onSale && (
               <p className="book-detail-promo-note">
-                Promotional pricing applies at BookVerse only
+                Giá khuyến mãi chỉ áp dụng tại BookVerse
               </p>
             )}
 
             {book.stock > 0 && (
               <div className="book-detail-stock-banner">
-                In stock online. Remaining quantity: <strong>{book.stock}</strong> copies.
+                Còn hàng trực tuyến. Số lượng còn lại: <strong>{book.stock}</strong> cuốn.
               </div>
             )}
           </div>
 
           <div className="book-detail-card">
-            <h2 className="book-detail-section-title">Shipping information</h2>
+            <h2 className="book-detail-section-title">Thông tin giao hàng</h2>
             <div className="book-detail-shipping-block">
               <div className="book-detail-shipping-line">
                 <MapPin size={18} />
                 <div className="book-detail-shipping-copy">
-                  <span>Deliver to</span>
+                  <span>Giao đến</span>
                   {!deliveryAddressReady ? (
-                    <strong className="book-detail-shipping-placeholder">Loading...</strong>
+                    <strong className="book-detail-shipping-placeholder">Đang tải...</strong>
                   ) : (
                     deliveryAddress && <strong>{formatDeliveryAddress(deliveryAddress)}</strong>
                   )}
                 </div>
                 {deliveryAddressReady && (
                   <button type="button" className="book-detail-link-btn" onClick={handleChangeShipping}>
-                    {deliveryAddress ? 'Change' : 'Add information'}
+                    {deliveryAddress ? 'Thay đổi' : 'Thêm thông tin'}
                   </button>
                 )}
               </div>
               <div className="book-detail-shipping-line">
                 <Truck size={18} />
                 <div>
-                  <span>Standard delivery</span>
-                  <strong>Estimated delivery in 2 - 5 business days</strong>
+                  <span>Giao hàng tiêu chuẩn</span>
+                  <strong>Dự kiến giao trong 2 - 5 ngày làm việc</strong>
                 </div>
               </div>
             </div>
 
             <div className="book-detail-field-row">
-              <span className="book-detail-field-label">Quantity</span>
+              <span className="book-detail-field-label">Số lượng</span>
               <div className="book-detail-quantity">
                 <button type="button" onClick={() => changeQuantity(-1)} disabled={quantity <= 1}>
                   <Minus size={16} />
@@ -614,7 +614,7 @@ export default function BookDetailPage() {
           </div>
 
           <div className="book-detail-card">
-            <h2 className="book-detail-section-title">Product details</h2>
+            <h2 className="book-detail-section-title">Chi tiết sản phẩm</h2>
             <div className="book-detail-specs-list">
               {specs.map((item) => (
                 <SpecRow
@@ -628,7 +628,7 @@ export default function BookDetailPage() {
           </div>
 
           <div className="book-detail-card">
-            <h2 className="book-detail-section-title">Product description</h2>
+            <h2 className="book-detail-section-title">Mô tả sản phẩm</h2>
             <h3 className="book-detail-description-title">{book.title}</h3>
             <div
               className={`book-detail-description ${isLongDescription && !descriptionExpanded ? 'is-collapsed' : ''
@@ -642,7 +642,7 @@ export default function BookDetailPage() {
                 className="book-detail-expand-btn"
                 onClick={() => setDescriptionExpanded((expanded) => !expanded)}
               >
-                {descriptionExpanded ? 'Show less' : 'Read more'}
+                {descriptionExpanded ? 'Thu gọn' : 'Xem thêm'}
               </button>
             )}
           </div>
@@ -650,12 +650,12 @@ export default function BookDetailPage() {
       </div>
 
       <div className="book-detail-card book-detail-reviews-card" id="reviews">
-        <h2 className="book-detail-section-title">Customer reviews</h2>
+        <h2 className="book-detail-section-title">Đánh giá từ khách hàng</h2>
         <div className="book-detail-reviews">
           <div className="book-detail-review-score">
             <strong>{ratingValue.toFixed(1)}/5</strong>
             <StarRating value={ratingValue} size={18} className="book-detail-rating" />
-            <span>({reviewCount} reviews)</span>
+            <span>({reviewCount} đánh giá)</span>
           </div>
 
           <div className="book-detail-review-bars">
@@ -667,19 +667,19 @@ export default function BookDetailPage() {
           <div className="book-detail-review-action">
             {!user ? (
               <p className="book-detail-review-note">
-                Purchased this book? Please{' '}
-                <Link to={`/login?redirect=${encodeURIComponent(`/books/${book.id}#reviews`)}`}>log in</Link>{' '}
-                to share your review after delivery.
+                Đã mua cuốn sách này? Vui lòng{' '}
+                <Link to={`/login?redirect=${encodeURIComponent(`/books/${book.id}#reviews`)}`}>đăng nhập</Link>{' '}
+                để chia sẻ đánh giá sau khi nhận hàng.
               </p>
             ) : user.role !== 'CUSTOMER' ? (
-              <p className="book-detail-review-note">Customer accounts can submit verified-purchase reviews.</p>
+              <p className="book-detail-review-note">Tài khoản khách hàng mới có thể gửi đánh giá đã mua hàng.</p>
             ) : currentUserReview ? (
               <div className="book-detail-review-complete">
-                <strong>{currentUserReview.status === 'HIDDEN' ? 'Your review is under moderation' : 'Your review is published'}</strong>
-                <span>{currentUserReview.rating}/5 stars</span>
+                <strong>{currentUserReview.status === 'HIDDEN' ? 'Đánh giá của bạn đang được kiểm duyệt' : 'Đánh giá của bạn đã được đăng'}</strong>
+                <span>{currentUserReview.rating}/5 sao</span>
                 <p>{currentUserReview.status === 'HIDDEN'
-                  ? 'This review is currently hidden from the public list.'
-                  : 'You can find it in the customer reviews below.'}</p>
+                  ? 'Đánh giá này hiện đang ẩn khỏi danh sách công khai.'
+                  : 'Bạn có thể tìm thấy nó trong phần đánh giá bên dưới.'}</p>
               </div>
             ) : (
               <ReviewForm bookId={book.id} onSubmitted={handleReviewSubmitted} />
@@ -689,11 +689,11 @@ export default function BookDetailPage() {
 
         <div className="book-detail-review-list-section">
           <div className="book-detail-review-list-heading">
-            <h3>Reviews from verified customers</h3>
-            <span>{reviewCount} total</span>
+            <h3>Đánh giá từ khách hàng đã mua</h3>
+            <span>{reviewCount} tổng cộng</span>
           </div>
           {reviewsLoading ? (
-            <LoadingState text="Loading reviews..." />
+            <LoadingState text="Đang tải đánh giá..." />
           ) : reviewsError ? (
             <ErrorState text={reviewsError} />
           ) : (
@@ -711,13 +711,13 @@ export default function BookDetailPage() {
 
       {relatedBooks.length > 0 && (
         <div className="book-detail-card book-detail-related-section">
-          <h2 className="book-detail-section-title">Recommended by BookVerse</h2>
+          <h2 className="book-detail-section-title">Gợi ý từ BookVerse</h2>
 
           <div className="book-detail-related-carousel">
             <button
               type="button"
               className="book-detail-related-arrow"
-              aria-label="Scroll left"
+              aria-label="Cuộn trái"
               onClick={() => scrollRelated(-1)}
             >
               <ChevronLeft size={20} />
@@ -732,7 +732,7 @@ export default function BookDetailPage() {
             <button
               type="button"
               className="book-detail-related-arrow"
-              aria-label="Scroll right"
+              aria-label="Cuộn phải"
               onClick={() => scrollRelated(1)}
             >
               <ChevronRight size={20} />

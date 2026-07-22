@@ -46,13 +46,13 @@ function isAddressComplete(address) {
 function formatVoucherDiscount(voucher) {
   if (!voucher) return '';
   if (voucher.discountType === 'PERCENTAGE') {
-    return `${voucher.discountValue}% off`;
+    return `${voucher.discountValue}% giảm`;
   }
-  return `${formatCurrency(voucher.discountValue)} off`;
+  return `Giảm ${formatCurrency(voucher.discountValue)}`;
 }
 
 function formatVoucherDate(value) {
-  return formatDateTime(value, 'No expiry date');
+  return formatDateTime(value, 'Không có hạn sử dụng');
 }
 
 export default function CheckoutPage() {
@@ -162,7 +162,7 @@ export default function CheckoutPage() {
       const fallback = fallbackItems.find((cartItem) => cartItem.bookId === item.bookId);
       return {
         ...item,
-        title: item.title || fallback?.title || 'Untitled book',
+        title: item.title || fallback?.title || 'Sách chưa có tên',
         unitPrice: item.unitPrice ?? fallback?.price ?? 0,
         quantity: item.quantity ?? fallback?.quantity ?? 1,
         lineTotal: item.lineTotal ?? fallback?.lineTotal ?? 0,
@@ -209,7 +209,7 @@ export default function CheckoutPage() {
         });
       } catch (err) {
         console.error('Failed to load guest preview:', err);
-        setCheckoutError(err.response?.data?.message || 'Could not calculate shipping fee for this address.');
+        setCheckoutError(err.response?.data?.message || 'Không thể tính phí vận chuyển cho địa chỉ này.');
       }
       return;
     }
@@ -306,7 +306,7 @@ export default function CheckoutPage() {
         if (!active) return;
         const pendingMessage = getPendingPaymentUserMessage(err);
         setCheckoutError(
-          pendingMessage || 'Could not load checkout information. Please try again.',
+          pendingMessage || 'Không thể tải thông tin thanh toán. Vui lòng thử lại.',
         );
       })
       .finally(() => {
@@ -334,7 +334,7 @@ export default function CheckoutPage() {
       setVoucherError('');
     } catch (err) {
       console.error('Failed to load checkout preview:', err);
-      setCheckoutError(err.response?.data?.message || 'Could not calculate shipping fee for this address.');
+      setCheckoutError(err.response?.data?.message || 'Không thể tính phí vận chuyển cho địa chỉ này.');
     }
   };
 
@@ -348,7 +348,7 @@ export default function CheckoutPage() {
       setShowVoucherList(false);
     } catch (err) {
       console.error('Failed to apply voucher:', err);
-      setVoucherError(err.response?.data?.message || 'This voucher cannot be applied to this order.');
+      setVoucherError(err.response?.data?.message || 'Mã giảm giá này không thể áp dụng cho đơn hàng.');
       setSelectedVoucherId('');
       await refreshPreview(selectedAddressId, cartItemIds, selectedCartItems, '');
     }
@@ -384,7 +384,7 @@ export default function CheckoutPage() {
         await refreshPreview(null, cartItemIds, selectedCartItems, '', mode, guestAddress, giftWrapId);
       } catch (err) {
         console.error('Failed to update guest delivery type:', err);
-        setCheckoutError(err.message || 'Could not update the delivery type.');
+        setCheckoutError(err.message || 'Không thể cập nhật loại giao hàng.');
       }
       return;
     }
@@ -394,7 +394,7 @@ export default function CheckoutPage() {
       await refreshPreview(selectedAddressId, cartItemIds, selectedCartItems, selectedVoucherId, mode, guestAddress, giftWrapId);
     } catch (err) {
       console.error('Failed to update delivery type:', err);
-      setCheckoutError(err.message || 'Could not update the delivery type.');
+      setCheckoutError(err.message || 'Không thể cập nhật loại giao hàng.');
     }
   };
 
@@ -412,7 +412,7 @@ export default function CheckoutPage() {
         await refreshPreview(null, cartItemIds, selectedCartItems, '', 'gift', guestAddress, giftWrapId);
       } catch (err) {
         console.error('Failed to update gift wrap selection:', err);
-        setCheckoutError(err.message || 'Could not update the gift wrap selection.');
+        setCheckoutError(err.message || 'Không thể cập nhật lựa chọn gói quà.');
       }
       return;
     }
@@ -422,7 +422,7 @@ export default function CheckoutPage() {
       await refreshPreview(selectedAddressId, cartItemIds, selectedCartItems, selectedVoucherId, 'gift', guestAddress, giftWrapId);
     } catch (err) {
       console.error('Failed to update gift wrap selection:', err);
-      setCheckoutError(err.message || 'Could not update the gift wrap selection.');
+      setCheckoutError(err.message || 'Không thể cập nhật lựa chọn gói quà.');
     }
   };
 
@@ -433,7 +433,7 @@ export default function CheckoutPage() {
       const paymentLink = await orderService.getPendingPaymentLink(pendingOrder.id);
       window.location.assign(paymentLink.checkoutUrl);
     } catch (err) {
-      showToast(err?.message || 'Could not continue this payment. Please try again.', 'error');
+      showToast(err?.message || 'Không thể tiếp tục thanh toán. Vui lòng thử lại.', 'error');
       setResumingPayment(false);
     }
   };
@@ -456,7 +456,7 @@ export default function CheckoutPage() {
 
       if (isGuest) {
         if (!isAddressComplete(guestAddress)) {
-          setCheckoutError('Add a delivery address to continue to payment.');
+          setCheckoutError('Thêm địa chỉ giao hàng để tiếp tục thanh toán.');
           setPaying(false);
           return;
         }
@@ -477,7 +477,7 @@ export default function CheckoutPage() {
           window.location.href = result.checkoutUrl;
           return;
         }
-        setCheckoutError('Guest checkout is not available yet. Please try again later or sign in.');
+        setCheckoutError('Thanh toán khách chưa khả dụng. Vui lòng thử lại sau hoặc đăng nhập.');
         return;
       }
 
@@ -508,7 +508,7 @@ export default function CheckoutPage() {
       const message = pendingMessage
         || err?.response?.data?.message
         || err?.message
-        || 'Checkout failed. Please try again.';
+        || 'Thanh toán thất bại. Vui lòng thử lại.';
       setCheckoutError(message);
       if (pendingMessage) {
         const existingPendingOrder = await getPendingPaymentOrder({ force: true });
@@ -618,7 +618,7 @@ export default function CheckoutPage() {
         setPreview(buildCartPreview(selectedCartItems));
       }
     } catch (err) {
-      setCheckoutError(err.response?.data?.message || 'Could not delete this address. Please try again.');
+      setCheckoutError(err.response?.data?.message || 'Không thể xóa địa chỉ này. Vui lòng thử lại.');
     } finally {
       setDeleteLoading(false);
     }
@@ -633,24 +633,24 @@ export default function CheckoutPage() {
   const disabledReason = pendingOrder
     ? PENDING_PAYMENT_MESSAGE
     : giftWrapMissing
-      ? 'Select a gift wrap design to continue.'
+      ? 'Chọn kiểu gói quà để tiếp tục.'
       : isGuest
-        ? (!isAddressComplete(guestAddress) ? 'Confirm a delivery address below to continue to payment.' : '')
-        : (!selectedAddressId ? 'Add a delivery address to continue to payment.' : '');
+        ? (!isAddressComplete(guestAddress) ? 'Xác nhận địa chỉ giao hàng bên dưới để tiếp tục thanh toán.' : '')
+        : (!selectedAddressId ? 'Thêm địa chỉ giao hàng để tiếp tục thanh toán.' : '');
 
   return (
     <div className="stack" style={{ gap: '24px' }}>
       <div className="checkout-page-header">
         <Link to="/cart" className="checkout-back-cart-link">
-          Back to cart
+          Quay lại giỏ hàng
         </Link>
-        <h1>Checkout Information</h1>
+        <h1>Thông tin thanh toán</h1>
       </div>
       {isGuest && (
         <p className="form-message form-message-success">
-          Checkout as guest. Have an account?{' '}
-          <Link to={`/login?redirect=${encodeURIComponent(loginRedirect)}`}>Log in</Link>
-          {' '}to use saved addresses and vouchers.
+          Thanh toán với tư cách khách. Đã có tài khoản?{' '}
+          <Link to={`/login?redirect=${encodeURIComponent(loginRedirect)}`}>Đăng nhập</Link>
+          {' '}để dùng địa chỉ và mã giảm giá đã lưu.
         </p>
       )}
       {checkoutError && <p className="form-message form-message-error">{checkoutError}</p>}
@@ -663,10 +663,10 @@ export default function CheckoutPage() {
               loading={resumingPayment}
               onClick={handleContinuePendingPayment}
             >
-              Continue payment
+              Tiếp tục thanh toán
             </Button>
             <Link className="btn-secondary" to={`/orders/${pendingOrder.id}`}>
-              View order #{pendingOrder.id}
+              Xem đơn #{pendingOrder.id}
             </Link>
           </div>
         </div>
@@ -675,32 +675,32 @@ export default function CheckoutPage() {
         <div className="checkout-sticky-region">
           <div className="checkout-sticky-left stack">
             <div className="panel checkout-delivery-mode">
-              <h3>Delivery type</h3>
-              <div className="delivery-mode-options" role="group" aria-label="Delivery type">
+              <h3>Loại giao hàng</h3>
+              <div className="delivery-mode-options" role="group" aria-label="Loại giao hàng">
                 <button
                   type="button"
                   className={deliveryMode === 'self' ? 'is-active' : ''}
                   onClick={() => handleDeliveryModeChange('self')}
                 >
-                  <strong>For myself</strong>
-                  <span>Ship this order to me.</span>
+                  <strong>Cho bản thân</strong>
+                  <span>Giao đơn hàng này cho tôi.</span>
                 </button>
                 <button
                   type="button"
                   className={deliveryMode === 'gift' ? 'is-active' : ''}
                   onClick={() => handleDeliveryModeChange('gift')}
                 >
-                  <strong>Gift to someone</strong>
-                  <span>Ship to another receiver with gift wrapping.</span>
+                  <strong>Tặng người khác</strong>
+                  <span>Giao cho người nhận khác kèm gói quà.</span>
                 </button>
               </div>
 
               {deliveryMode === 'gift' && (
                 <div className="gift-wrap-picker">
                   {giftWrapsLoading ? (
-                    <p className="muted">Loading gift wrap options...</p>
+                    <p className="muted">Đang tải tùy chọn gói quà...</p>
                   ) : giftWraps.length > 0 ? (
-                    <div className="gift-wrap-options" role="radiogroup" aria-label="Gift wrap design">
+                    <div className="gift-wrap-options" role="radiogroup" aria-label="Kiểu gói quà">
                       {giftWraps.map((giftWrap) => (
                         <button
                           type="button"
@@ -713,7 +713,7 @@ export default function CheckoutPage() {
                           {giftWrap.imageUrl ? (
                             <img src={giftWrap.imageUrl} alt={giftWrap.name} />
                           ) : (
-                            <span className="gift-wrap-option-noimage">No image</span>
+                            <span className="gift-wrap-option-noimage">Không có ảnh</span>
                           )}
                           <strong>{giftWrap.name}</strong>
                           <span>{formatCurrency(giftWrap.feeVnd)}</span>
@@ -722,7 +722,7 @@ export default function CheckoutPage() {
                     </div>
                   ) : (
                     <p className="form-message form-message-error">
-                      No gift wrap options are available right now. Please choose "For myself" or try again later.
+                      Hiện không có tùy chọn gói quà. Vui lòng chọn "Cho bản thân" hoặc thử lại sau.
                     </p>
                   )}
                 </div>
@@ -732,13 +732,13 @@ export default function CheckoutPage() {
             {isGuest && (
               <div className="panel">
                 <div className="panel-heading">
-                  <h3>Contact Information</h3>
-                  <p>Enter your email to receive order updates.</p>
+                  <h3>Thông tin liên hệ</h3>
+                  <p>Nhập email để nhận cập nhật đơn hàng.</p>
                 </div>
                 <div className="stack" style={{ gap: '12px', marginTop: '12px' }}>
                   <input
                     type="email"
-                    placeholder="Email address (optional)"
+                    placeholder="Địa chỉ email (không bắt buộc)"
                     value={guestEmail}
                     onChange={(e) => {
                       setGuestEmail(e.target.value);
@@ -755,13 +755,13 @@ export default function CheckoutPage() {
             {isGuest ? (
               <div className="panel checkout-delivery-address">
                 <div className="panel-heading">
-                  <h3>Delivery address</h3>
-                  <p>Enter where we should deliver this order. You do not need an account.</p>
+                  <h3>Địa chỉ giao hàng</h3>
+                  <p>Nhập nơi chúng tôi sẽ giao đơn hàng này. Bạn không cần tài khoản.</p>
                 </div>
                 {guestAddress && (
                   <article className="selected-address-card">
                     <div>
-                      <span>Selected for this order</span>
+                      <span>Đã chọn cho đơn này</span>
                       <strong>{guestAddress.recipient}</strong>
                       <p>
                         {guestAddress.line}
@@ -779,7 +779,7 @@ export default function CheckoutPage() {
                   initialValues={guestAddress || undefined}
                   fieldErrors={formFieldErrors}
                   onSubmit={handleGuestAddressSubmit}
-                  submitLabel={guestAddress ? 'Update address' : 'Use this address'}
+                  submitLabel={guestAddress ? 'Cập nhật địa chỉ' : 'Dùng địa chỉ này'}
                   loading={formLoading}
                   showDefaultOption={false}
                 />
@@ -787,11 +787,11 @@ export default function CheckoutPage() {
             ) : (
               <div className="panel checkout-delivery-address">
                 <div className="panel-heading">
-                  <h3>Delivery address</h3>
+                  <h3>Địa chỉ giao hàng</h3>
                   <p>
                     {addresses.length > 0
-                      ? 'Review the delivery address selected from your cart.'
-                      : 'You do not have any saved address yet. Add a delivery address below.'}
+                      ? 'Xem lại địa chỉ giao hàng đã chọn từ giỏ hàng.'
+                      : 'Bạn chưa có địa chỉ đã lưu. Thêm địa chỉ giao hàng bên dưới.'}
                   </p>
                 </div>
                 {addresses.length > 0 ? (
@@ -799,7 +799,7 @@ export default function CheckoutPage() {
                     {selectedAddress && (
                       <article className="selected-address-card">
                         <div>
-                          <span>Selected for this order</span>
+                          <span>Đã chọn cho đơn này</span>
                           <strong>{selectedAddress.recipient}</strong>
                           <p>
                             {selectedAddress.line}
@@ -814,14 +814,14 @@ export default function CheckoutPage() {
                             className="btn-secondary"
                             onClick={() => setShowAddressList((open) => !open)}
                           >
-                            {showAddressList ? 'Hide' : 'Change'}
+                            {showAddressList ? 'Ẩn' : 'Thay đổi'}
                           </Button>
                         </div>
                       </article>
                     )}
                   </>
                 ) : (
-                  <p className="empty-address-box">No saved address available. Please create one below.</p>
+                  <p className="empty-address-box">Chưa có địa chỉ đã lưu. Vui lòng tạo địa chỉ bên dưới.</p>
                 )}
                 {showAddressList && (
                   <div className="saved-address-list">
@@ -834,8 +834,8 @@ export default function CheckoutPage() {
                           <span className="saved-address-main">
                             <strong>{address.recipient}</strong>
                             <span>
-                              {Number(selectedAddressId) === address.id && <em>Selected</em>}
-                              {address.isDefault && <em>Default</em>}
+                              {Number(selectedAddressId) === address.id && <em>Đã chọn</em>}
+                              {address.isDefault && <em>Mặc định</em>}
                             </span>
                           </span>
                           <span>{address.phone}</span>
@@ -853,34 +853,34 @@ export default function CheckoutPage() {
                             onClick={() => handleSelectAddress(address.id)}
                             disabled={Number(selectedAddressId) === address.id}
                           >
-                            {Number(selectedAddressId) === address.id ? 'Selected' : 'Select'}
+                            {Number(selectedAddressId) === address.id ? 'Đã chọn' : 'Chọn'}
                           </Button>
                           <Button
                             type="button"
                             className="btn-secondary"
                             onClick={() => startEditingAddress(address.id)}
                           >
-                            Edit
+                            Sửa
                           </Button>
                           <Button
                             type="button"
                             className="btn-secondary danger-action"
                             onClick={() => requestDeleteAddress(address)}
                           >
-                            Delete
+                            Xóa
                           </Button>
                         </div>
                         {editingAddressId === address.id && editingAddress && (
                           <div className="saved-address-edit">
                             <div className="panel-heading compact">
-                              <h4>Edit saved address</h4>
-                              <p>Changes will update this saved address in your account.</p>
+                              <h4>Sửa địa chỉ đã lưu</h4>
+                              <p>Thay đổi sẽ cập nhật địa chỉ này trong tài khoản của bạn.</p>
                             </div>
                             <AuthFormMessage error={editError} />
                             <AddressForm
                               key={`edit-${editingAddress.id}-${deliveryMode}`}
                               initialValues={editingAddress}
-                              submitLabel="Save changes"
+                              submitLabel="Lưu thay đổi"
                               fieldErrors={editFieldErrors}
                               onSubmit={handleUpdateAddress}
                               loading={editLoading}
@@ -898,9 +898,9 @@ export default function CheckoutPage() {
             {isLoggedIn && (
               <div className="panel checkout-voucher-panel">
                 <div className="panel-heading">
-                  <h3>Voucher</h3>
+                  <h3>Mã giảm giá</h3>
                   <p>
-                    Review the voucher selected from your cart, or choose another available voucher.
+                    Xem lại mã giảm giá đã chọn từ giỏ hàng, hoặc chọn mã khác có sẵn.
                   </p>
                 </div>
                 {vouchers.length > 0 ? (
@@ -908,35 +908,35 @@ export default function CheckoutPage() {
                     {selectedVoucher ? (
                       <article className="checkout-selected-voucher-card">
                         <div>
-                          <span className="voucher-card-label">Applied voucher</span>
+                          <span className="voucher-card-label">Mã đã áp dụng</span>
                           <strong>{selectedVoucher.code}</strong>
                           <p>{selectedVoucher.name}</p>
                         </div>
                         <dl>
                           <div>
-                            <dt>Discount</dt>
+                            <dt>Giảm giá</dt>
                             <dd>{formatVoucherDiscount(selectedVoucher)}</dd>
                           </div>
                           <div>
-                            <dt>Minimum subtotal</dt>
+                            <dt>Tạm tính tối thiểu</dt>
                             <dd>{formatCurrency(selectedVoucher.tierMinAmount)}</dd>
                           </div>
                         </dl>
                         <div className="checkout-voucher-actions">
                           <Button type="button" className="btn-secondary" onClick={() => setShowVoucherList((open) => !open)}>
-                            {showVoucherList ? 'Hide' : 'Change'}
+                            {showVoucherList ? 'Ẩn' : 'Thay đổi'}
                           </Button>
                           <Button type="button" className="btn-secondary" onClick={clearVoucher}>
-                            Remove
+                            Gỡ bỏ
                           </Button>
                         </div>
                       </article>
                     ) : (
                       <div className="voucher-empty-inline">
-                        <strong>No voucher selected</strong>
-                        <p>You can continue without a voucher or choose one from your account.</p>
+                        <strong>Chưa chọn mã giảm giá</strong>
+                        <p>Bạn có thể tiếp tục không dùng mã hoặc chọn một mã trong tài khoản.</p>
                         <Button type="button" className="btn-secondary" onClick={() => setShowVoucherList((open) => !open)}>
-                          {showVoucherList ? 'Hide vouchers' : 'Choose voucher'}
+                          {showVoucherList ? 'Ẩn mã giảm giá' : 'Chọn mã giảm giá'}
                         </Button>
                       </div>
                     )}
@@ -947,21 +947,21 @@ export default function CheckoutPage() {
                           return (
                             <article className={`checkout-voucher-card${isSelected ? ' is-selected' : ''}`} key={voucher.id}>
                               <div>
-                                <span className="voucher-card-label">Voucher code</span>
+                                <span className="voucher-card-label">Mã giảm giá</span>
                                 <strong>{voucher.code}</strong>
                                 <p>{voucher.name}</p>
                               </div>
                               <dl>
                                 <div>
-                                  <dt>Discount</dt>
+                                  <dt>Giảm giá</dt>
                                   <dd>{formatVoucherDiscount(voucher)}</dd>
                                 </div>
                                 <div>
-                                  <dt>Minimum subtotal</dt>
+                                  <dt>Tạm tính tối thiểu</dt>
                                   <dd>{formatCurrency(voucher.tierMinAmount)}</dd>
                                 </div>
                                 <div>
-                                  <dt>Expires</dt>
+                                  <dt>Hết hạn</dt>
                                   <dd>{formatVoucherDate(voucher.expiresAt)}</dd>
                                 </div>
                               </dl>
@@ -970,7 +970,7 @@ export default function CheckoutPage() {
                                 className={isSelected ? 'btn-secondary' : ''}
                                 onClick={() => (isSelected ? clearVoucher() : applyVoucher(voucher.id))}
                               >
-                                {isSelected ? 'Applied' : 'Apply voucher'}
+                                {isSelected ? 'Đã áp dụng' : 'Áp dụng mã'}
                               </Button>
                             </article>
                           );
@@ -979,16 +979,15 @@ export default function CheckoutPage() {
                     )}
                     {selectedVoucher && (
                       <p className="voucher-applied-note">
-                        Voucher {selectedVoucher.code} is applied to this checkout.
+                        Mã {selectedVoucher.code} đã được áp dụng cho đơn thanh toán này.
                       </p>
                     )}
                   </>
                 ) : (
                   <div className="voucher-empty-inline">
-                    <strong>No available voucher</strong>
+                    <strong>Không có mã giảm giá khả dụng</strong>
                     <p>
-                      Complete an eligible paid order first. A voucher can appear in your account for
-                      the next purchase.
+                      Hoàn tất một đơn hàng đủ điều kiện trước. Mã giảm giá có thể xuất hiện trong tài khoản cho lần mua tiếp theo.
                     </p>
                   </div>
                 )}
@@ -999,11 +998,11 @@ export default function CheckoutPage() {
             {isLoggedIn && (
               <div className={`panel checkout-add-address ${!showAddAddress && addresses.length > 0 ? 'collapsed-panel' : ''}`}>
                 <div className="panel-heading">
-                  <h3>Add delivery address</h3>
+                  <h3>Thêm địa chỉ giao hàng</h3>
                   <p>
                     {addresses.length > 0
-                      ? 'Use this only when you want to save another delivery address.'
-                      : 'Enter a delivery address before continuing to payment.'}
+                      ? 'Chỉ dùng khi bạn muốn lưu thêm một địa chỉ giao hàng khác.'
+                      : 'Nhập địa chỉ giao hàng trước khi tiếp tục thanh toán.'}
                   </p>
                 </div>
                 {showAddAddress ? (
@@ -1018,7 +1017,7 @@ export default function CheckoutPage() {
                   </>
                 ) : (
                   <Button type="button" onClick={() => setShowAddAddress(true)}>
-                    Add new address
+                    Thêm địa chỉ mới
                   </Button>
                 )}
               </div>
@@ -1040,9 +1039,9 @@ export default function CheckoutPage() {
           <div className="modal" role="dialog" aria-modal="true" aria-labelledby="delete-address-title">
             <div className="stack">
               <div>
-                <h2 id="delete-address-title">Delete address?</h2>
+                <h2 id="delete-address-title">Xóa địa chỉ?</h2>
                 <p className="muted">
-                  This saved address will be removed from your account. You can add a new one later.
+                  Địa chỉ đã lưu này sẽ bị xóa khỏi tài khoản. Bạn có thể thêm địa chỉ mới sau.
                 </p>
               </div>
               <div className="delete-address-preview">
@@ -1057,10 +1056,10 @@ export default function CheckoutPage() {
               </div>
               <div className="actions">
                 <Button type="button" className="btn-secondary" onClick={cancelDeleteAddress} disabled={deleteLoading}>
-                  Cancel
+                  Hủy
                 </Button>
                 <Button type="button" onClick={confirmDeleteAddress} loading={deleteLoading}>
-                  Delete address
+                  Xóa địa chỉ
                 </Button>
               </div>
             </div>

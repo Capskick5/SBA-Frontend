@@ -16,7 +16,7 @@ const defaultValues = {
 export default function AddressForm({
   initialValues = defaultValues,
   onSubmit,
-  submitLabel = 'Save',
+  submitLabel = 'Lưu',
   loading = false,
   onCancel,
   fieldErrors = {},
@@ -52,7 +52,7 @@ export default function AddressForm({
         if (matchedProvince) setProvinceCode(String(matchedProvince.code));
       })
       .catch(() => {
-        if (active) setAddressLookupError('Address lookup is unavailable. You can enter the address manually.');
+        if (active) setAddressLookupError('Không thể tra cứu địa chỉ. Bạn có thể nhập thủ công.');
       })
       .finally(() => {
         if (active) setLoadingProvinces(false);
@@ -84,7 +84,7 @@ export default function AddressForm({
         setDistrictCode(matchedDistrict ? String(matchedDistrict.code) : '');
       })
       .catch(() => {
-        if (active) setAddressLookupError('District lookup is unavailable. You can enter the district manually.');
+        if (active) setAddressLookupError('Không thể tra cứu quận/huyện. Bạn có thể nhập thủ công.');
       })
       .finally(() => {
         if (active) setLoadingDistricts(false);
@@ -110,7 +110,7 @@ export default function AddressForm({
         if (active) setWards(items);
       })
       .catch(() => {
-        if (active) setAddressLookupError('Ward lookup is unavailable. You can enter the ward manually.');
+        if (active) setAddressLookupError('Không thể tra cứu phường/xã. Bạn có thể nhập thủ công.');
       })
       .finally(() => {
         if (active) setLoadingWards(false);
@@ -173,24 +173,24 @@ export default function AddressForm({
   return (
     <form className="form address-form" onSubmit={handleSubmit}>
       <div className="address-form-note">
-        <strong>Delivery contact</strong>
-        <span>Use the name and phone number that the shipper should contact.</span>
+        <strong>Thông tin liên hệ giao hàng</strong>
+        <span>Dùng tên và số điện thoại mà shipper sẽ liên hệ.</span>
       </div>
 
       <div className="address-form-grid">
         <Input
-          label="Recipient name"
+          label="Tên người nhận"
           name="recipient"
-          placeholder="Full name of the recipient"
+          placeholder="Họ tên người nhận"
           value={values.recipient}
           onChange={(e) => setField('recipient', e.target.value)}
           error={fieldErrors.recipient}
           required
         />
         <Input
-          label="Phone"
+          label="Số điện thoại"
           name="phone"
-          placeholder="Vietnam phone number"
+          placeholder="Số điện thoại Việt Nam"
           value={values.phone}
           onChange={(e) => setField('phone', e.target.value)}
           error={fieldErrors.phone}
@@ -198,9 +198,9 @@ export default function AddressForm({
         />
         <div className="field-span-2">
           <Input
-            label="Street address"
+            label="Địa chỉ đường"
             name="line"
-            placeholder="House number, street, building, apartment"
+            placeholder="Số nhà, đường, tòa nhà, căn hộ"
             value={values.line}
             onChange={(e) => setField('line', e.target.value)}
             error={fieldErrors.line}
@@ -209,9 +209,9 @@ export default function AddressForm({
         </div>
         {shouldShowManualCity ? (
           <Input
-            label="City / Province"
+            label="Tỉnh / Thành phố"
             name="city"
-            placeholder="City or province"
+            placeholder="Tỉnh hoặc thành phố"
             value={values.city}
             onChange={(e) => setField('city', e.target.value)}
             error={fieldErrors.city}
@@ -219,7 +219,7 @@ export default function AddressForm({
           />
         ) : (
           <label className={`field${fieldErrors.city ? ' field-invalid' : ''}`}>
-            <span>City / Province</span>
+            <span>Tỉnh / Thành phố</span>
             <select
               name="city"
               value={citySelectValue}
@@ -228,7 +228,7 @@ export default function AddressForm({
               aria-invalid={fieldErrors.city ? 'true' : undefined}
               required
             >
-              <option value="">{loadingProvinces ? 'Loading provinces...' : 'Select city or province'}</option>
+              <option value="">{loadingProvinces ? 'Đang tải tỉnh/thành...' : 'Chọn tỉnh hoặc thành phố'}</option>
               {currentCityExists && <option value="current">{values.city}</option>}
               {provinces.map((province) => (
                 <option key={province.code} value={province.code}>
@@ -241,23 +241,23 @@ export default function AddressForm({
         )}
         {shouldShowManualDistrict ? (
           <Input
-            label="District"
+            label="Quận / Huyện"
             name="district"
-            placeholder={provinceCode ? 'District' : 'Select city or province first'}
+            placeholder={provinceCode ? 'Quận hoặc huyện' : 'Chọn tỉnh/thành trước'}
             value={values.district}
             onChange={(e) => setField('district', e.target.value)}
             disabled={!provinceCode && hasProvinceOptions}
           />
         ) : (
           <label className="field">
-            <span>District</span>
+            <span>Quận / Huyện</span>
             <select
               name="district"
               value={districtSelectValue}
               onChange={handleDistrictChange}
               disabled={loadingDistricts}
             >
-              <option value="">{loadingDistricts ? 'Loading districts...' : 'Select district'}</option>
+              <option value="">{loadingDistricts ? 'Đang tải quận/huyện...' : 'Chọn quận hoặc huyện'}</option>
               {currentDistrictExists && <option value="current">{values.district}</option>}
               {districts.map((district) => (
                 <option key={district.code} value={district.code}>
@@ -269,23 +269,23 @@ export default function AddressForm({
         )}
         {shouldShowManualWard ? (
           <Input
-            label="Ward"
+            label="Phường / Xã"
             name="ward"
-            placeholder={districtCode ? 'Ward' : 'Select district first'}
+            placeholder={districtCode ? 'Phường hoặc xã' : 'Chọn quận/huyện trước'}
             value={values.ward}
             onChange={(e) => setField('ward', e.target.value)}
             disabled={!districtCode && hasProvinceOptions}
           />
         ) : (
           <label className="field">
-            <span>Ward</span>
+            <span>Phường / Xã</span>
             <select
               name="ward"
               value={values.ward}
               onChange={handleWardChange}
               disabled={loadingWards}
             >
-              <option value="">{loadingWards ? 'Loading wards...' : 'Select ward'}</option>
+              <option value="">{loadingWards ? 'Đang tải phường/xã...' : 'Chọn phường hoặc xã'}</option>
               {currentWardExists && <option value={values.ward}>{values.ward}</option>}
               {wards.map((ward) => (
                 <option key={ward.code} value={ward.name}>
@@ -306,18 +306,18 @@ export default function AddressForm({
             onChange={(e) => setField('isDefault', e.target.checked)}
           />
           <span>
-            <strong>Save as default address</strong>
-            <small>Use this address faster next time.</small>
+            <strong>Lưu làm địa chỉ mặc định</strong>
+            <small>Dùng địa chỉ này nhanh hơn lần sau.</small>
           </span>
         </label>
       )}
 
       <div className="actions address-form-actions">
         <Button type="submit" disabled={loading}>
-          {loading ? 'Saving...' : submitLabel}
+          {loading ? 'Đang lưu...' : submitLabel}
         </Button>
         {onCancel && (
-          <Button type="button" className="btn-secondary" onClick={onCancel}>Cancel</Button>
+          <Button type="button" className="btn-secondary" onClick={onCancel}>Hủy</Button>
         )}
       </div>
     </form>

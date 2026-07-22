@@ -59,7 +59,7 @@ export default function AdminBooksPage() {
       })
       .catch((err) => {
         console.error('Failed to load books:', err);
-        setError('Could not load the book inventory.');
+        setError('Không thể tải kho sách.');
         setBooks([]);
         setTotalPages(1);
       })
@@ -73,10 +73,10 @@ export default function AdminBooksPage() {
   const handleToggleActive = async (row) => {
     try {
       await adminService.toggleBookActive(row.id, !row.active);
-      alert(`Book ${row.active ? 'hidden' : 'shown'} successfully.`);
+      alert(`Đã ${row.active ? 'ẩn' : 'hiển thị'} sách thành công.`);
       loadBooks(currentPage, sortBy, statusFilter, debouncedSearch);
     } catch (err) {
-      alert('Failed to update book status: ' + (err.response?.data?.message || err.message));
+      alert('Không thể cập nhật trạng thái sách: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -92,16 +92,16 @@ export default function AdminBooksPage() {
 
   return (
     <section className="stack">
-      <h1>Book Inventory</h1>
+      <h1>Kho sách</h1>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '16px', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', maxWidth: '500px', flex: '1 1 320px' }}>
           <div style={{ flex: 1 }}>
             <Input
-              aria-label="Search books"
+              aria-label="Tìm kiếm sách"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Title, author, or ISBN"
+              placeholder="Tiêu đề, tác giả hoặc ISBN"
               style={{ height: '46px' }}
             />
           </div>
@@ -111,13 +111,13 @@ export default function AdminBooksPage() {
             onClick={() => navigate('/admin/books/new')}
             style={{ height: '46px', flexShrink: 0 }}
           >
-            + Add Book
+            + Thêm sách
           </Button>
         </div>
 
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
           <label htmlFor="statusSelect" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', margin: 0 }}>
-            Status:
+            Trạng thái:
             <select
               id="statusSelect"
               value={statusFilter}
@@ -127,14 +127,14 @@ export default function AdminBooksPage() {
               }}
               style={toolbarControlStyle}
             >
-              <option value="all">All</option>
-              <option value="active">Active</option>
-              <option value="hidden">Hidden</option>
+              <option value="all">Tất cả</option>
+              <option value="active">Đang hiện</option>
+              <option value="hidden">Đã ẩn</option>
             </select>
           </label>
 
           <label htmlFor="sortSelect" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', margin: 0 }}>
-            Sort:
+            Sắp xếp:
             <select
               id="sortSelect"
               value={sortBy}
@@ -144,49 +144,49 @@ export default function AdminBooksPage() {
               }}
               style={toolbarControlStyle}
             >
-              <option value="id,desc">ID: Newest first</option>
-              <option value="id,asc">ID: Oldest first</option>
-              <option value="price,asc">Price: Low to high</option>
-              <option value="price,desc">Price: High to low</option>
-              <option value="soldCount,desc">Best selling</option>
+              <option value="id,desc">ID: Mới nhất trước</option>
+              <option value="id,asc">ID: Cũ nhất trước</option>
+              <option value="price,asc">Giá: Thấp đến cao</option>
+              <option value="price,desc">Giá: Cao đến thấp</option>
+              <option value="soldCount,desc">Bán chạy nhất</option>
             </select>
           </label>
         </div>
       </div>
 
       {loading ? (
-        <LoadingState text="Loading books..." />
+        <LoadingState text="Đang tải sách..." />
       ) : error ? (
         <ErrorState text={error}>
-          <Button onClick={() => loadBooks(currentPage, sortBy, statusFilter, debouncedSearch)}>Try again</Button>
+          <Button onClick={() => loadBooks(currentPage, sortBy, statusFilter, debouncedSearch)}>Thử lại</Button>
         </ErrorState>
       ) : (
         <>
           <Table
-            emptyText="No books found."
+            emptyText="Không tìm thấy sách nào."
             columns={[
               { key: 'id', label: 'ID' },
-              { key: 'title', label: 'Title' },
-              { key: 'author', label: 'Author' },
+              { key: 'title', label: 'Tiêu đề' },
+              { key: 'author', label: 'Tác giả' },
               {
                 key: 'category',
-                label: 'Category',
-                render: (row) => row.category?.name || <em style={{ color: '#999' }}>Uncategorized</em>,
+                label: 'Danh mục',
+                render: (row) => row.category?.name || <em style={{ color: '#999' }}>Chưa phân loại</em>,
               },
-              { key: 'price', label: 'Price', render: (row) => formatCurrency(row.price) },
-              { key: 'stock', label: 'Stock' },
+              { key: 'price', label: 'Giá', render: (row) => formatCurrency(row.price) },
+              { key: 'stock', label: 'Tồn kho' },
               {
                 key: 'active',
-                label: 'Status',
+                label: 'Trạng thái',
                 render: (row) => (
                   <span style={{ color: row.active ? 'green' : 'red', fontWeight: 'bold' }}>
-                    {row.active ? 'Active' : 'Hidden'}
+                    {row.active ? 'Đang hiện' : 'Đã ẩn'}
                   </span>
                 ),
               },
               {
                 key: 'action',
-                label: 'Actions',
+                label: 'Thao tác',
                 render: (row) => (
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <Link
@@ -194,7 +194,7 @@ export default function AdminBooksPage() {
                       state={{ book: row }}
                       className="btn-link"
                     >
-                      Edit
+                      Sửa
                     </Link>
                     <button
                       type="button"
@@ -202,7 +202,7 @@ export default function AdminBooksPage() {
                       className="btn-link"
                       style={{ color: row.active ? '#e53e3e' : '#3182ce' }}
                     >
-                      {row.active ? 'Hide' : 'Show'}
+                      {row.active ? 'Ẩn' : 'Hiện'}
                     </button>
                   </div>
                 ),
@@ -214,13 +214,13 @@ export default function AdminBooksPage() {
           {books.length > 0 && (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '20px' }}>
             <Button type="button" disabled={currentPage === 0} onClick={() => setCurrentPage((prev) => prev - 1)}>
-              &laquo; Previous
+              &laquo; Trước
             </Button>
             <span style={{ fontWeight: 'bold' }}>
-              Page {currentPage + 1} / {totalPages}
+              Trang {currentPage + 1} / {totalPages}
             </span>
             <Button type="button" disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage((prev) => prev + 1)}>
-              Next &raquo;
+              Sau &raquo;
             </Button>
           </div>
           )}

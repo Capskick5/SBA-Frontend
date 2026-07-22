@@ -22,9 +22,9 @@ export default function ReviewForm({ bookId, onSubmitted }) {
       setComment('');
       setRating(5);
       onSubmitted?.(review);
-      showToast('Your review has been published.', 'success');
+      showToast('Đánh giá của bạn đã được đăng.', 'success');
     } catch (err) {
-      setError(err?.message || 'Could not submit your review. Please try again.');
+      setError(err?.message || 'Không thể gửi đánh giá. Vui lòng thử lại.');
     } finally {
       setSubmitting(false);
     }
@@ -33,15 +33,15 @@ export default function ReviewForm({ bookId, onSubmitted }) {
   return (
     <form className="review-form" onSubmit={handleSubmit}>
       <div>
-        <span className="review-form-label">Your rating</span>
-        <div className="review-rating-input" role="radiogroup" aria-label="Book rating">
+        <span className="review-form-label">Đánh giá của bạn</span>
+        <div className="review-rating-input" role="radiogroup" aria-label="Đánh giá sách">
           {[1, 2, 3, 4, 5].map((value) => (
             <button
               key={value}
               type="button"
               role="radio"
               aria-checked={rating === value}
-              aria-label={`${value} ${value === 1 ? 'star' : 'stars'}`}
+              aria-label={`${value} sao`}
               onClick={() => setRating(value)}
             >
               <Star size={28} fill={value <= rating ? '#f5a623' : 'transparent'} />
@@ -52,19 +52,19 @@ export default function ReviewForm({ bookId, onSubmitted }) {
       </div>
 
       <Textarea
-        label="Your review"
+        label="Nhận xét"
         value={comment}
         maxLength={1000}
-        placeholder="Share what you liked about this book..."
+        placeholder="Chia sẻ điều bạn thích về cuốn sách này..."
         onChange={(event) => setComment(event.target.value)}
       />
       <div className="review-form-footer">
         <span>{comment.length}/1000</span>
         <Button type="submit" loading={submitting} disabled={submitting}>
-          Publish review
+          Đăng đánh giá
         </Button>
       </div>
-      <p className="review-form-policy">Only books from delivered orders can be reviewed.</p>
+      <p className="review-form-policy">Chỉ có thể đánh giá sách từ các đơn đã giao thành công.</p>
       {error && <p className="review-form-error" role="alert">{error}</p>}
     </form>
   );

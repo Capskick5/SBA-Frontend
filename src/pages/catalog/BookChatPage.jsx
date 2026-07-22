@@ -41,7 +41,7 @@ export default function BookChatPage() {
       }
     } catch (err) {
       console.error(err);
-      setError('Failed to load chat history.');
+      setError('Không thể tải lịch sử trò chuyện.');
     } finally {
       setLoading(false);
     }
@@ -107,7 +107,7 @@ export default function BookChatPage() {
       setCurrentSession(details);
     } catch (err) {
       console.error(err);
-      setError('Failed to load chat conversation details.');
+      setError('Không thể tải chi tiết cuộc trò chuyện.');
     }
   }
 
@@ -123,12 +123,12 @@ export default function BookChatPage() {
   const handleCreateSession = async (e) => {
     e.preventDefault();
     if (selectedBookIds.length === 0) {
-      alert('Please select at least one book to chat about.');
+      alert('Vui lòng chọn ít nhất một cuốn sách để trò chuyện.');
       return;
     }
 
     const firstBook = purchasedBooks.find((b) => b.bookId === selectedBookIds[0]);
-    let defaultTitle = 'Book Q&A Chat';
+    let defaultTitle = 'Hỏi đáp về sách';
     if (firstBook) {
       defaultTitle = firstBook.title.length > 35 ? firstBook.title.substring(0, 35) + '...' : firstBook.title;
     }
@@ -147,13 +147,13 @@ export default function BookChatPage() {
       });
     } catch (err) {
       console.error(err);
-      alert('Failed to start a new chat session.');
+      alert('Không thể bắt đầu cuộc trò chuyện mới.');
     }
   };
 
   const handleDeleteSession = async (id, e) => {
     e.stopPropagation();
-    if (!window.confirm('Are you sure you want to delete this chat history?')) return;
+    if (!window.confirm('Bạn có chắc muốn xóa lịch sử trò chuyện này?')) return;
 
     try {
       await aiChatService.deleteSession(id);
@@ -163,7 +163,7 @@ export default function BookChatPage() {
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to delete chat session.');
+      alert('Không thể xóa cuộc trò chuyện.');
     }
   };
 
@@ -198,7 +198,7 @@ export default function BookChatPage() {
       });
     } catch (err) {
       console.error(err);
-      alert(err.message || 'Failed to get answer from AI assistant.');
+      alert(err.message || 'Không thể nhận câu trả lời từ trợ lý AI.');
     } finally {
       setSending(false);
     }
@@ -223,13 +223,13 @@ export default function BookChatPage() {
             }}
             style={{ width: '100%', marginBottom: '16px' }}
           >
-            + Start New Chat
+            + Bắt đầu trò chuyện mới
           </Button>
 
           {loading ? (
-            <LoadingState text="Loading history..." />
+            <LoadingState text="Đang tải lịch sử..." />
           ) : sessions.length === 0 ? (
-            <p className="muted" style={{ textAlign: 'center', fontSize: '14px', marginTop: '20px' }}>No chat history found.</p>
+            <p className="muted" style={{ textAlign: 'center', fontSize: '14px', marginTop: '20px' }}>Chưa có lịch sử trò chuyện.</p>
           ) : (
             <div className="session-list">
               {sessions.map((session) => (
@@ -264,12 +264,12 @@ export default function BookChatPage() {
                 <h3>{currentSession.title}</h3>
                 {currentSession.sessionType === 'BOOK_CHAT' && currentSession.bookIds?.length > 0 && (
                   <div className="chat-meta-books">
-                    <span className="muted" style={{ fontSize: '12px' }}>Querying books: </span>
+                    <span className="muted" style={{ fontSize: '12px' }}>Đang hỏi về sách: </span>
                     {currentSession.bookIds.map((bid) => {
                       const book = purchasedBooks.find((pb) => pb.bookId === bid);
                       return (
                         <span key={bid} className="chat-book-tag">
-                          {book ? book.title : `Book #${bid}`}
+                          {book ? book.title : `Sách #${bid}`}
                         </span>
                       );
                     })}
@@ -281,16 +281,16 @@ export default function BookChatPage() {
                 {currentSession.messages && currentSession.messages.length > 0 ? (
                   currentSession.messages.map((msg) => (
                     <div key={msg.id} className={`chat-message-bubble ${msg.role === 'user' ? 'user' : 'assistant'}`}>
-                      <div className="bubble-role">{msg.role === 'user' ? 'You' : 'AI'}</div>
+                      <div className="bubble-role">{msg.role === 'user' ? 'Bạn' : 'AI'}</div>
                       <div className="bubble-content"><ReactMarkdown>{msg.content}</ReactMarkdown></div>
                       {msg.sources && msg.sources.length > 0 && (
                         <details className="sources-details">
-                          <summary>References &amp; Sources ({msg.sources.length})</summary>
+                          <summary>Tham khảo &amp; nguồn ({msg.sources.length})</summary>
                           <div className="sources-list">
                             {msg.sources.map((src, idx) => (
                               <div key={idx} className="source-item-box">
                                 <div style={{ fontWeight: 'bold', fontSize: '12px' }}>
-                                  [{idx + 1}] {src.bookTitle} {src.page ? `(page ${src.page})` : ''} - match score: {Math.round(src.score * 100)}%
+                                  [{idx + 1}] {src.bookTitle} {src.page ? `(trang ${src.page})` : ''} - độ khớp: {Math.round(src.score * 100)}%
                                 </div>
                                 <div className="source-item-text">{src.text}</div>
                               </div>
@@ -302,13 +302,13 @@ export default function BookChatPage() {
                   ))
                 ) : (
                   <div style={{ textAlign: 'center', marginTop: '60px' }} className="muted">
-                    Ask your first question to start the conversation.
+                    Hãy đặt câu hỏi đầu tiên để bắt đầu cuộc trò chuyện.
                   </div>
                 )}
                 {sending && (
                   <div className="chat-message-bubble assistant loading">
                     <div className="bubble-role">AI</div>
-                    <div className="bubble-content" style={{ fontStyle: 'italic' }}>AI is thinking...</div>
+                    <div className="bubble-content" style={{ fontStyle: 'italic' }}>AI đang suy nghĩ...</div>
                   </div>
                 )}
               </div>
@@ -316,24 +316,24 @@ export default function BookChatPage() {
               <form onSubmit={handleSendMessage} className="chat-input-form-bar">
                 <input
                   type="text"
-                  placeholder="Ask a question..."
+                  placeholder="Đặt câu hỏi..."
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   disabled={sending}
                   required
                 />
                 <Button type="submit" disabled={sending}>
-                  Send
+                  Gửi
                 </Button>
               </form>
             </div>
           ) : (
             <div style={{ display: 'grid', placeItems: 'center', height: '100%', minHeight: '300px' }} className="muted">
               <div>
-                <p style={{ textAlign: 'center', fontSize: '18px' }}>Select or start a new conversation to begin.</p>
+                <p style={{ textAlign: 'center', fontSize: '18px' }}>Chọn hoặc bắt đầu cuộc trò chuyện mới.</p>
                 {chatType === 'BOOK_CHAT' && purchasedBooks.length === 0 && (
                   <p style={{ color: 'var(--error)', fontSize: '14px', textAlign: 'center', marginTop: '10px' }}>
-                    Warning: You do not have any purchased books to query.
+                    Cảnh báo: Bạn chưa có sách đã mua để hỏi đáp.
                   </p>
                 )}
               </div>
@@ -346,15 +346,15 @@ export default function BookChatPage() {
         <div className="modal-backdrop">
           <div className="modal">
             <div className="modal-header">
-              <h3>Start New AI Chat</h3>
+              <h3>Bắt đầu trò chuyện AI mới</h3>
               <button type="button" onClick={() => setIsModalOpen(false)} style={{ border: 0, background: 'transparent', fontSize: '20px', cursor: 'pointer' }}>×</button>
             </div>
             <form onSubmit={handleCreateSession} className="form" style={{ marginTop: '16px' }}>
               <div className="field">
-                <label>Chat Title</label>
+                <label>Tiêu đề trò chuyện</label>
                 <input
                   type="text"
-                  placeholder="Enter custom chat title (optional)"
+                  placeholder="Nhập tiêu đề tùy chỉnh (không bắt buộc)"
                   value={newChatTitle}
                   onChange={(e) => setNewChatTitle(e.target.value)}
                 />
@@ -363,20 +363,20 @@ export default function BookChatPage() {
               {purchasedBooks.length === 0 ? (
                 <div className="field">
                   <p style={{ color: 'var(--error)', fontSize: '14px' }}>
-                    You have no purchased books. Please purchase books first to start a chat.
+                    Bạn chưa có sách đã mua. Vui lòng mua sách trước khi bắt đầu trò chuyện.
                   </p>
                 </div>
               ) : (
                 <div style={{ display: 'grid', gap: '8px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <label style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text)', margin: 0 }}>Select Books to Ask About</label>
+                    <label style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text)', margin: 0 }}>Chọn sách để hỏi</label>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                       <button
                         type="button"
                         onClick={() => setSelectedBookIds(purchasedBooks.map((b) => b.bookId))}
                         style={{ border: 'none', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '12px', padding: 0 }}
                       >
-                        Select All
+                        Chọn tất cả
                       </button>
                       <span style={{ color: 'var(--muted)', fontSize: '12px' }}>|</span>
                       <button
@@ -384,7 +384,7 @@ export default function BookChatPage() {
                         onClick={() => setSelectedBookIds([])}
                         style={{ border: 'none', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '12px', padding: 0 }}
                       >
-                        Clear All
+                        Bỏ chọn tất cả
                       </button>
                     </div>
                   </div>
@@ -434,15 +434,15 @@ export default function BookChatPage() {
                   </div>
                   {selectedBookIds.length === 0 && (
                     <span style={{ color: 'var(--error)', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                      Please select at least one book to ask about.
+                      Vui lòng chọn ít nhất một cuốn sách để hỏi.
                     </span>
                   )}
                 </div>
               )}
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '24px' }}>
-                <Button type="button" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                <Button type="submit" disabled={purchasedBooks.length === 0 || selectedBookIds.length === 0}>Create Chat</Button>
+                <Button type="button" onClick={() => setIsModalOpen(false)}>Hủy</Button>
+                <Button type="submit" disabled={purchasedBooks.length === 0 || selectedBookIds.length === 0}>Tạo trò chuyện</Button>
               </div>
             </form>
           </div>

@@ -54,7 +54,7 @@ const admin = (page) => (
 
 export default function AppRoutes() {
   return (
-    <Suspense fallback={<LoadingState text="Loading page..." />}>
+    <Suspense fallback={<LoadingState text="Đang tải trang..." />}>
       <Routes>
         <Route path="/" element={main(<CatalogPage />)} />
         <Route path="/books/:id" element={main(<BookDetailPage />)} />

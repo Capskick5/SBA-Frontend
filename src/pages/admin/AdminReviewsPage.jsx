@@ -45,7 +45,7 @@ export default function AdminReviewsPage() {
       })
       .catch((err) => {
         console.error('Failed to load reviews:', err);
-        setError('Failed to load reviews. Please try again later.');
+        setError('Không thể tải đánh giá. Vui lòng thử lại sau.');
       })
       .finally(() => setLoading(false));
   }, [page, status]);
@@ -63,7 +63,7 @@ export default function AdminReviewsPage() {
     if (!moderationTarget || moderating) return;
     const nextStatus = moderationTarget.status === 'HIDDEN' ? 'PUBLISHED' : 'HIDDEN';
     if (nextStatus === 'HIDDEN' && !moderationReason.trim()) {
-      showToast('Enter a reason before hiding this review.', 'error');
+      showToast('Nhập lý do trước khi ẩn đánh giá này.', 'error');
       return;
     }
 
@@ -74,14 +74,14 @@ export default function AdminReviewsPage() {
         reason: nextStatus === 'HIDDEN' ? moderationReason.trim() : undefined,
       });
       setModerationTarget(null);
-      showToast(nextStatus === 'HIDDEN' ? 'Review hidden successfully.' : 'Review restored successfully.', 'success');
+      showToast(nextStatus === 'HIDDEN' ? 'Đã ẩn đánh giá thành công.' : 'Đã khôi phục đánh giá thành công.', 'success');
       if (reviews.length === 1 && page > 0) {
         setPage((current) => current - 1);
       } else {
         loadReviews();
       }
     } catch (err) {
-      showToast(err?.response?.data?.message || err?.message || 'Failed to moderate review.', 'error');
+      showToast(err?.response?.data?.message || err?.message || 'Không thể kiểm duyệt đánh giá.', 'error');
     } finally {
       setModerating(false);
     }
@@ -115,7 +115,7 @@ export default function AdminReviewsPage() {
       })
       .catch((err) => {
         console.error('Failed to load moderation history:', err);
-        if (active) setHistoryError('Failed to load moderation history.');
+        if (active) setHistoryError('Không thể tải lịch sử kiểm duyệt.');
       })
       .finally(() => {
         if (active) setHistoryLoading(false);
@@ -129,15 +129,15 @@ export default function AdminReviewsPage() {
     <section className="stack">
       <div className="admin-review-heading">
         <div>
-          <h1>Review Management</h1>
-          <p className="muted">Monitor verified-purchase feedback and hide inappropriate content without deleting evidence.</p>
+          <h1>Quản lý đánh giá</h1>
+          <p className="muted">Theo dõi phản hồi từ mua hàng đã xác minh và ẩn nội dung không phù hợp mà không xóa bằng chứng.</p>
         </div>
-        <span className="admin-review-count">{totalItems} reviews</span>
+        <span className="admin-review-count">{totalItems} đánh giá</span>
       </div>
 
       <div className="admin-review-filters">
         <label>
-          <span>Status</span>
+          <span>Trạng thái</span>
           <select
             value={status}
             onChange={(event) => {
@@ -145,35 +145,35 @@ export default function AdminReviewsPage() {
               setPage(0);
             }}
           >
-            <option value="ALL">All reviews</option>
-            <option value="PUBLISHED">Published</option>
-            <option value="HIDDEN">Hidden</option>
+            <option value="ALL">Tất cả đánh giá</option>
+            <option value="PUBLISHED">Đang hiển thị</option>
+            <option value="HIDDEN">Đã ẩn</option>
           </select>
         </label>
       </div>
 
       {loading ? (
-        <LoadingState text="Loading reviews..." />
+        <LoadingState text="Đang tải đánh giá..." />
       ) : error ? (
         <ErrorState text={error}>
-          <Button onClick={loadReviews}>Retry</Button>
+          <Button onClick={loadReviews}>Thử lại</Button>
         </ErrorState>
       ) : (
         <>
           <Table
-            emptyText="No reviews found."
+            emptyText="Không tìm thấy đánh giá nào."
             columns={[
               {
                 key: 'bookId',
-                label: 'Book',
-                render: (row) => <Link to={`/admin/books/${row.bookId}`}>Book #{row.bookId}</Link>,
+                label: 'Sách',
+                render: (row) => <Link to={`/admin/books/${row.bookId}`}>Sách #{row.bookId}</Link>,
               },
-              { key: 'userName', label: 'Customer' },
+              { key: 'userName', label: 'Khách hàng' },
               {
                 key: 'rating',
-                label: 'Rating',
+                label: 'Xếp hạng',
                 render: (row) => (
-                  <span className="admin-review-rating" aria-label={`${row.rating} out of 5 stars`}>
+                  <span className="admin-review-rating" aria-label={`${row.rating} trên 5 sao`}>
                     {'★'.repeat(row.rating)}{'☆'.repeat(5 - row.rating)}
                     <strong>{row.rating}/5</strong>
                   </span>
@@ -181,33 +181,33 @@ export default function AdminReviewsPage() {
               },
               {
                 key: 'comment',
-                label: 'Review',
-                render: (row) => row.comment || <span className="muted">Rating only</span>,
+                label: 'Đánh giá',
+                render: (row) => row.comment || <span className="muted">Chỉ xếp hạng</span>,
               },
               {
                 key: 'status',
-                label: 'Status',
+                label: 'Trạng thái',
                 render: (row) => (
                   <span className={`admin-review-status ${row.status === 'HIDDEN' ? 'is-hidden' : 'is-published'}`}>
-                    {row.status === 'HIDDEN' ? 'Hidden' : 'Published'}
+                    {row.status === 'HIDDEN' ? 'Đã ẩn' : 'Đang hiển thị'}
                   </span>
                 ),
               },
               {
                 key: 'createdAt',
-                label: 'Submitted',
+                label: 'Ngày gửi',
                 render: (row) => formatDateTime(row.createdAt),
               },
               {
                 key: 'action',
-                label: 'Actions',
+                label: 'Thao tác',
                 render: (row) => (
                   <div className="admin-review-actions">
                     <Button className="btn-secondary" onClick={() => openHistory(row)}>
-                      History
+                      Lịch sử
                     </Button>
                     <Button className="btn-secondary" onClick={() => openModeration(row)}>
-                      {row.status === 'HIDDEN' ? 'Restore' : 'Hide'}
+                      {row.status === 'HIDDEN' ? 'Khôi phục' : 'Ẩn'}
                     </Button>
                   </div>
                 ),
@@ -225,7 +225,7 @@ export default function AdminReviewsPage() {
 
       {moderationTarget && (
         <Modal
-          title={moderationTarget.status === 'HIDDEN' ? 'Restore review' : 'Hide review'}
+          title={moderationTarget.status === 'HIDDEN' ? 'Khôi phục đánh giá' : 'Ẩn đánh giá'}
           onClose={() => {
             if (!moderating) setModerationTarget(null);
           }}
@@ -233,27 +233,27 @@ export default function AdminReviewsPage() {
           <div className="admin-review-moderation-form">
             <p>
               {moderationTarget.status === 'HIDDEN'
-                ? 'Restore this review to the public book page?'
-                : 'The review will disappear from the public book page but remain available to administrators.'}
+                ? 'Khôi phục đánh giá này lên trang sách công khai?'
+                : 'Đánh giá sẽ biến mất khỏi trang sách công khai nhưng vẫn khả dụng cho quản trị viên.'}
             </p>
             {moderationTarget.status !== 'HIDDEN' && (
               <label>
-                <span>Reason</span>
+                <span>Lý do</span>
                 <textarea
                   rows="4"
                   maxLength="500"
                   value={moderationReason}
                   onChange={(event) => setModerationReason(event.target.value)}
-                  placeholder="Explain why this review should be hidden"
+                  placeholder="Giải thích lý do ẩn đánh giá này"
                 />
               </label>
             )}
             <div className="actions">
               <Button className="btn-secondary" onClick={() => setModerationTarget(null)} disabled={moderating}>
-                Cancel
+                Hủy
               </Button>
               <Button onClick={handleModeration} loading={moderating}>
-                {moderationTarget.status === 'HIDDEN' ? 'Restore review' : 'Hide review'}
+                {moderationTarget.status === 'HIDDEN' ? 'Khôi phục đánh giá' : 'Ẩn đánh giá'}
               </Button>
             </div>
           </div>
@@ -261,13 +261,13 @@ export default function AdminReviewsPage() {
       )}
 
       {historyTarget && (
-        <Modal title={`Moderation history · Review #${historyTarget.id}`} onClose={() => setHistoryTarget(null)}>
+        <Modal title={`Lịch sử kiểm duyệt · Đánh giá #${historyTarget.id}`} onClose={() => setHistoryTarget(null)}>
           {historyLoading ? (
-            <LoadingState text="Loading moderation history..." />
+            <LoadingState text="Đang tải lịch sử kiểm duyệt..." />
           ) : historyError ? (
             <ErrorState text={historyError} />
           ) : historyEntries.length === 0 ? (
-            <p className="muted">This review has not been moderated yet.</p>
+            <p className="muted">Đánh giá này chưa được kiểm duyệt.</p>
           ) : (
             <>
               <ol className="admin-review-history">
@@ -277,7 +277,7 @@ export default function AdminReviewsPage() {
                       <strong>{entry.fromStatus} → {entry.toStatus}</strong>
                       <time>{formatDateTime(entry.createdAt)}</time>
                     </div>
-                    <p>By {entry.moderatorName || `Admin #${entry.moderatedBy}`}</p>
+                    <p>Bởi {entry.moderatorName || `Admin #${entry.moderatedBy}`}</p>
                     {entry.reason && <p className="admin-review-history-reason">{entry.reason}</p>}
                   </li>
                 ))}

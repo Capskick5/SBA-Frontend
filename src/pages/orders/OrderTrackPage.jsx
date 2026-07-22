@@ -5,24 +5,14 @@ import { bookService } from '../../services/bookService';
 import Button from '../../components/ui/Button';
 import { LoadingState } from '../../components/ui/State';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
-
-const STATUS_MAP = {
-  PENDING_PAYMENT: { text: 'Pending payment', class: 'warning' },
-  PAID: { text: 'Processing', class: 'info' },
-  PROCESSING: { text: 'Processing', class: 'info' },
-  PACKED: { text: 'Packed', class: 'info' },
-  SHIPPED: { text: 'Shipping', class: 'info' },
-  DELIVERED: { text: 'Delivered', class: 'success' },
-  CANCELLED: { text: 'Cancelled', class: 'error' },
-  PAYMENT_FAILED: { text: 'Payment failed', class: 'error' },
-};
+import { getOrderStatusConfig, getPaymentMethodLabel } from '../../utils/orderLabels';
 
 // Milestones for the tracking progress bar, in order.
 const MILESTONES = [
-  { key: 'placed', label: 'Order placed' },
-  { key: 'paid', label: 'Payment confirmed' },
-  { key: 'shipped', label: 'Shipped' },
-  { key: 'delivered', label: 'Delivered' },
+  { key: 'placed', label: 'Đã đặt hàng' },
+  { key: 'paid', label: 'Đã xác nhận thanh toán' },
+  { key: 'shipped', label: 'Đã gửi hàng' },
+  { key: 'delivered', label: 'Đã giao' },
 ];
 
 function buildTimeline(order) {
@@ -70,7 +60,7 @@ export default function OrderTrackPage() {
     } catch {
       setOrder(null);
       setError(
-        'We could not find an order matching that email. Please double-check the email you used at checkout, and make sure you opened the link from your confirmation email.',
+        'Không tìm thấy đơn hàng khớp với email này. Vui lòng kiểm tra lại email bạn dùng khi thanh toán và đảm bảo bạn mở đúng liên kết từ email xác nhận.',
       );
     } finally {
       setLoading(false);
@@ -89,13 +79,13 @@ export default function OrderTrackPage() {
           padding: '28px 32px',
         }}
       >
-        <h1 style={{ margin: 0, color: '#fff' }}>Track your order</h1>
+        <h1 style={{ margin: 0, color: '#fff' }}>Theo dõi đơn hàng</h1>
         <p style={{ margin: '8px 0 0', opacity: 0.9 }}>
-          Enter the email you used at checkout to see the latest status of your BookVerse order.
+          Nhập email bạn dùng khi thanh toán để xem trạng thái mới nhất của đơn BookVerse.
         </p>
         {code && (
           <p style={{ margin: '12px 0 0', fontWeight: 600 }}>
-            Order code: <span style={{ letterSpacing: '1px' }}>{code}</span>
+            Mã đơn: <span style={{ letterSpacing: '1px' }}>{code}</span>
           </p>
         )}
       </div>
@@ -104,8 +94,7 @@ export default function OrderTrackPage() {
         <div className="order-detail-info-card">
           <div className="card-content">
             <p>
-              This tracking link looks incomplete. Please open the “Track My Order” link from your
-              confirmation email, or contact us if the problem continues.
+              Liên kết theo dõi không đầy đủ. Vui lòng mở liên kết "Theo dõi đơn hàng" từ email xác nhận, hoặc liên hệ chúng tôi nếu sự cố vẫn tiếp diễn.
             </p>
           </div>
         </div>
@@ -127,7 +116,7 @@ export default function OrderTrackPage() {
           }}
         >
           <label style={{ flex: '1 1 260px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <span style={{ fontWeight: 600 }}>Email used at checkout</span>
+            <span style={{ fontWeight: 600 }}>Email dùng khi thanh toán</span>
             <input
               type="email"
               required
@@ -143,7 +132,7 @@ export default function OrderTrackPage() {
             />
           </label>
           <Button type="submit" loading={loading} disabled={!email.trim()}>
-            Track order
+            Theo dõi đơn hàng
           </Button>
         </form>
       )}
@@ -156,19 +145,19 @@ export default function OrderTrackPage() {
         </div>
       )}
 
-      {loading && <LoadingState text="Looking up your order..." />}
+      {loading && <LoadingState text="Đang tra cứu đơn hàng..." />}
 
       {order && !loading && <OrderTrackResult order={order} code={code} />}
 
       <div>
-        <Link to="/" className="order-detail-back-link">&lt;&lt; Back to home</Link>
+        <Link to="/" className="order-detail-back-link">&lt;&lt; Quay lại trang chủ</Link>
       </div>
     </section>
   );
 }
 
 function OrderTrackResult({ order, code }) {
-  const statusConfig = STATUS_MAP[order.status] || { text: order.status, class: 'info' };
+  const statusConfig = getOrderStatusConfig(order.status);
   const address =
     typeof order.addressSnapshot === 'string'
       ? safeParse(order.addressSnapshot)
@@ -186,20 +175,20 @@ function OrderTrackResult({ order, code }) {
     <div className="stack" style={{ gap: '16px' }}>
       <div className="order-detail-header">
         <h1>
-          Order {code} - <span className={`highlight ${statusConfig.class}`}>{statusConfig.text}</span>
+          Đơn {code} - <span className={`highlight ${statusConfig.class}`}>{statusConfig.text}</span>
         </h1>
-        <div className="order-detail-date">Placed on {formatDateTime(order.createdAt)}</div>
+        <div className="order-detail-date">Đặt ngày {formatDateTime(order.createdAt)}</div>
       </div>
 
       {/* Progress timeline */}
       <div className="order-detail-info-card">
-        <h3>Delivery progress</h3>
+        <h3>Tiến trình giao hàng</h3>
         <div className="card-content">
           {cancelled ? (
             <p className="highlight error" style={{ margin: 0 }}>
               {order.status === 'PAYMENT_FAILED'
-                ? 'The payment for this order failed. No package will be shipped.'
-                : 'This order was cancelled.'}
+                ? 'Thanh toán cho đơn hàng này thất bại. Không có kiện hàng nào được gửi.'
+                : 'Đơn hàng này đã bị hủy.'}
             </p>
           ) : (
             <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '14px' }}>
@@ -222,7 +211,7 @@ function OrderTrackResult({ order, code }) {
                       {step.label}
                     </strong>
                     <div style={{ fontSize: '13px', color: 'var(--muted)' }}>
-                      {step.at ? formatDateTime(step.at) : 'Pending'}
+                      {step.at ? formatDateTime(step.at) : 'Chờ xử lý'}
                     </div>
                   </div>
                 </li>
@@ -235,53 +224,53 @@ function OrderTrackResult({ order, code }) {
       {/* Info grid */}
       <div className="order-detail-info-grid">
         <div className="order-detail-info-card">
-          <h3>Recipient address</h3>
+          <h3>Địa chỉ người nhận</h3>
           <div className="card-content">
-            <strong>{address.recipient || 'N/A'}</strong>
+            <strong>{address.recipient || 'Không có'}</strong>
             <p>
-              Address:{' '}
+              Địa chỉ:{' '}
               {[address.line, address.ward, address.district, address.city]
                 .filter(Boolean)
-                .join(', ') || 'N/A'}
+                .join(', ') || 'Không có'}
             </p>
-            <p style={{ marginTop: '8px' }}>Phone: {address.phone || 'N/A'}</p>
+            <p style={{ marginTop: '8px' }}>Điện thoại: {address.phone || 'Không có'}</p>
           </div>
         </div>
 
         <div className="order-detail-info-card">
-          <h3>Delivery method</h3>
+          <h3>Phương thức giao hàng</h3>
           <div className="card-content">
             <strong>
-              <span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>FAST</span> Standard Delivery
+              <span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>NHANH</span> Giao hàng tiêu chuẩn
             </strong>
             <p style={{ marginTop: '8px', fontWeight: 500 }}>
-              {shippingFee === 0 ? 'Free shipping' : `Shipping fee: ${formatCurrency(shippingFee)}`}
+              {shippingFee === 0 ? 'Miễn phí vận chuyển' : `Phí vận chuyển: ${formatCurrency(shippingFee)}`}
             </p>
             {order.deliveryType === 'GIFT' && (
-              <p style={{ marginTop: '8px' }}>Gift delivery with wrapping</p>
+              <p style={{ marginTop: '8px' }}>Giao quà kèm gói quà</p>
             )}
             {order.trackingCode && (
               <p style={{ marginTop: '8px', fontSize: '13px', color: 'var(--muted)' }}>
-                Carrier tracking: {order.trackingCode}
+                Mã vận đơn: {order.trackingCode}
               </p>
             )}
           </div>
         </div>
 
         <div className="order-detail-info-card">
-          <h3>Payment method</h3>
+          <h3>Phương thức thanh toán</h3>
           <div className="card-content">
-            <p>{order.paymentMethod === 'COD' ? 'Cash on delivery' : 'Payment through VNPay'}</p>
+            <p>{getPaymentMethodLabel(order.paymentMethod)}</p>
             <p style={{ marginTop: '10px' }} className={`highlight ${statusConfig.class}`}>
               {order.status === 'PENDING_PAYMENT'
-                ? 'Waiting for payment.'
+                ? 'Đang chờ thanh toán.'
                 : order.status === 'CANCELLED'
-                  ? 'This order has been cancelled.'
+                  ? 'Đơn hàng này đã bị hủy.'
                   : order.status === 'PAYMENT_FAILED'
-                    ? 'Payment failed.'
+                    ? 'Thanh toán thất bại.'
                     : order.paymentMethod === 'COD'
-                      ? 'Pay with cash when your order arrives.'
-                      : 'Payment completed.'}
+                      ? 'Thanh toán tiền mặt khi nhận hàng.'
+                      : 'Đã thanh toán.'}
             </p>
           </div>
         </div>
@@ -292,10 +281,10 @@ function OrderTrackResult({ order, code }) {
         <table className="order-detail-table">
           <thead>
             <tr>
-              <th style={{ width: '55%' }}>Product</th>
-              <th style={{ width: '15%' }}>Price</th>
-              <th style={{ width: '10%' }}>Quantity</th>
-              <th style={{ width: '20%', textAlign: 'right' }}>Subtotal</th>
+              <th style={{ width: '55%' }}>Sản phẩm</th>
+              <th style={{ width: '15%' }}>Giá</th>
+              <th style={{ width: '10%' }}>Số lượng</th>
+              <th style={{ width: '20%', textAlign: 'right' }}>Tạm tính</th>
             </tr>
           </thead>
           <tbody>
@@ -307,13 +296,13 @@ function OrderTrackResult({ order, code }) {
                       <img
                         src={
                           item.coverUrl ||
-                          `https://placehold.co/120x170?text=${encodeURIComponent(item.title || 'Book')}`
+                          `https://placehold.co/120x170?text=${encodeURIComponent(item.title || 'Sách')}`
                         }
                         alt={item.title}
                         className="order-detail-item-cover"
                         onError={(e) => {
                           e.target.src = `https://placehold.co/120x170?text=${encodeURIComponent(
-                            item.title || 'Book',
+                            item.title || 'Sách',
                           )}`;
                         }}
                       />
@@ -336,27 +325,27 @@ function OrderTrackResult({ order, code }) {
         <div className="order-detail-summary-section">
           <div className="order-detail-summary-box">
             <div className="order-detail-summary-row">
-              <span>Subtotal</span>
+              <span>Tạm tính</span>
               <strong>{formatCurrency(subtotal)}</strong>
             </div>
             <div className="order-detail-summary-row">
-              <span>Shipping fee</span>
+              <span>Phí vận chuyển</span>
               <strong>{formatCurrency(shippingFee)}</strong>
             </div>
             {giftWrapFee > 0 && (
               <div className="order-detail-summary-row">
-                <span>Gift wrap fee</span>
+                <span>Phí gói quà</span>
                 <strong>{formatCurrency(giftWrapFee)}</strong>
               </div>
             )}
             {discount > 0 && (
               <div className="order-detail-summary-row">
-                <span>Discount</span>
+                <span>Giảm giá</span>
                 <strong style={{ color: 'var(--success)' }}>-{formatCurrency(discount)}</strong>
               </div>
             )}
             <div className="order-detail-summary-row total">
-              <strong>Total</strong>
+              <strong>Tổng cộng</strong>
               <span className="order-detail-total-price">{formatCurrency(order.total || 0)}</span>
             </div>
           </div>

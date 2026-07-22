@@ -12,10 +12,10 @@ function getAddToCartErrorMessage(error) {
   if (pendingMessage) return pendingMessage;
 
   if (error?.error_type) {
-    return error.message || ERROR_MESSAGES[error.error_type] || 'Could not add this book to cart.';
+    return error.message || ERROR_MESSAGES[error.error_type] || 'Không thể thêm sách này vào giỏ.';
   }
 
-  return error?.message || 'Could not add this book to cart.';
+  return error?.message || 'Không thể thêm sách này vào giỏ.';
 }
 
 function debounce(func, delay) {
@@ -37,7 +37,7 @@ export default function AddToCartButton({ book, className = '' }) {
       try {
         const updatedCart = await cartFacade.addItem(bookToAdd, 1);
         notifyCartUpdated(updatedCart);
-        showToast(`Added "${bookToAdd.title}" to cart!`);
+        showToast(`Đã thêm "${bookToAdd.title}" vào giỏ!`);
       } catch (err) {
         const errMsg = getAddToCartErrorMessage(err);
         setError(errMsg);
@@ -79,7 +79,7 @@ export default function AddToCartButton({ book, className = '' }) {
   return (
     <div className={`add-to-cart-control ${className}`.trim()}>
       <Button onClick={addToCart} disabled={isOutOfStock} loading={adding}>
-        {isOutOfStock ? 'Out of stock' : 'Add to Cart'}
+        {isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}
       </Button>
       {error && <p className="form-hint form-hint-error">{error}</p>}
     </div>

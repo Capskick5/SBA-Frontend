@@ -65,7 +65,7 @@ export default function AdminVouchersPage() {
         if (!activeRequest) return;
         setRules([]);
         setTotalPages(1);
-        setError(getErrorMessage(err, 'Could not load voucher rules.'));
+        setError(getErrorMessage(err, 'Không thể tải quy tắc voucher.'));
       })
       .finally(() => {
         if (activeRequest) setLoading(false);
@@ -133,15 +133,15 @@ export default function AdminVouchersPage() {
     const tierMinAmount = Number(form.tierMinAmount);
 
     if (!form.name.trim() || !Number.isFinite(discountValue) || discountValue <= 0) {
-      setFormError('Enter a rule name and a positive discount value.');
+      setFormError('Nhập tên quy tắc và giá trị giảm giá dương.');
       return;
     }
     if (!Number.isFinite(tierMinAmount) || tierMinAmount < 0) {
-      setFormError('Minimum order amount cannot be negative.');
+      setFormError('Giá trị đơn hàng tối thiểu không được âm.');
       return;
     }
     if (form.discountType === 'PERCENTAGE' && discountValue > 100) {
-      setFormError('Percentage discount cannot exceed 100%.');
+      setFormError('Giảm giá theo phần trăm không được vượt quá 100%.');
       return;
     }
 
@@ -159,10 +159,10 @@ export default function AdminVouchersPage() {
 
       if (editingRuleId) {
         await adminService.updateVoucherRule(editingRuleId, payload);
-        showToast('Voucher reward rule updated.');
+        showToast('Đã cập nhật quy tắc voucher.');
       } else {
         await adminService.createVoucherRule(payload);
-        showToast('Voucher reward rule created.');
+        showToast('Đã tạo quy tắc voucher.');
       }
       setFormOpen(false);
       if (currentPage === 0) {
@@ -171,7 +171,7 @@ export default function AdminVouchersPage() {
         changePage(0);
       }
     } catch (err) {
-      setFormError(getErrorMessage(err, 'Could not create voucher rule.'));
+      setFormError(getErrorMessage(err, 'Không thể tạo quy tắc voucher.'));
     } finally {
       setSubmitting(false);
     }
@@ -183,10 +183,10 @@ export default function AdminVouchersPage() {
     try {
       await adminService.disableVoucherRule(disableTarget.id);
       setDisableTarget(null);
-      showToast('Voucher reward rule disabled.');
+      showToast('Đã vô hiệu hóa quy tắc voucher.');
       reloadRules();
     } catch (err) {
-      showToast(getErrorMessage(err, 'Could not disable voucher rule.'), 'error');
+      showToast(getErrorMessage(err, 'Không thể vô hiệu hóa quy tắc voucher.'), 'error');
     } finally {
       setDisabling(false);
     }
@@ -198,50 +198,50 @@ export default function AdminVouchersPage() {
         ...rule,
         active: true,
       });
-      showToast('Voucher reward rule enabled.');
+      showToast('Đã kích hoạt quy tắc voucher.');
       reloadRules();
     } catch (err) {
-      showToast(getErrorMessage(err, 'Could not enable voucher rule.'), 'error');
+      showToast(getErrorMessage(err, 'Không thể kích hoạt quy tắc voucher.'), 'error');
     }
   };
 
   const columns = [
-    { key: 'name', label: 'Rule Name' },
-    { key: 'reward', label: 'Reward', render: formatReward },
+    { key: 'name', label: 'Tên quy tắc' },
+    { key: 'reward', label: 'Phần thưởng', render: formatReward },
     {
       key: 'tierMinAmount',
-      label: 'Minimum Order',
+      label: 'Đơn hàng tối thiểu',
       render: (rule) => formatCurrency(rule.tierMinAmount),
     },
-    { key: 'codePrefix', label: 'Code Prefix', render: (rule) => rule.codePrefix || 'BV' },
+    { key: 'codePrefix', label: 'Tiền tố mã', render: (rule) => rule.codePrefix || 'BV' },
     {
       key: 'active',
-      label: 'Status',
+      label: 'Trạng thái',
       render: (rule) => (
         <span className={`${styles.status} ${rule.active ? styles.active : styles.disabled}`}>
-          {rule.active ? 'Active' : 'Disabled'}
+          {rule.active ? 'Đang hiện' : 'Đã vô hiệu'}
         </span>
       ),
     },
-    { key: 'updatedAt', label: 'Last Updated', render: (rule) => formatDateTime(rule.updatedAt) },
+    { key: 'updatedAt', label: 'Cập nhật lần cuối', render: (rule) => formatDateTime(rule.updatedAt) },
     {
       key: 'actions',
-      label: 'Actions',
+      label: 'Thao tác',
       render: (rule) => (
         <div className={styles.rowActions}>
           <Button type="button" className="btn-secondary" onClick={() => openEdit(rule)}>
-            Edit
+            Sửa
           </Button>
           <Button type="button" className="btn-secondary" onClick={() => openClone(rule)}>
-            <Copy size={15} /> Clone
+            <Copy size={15} /> Sao chép
           </Button>
           {rule.active ? (
             <Button type="button" className={styles.disableButton} onClick={() => setDisableTarget(rule)}>
-              <Ban size={15} /> Disable
+              <Ban size={15} /> Vô hiệu
             </Button>
           ) : (
             <Button type="button" className="btn-secondary" onClick={() => enableRule(rule)}>
-              Enable
+              Kích hoạt
             </Button>
           )}
         </div>
@@ -253,18 +253,18 @@ export default function AdminVouchersPage() {
     <section className={`${styles.page} stack`}>
       <header className={styles.header}>
         <div>
-          <span className={styles.kicker}>Promotions</span>
-          <h1>Voucher Reward Rules</h1>
-          <p>Configure the rules used for future customer voucher rewards.</p>
+          <span className={styles.kicker}>Khuyến mãi</span>
+          <h1>Quy tắc voucher</h1>
+          <p>Cấu hình quy tắc dùng để tặng voucher cho khách hàng trong tương lai.</p>
         </div>
         <Button type="button" onClick={openCreate}>
-          <Plus size={17} /> Create rule
+          <Plus size={17} /> Tạo quy tắc
         </Button>
       </header>
 
       <div className={styles.toolbar}>
         <label className={styles.filterField}>
-          <span>Status</span>
+          <span>Trạng thái</span>
           <select
             value={filter}
             onChange={(event) => {
@@ -274,26 +274,26 @@ export default function AdminVouchersPage() {
               setCurrentPage(0);
             }}
           >
-            <option value="all">All rules</option>
-            <option value="active">Active</option>
-            <option value="disabled">Disabled</option>
+            <option value="all">Tất cả quy tắc</option>
+            <option value="active">Đang hiện</option>
+            <option value="disabled">Đã vô hiệu</option>
           </select>
         </label>
         <div className={styles.rulePolicy}>
           <TicketPercent size={18} />
-          <span>Existing customer vouchers are not managed from this page.</span>
+          <span>Voucher khách hàng hiện có không được quản lý từ trang này.</span>
         </div>
       </div>
 
       {loading ? (
-        <LoadingState text="Loading voucher rules..." />
+        <LoadingState text="Đang tải quy tắc voucher..." />
       ) : error ? (
         <ErrorState text={error}>
-          <Button type="button" onClick={reloadRules}>Try again</Button>
+          <Button type="button" onClick={reloadRules}>Thử lại</Button>
         </ErrorState>
       ) : (
         <>
-          <Table columns={columns} rows={rules} emptyText="No voucher reward rules found." />
+          <Table columns={columns} rows={rules} emptyText="Không tìm thấy quy tắc voucher nào." />
           {rules.length > 0 && (
             <div className={styles.pagination}>
               <Button
@@ -302,16 +302,16 @@ export default function AdminVouchersPage() {
                 disabled={currentPage === 0}
                 onClick={() => changePage(currentPage - 1)}
               >
-                Previous
+                Trước
               </Button>
-              <span>Page {currentPage + 1} of {totalPages}</span>
+              <span>Trang {currentPage + 1} / {totalPages}</span>
               <Button
                 type="button"
                 className="btn-secondary"
                 disabled={currentPage >= totalPages - 1}
                 onClick={() => changePage(currentPage + 1)}
               >
-                Next
+                Sau
               </Button>
             </div>
           )}
@@ -320,36 +320,36 @@ export default function AdminVouchersPage() {
 
       {formOpen && (
         <Modal 
-          title={editingRuleId ? 'Edit voucher rule' : 'Create voucher rule'} 
+          title={editingRuleId ? 'Sửa quy tắc voucher' : 'Tạo quy tắc voucher'} 
           onClose={() => setFormOpen(false)}
           maxWidth="500px"
         >
           <form onSubmit={submitRule} className="stack">
             {formError && <div className={styles.formError}>{formError}</div>}
             <Input
-              label="Rule name"
+              label="Tên quy tắc"
               value={form.name}
               onChange={(event) => setField('name', event.target.value)}
-              placeholder="e.g. 10% off orders over 300,000 VND"
+              placeholder="vd. Giảm 10% cho đơn trên 300.000 VND"
               required
             />
             <Input
-              label="Code prefix"
+              label="Tiền tố mã"
               value={form.codePrefix}
               onChange={(event) => setField('codePrefix', event.target.value.toUpperCase())}
-              placeholder="e.g. TIER3"
+              placeholder="vd. TIER3"
               maxLength={20}
             />
             <label className="field">
-              <span>Discount type</span>
+              <span>Loại giảm giá</span>
               <select value={form.discountType} onChange={(event) => setField('discountType', event.target.value)}>
-                <option value="FIXED">Fixed amount</option>
-                <option value="PERCENTAGE">Percentage</option>
+                <option value="FIXED">Số tiền cố định</option>
+                <option value="PERCENTAGE">Phần trăm</option>
               </select>
             </label>
             <div className={styles.formGrid}>
               <Input
-                label={form.discountType === 'PERCENTAGE' ? 'Discount percentage' : 'Discount amount (VND)'}
+                label={form.discountType === 'PERCENTAGE' ? 'Phần trăm giảm giá' : 'Số tiền giảm (VND)'}
                 type="number"
                 min="1"
                 max={form.discountType === 'PERCENTAGE' ? '100' : undefined}
@@ -358,7 +358,7 @@ export default function AdminVouchersPage() {
                 required
               />
               <Input
-                label="Minimum order amount (VND)"
+                label="Giá trị đơn hàng tối thiểu (VND)"
                 type="number"
                 min="0"
                 value={form.tierMinAmount}
@@ -372,14 +372,14 @@ export default function AdminVouchersPage() {
                 checked={form.active}
                 onChange={(event) => setField('active', event.target.checked)}
               />
-              <span>Activate this rule immediately</span>
+              <span>Kích hoạt quy tắc này ngay</span>
             </label>
             <div className={styles.modalActions}>
               <Button type="button" className="btn-secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
-                Cancel
+                Hủy
               </Button>
               <Button type="submit" loading={submitting}>
-                {editingRuleId ? 'Save Changes' : 'Create rule'}
+                {editingRuleId ? 'Lưu thay đổi' : 'Tạo quy tắc'}
               </Button>
             </div>
           </form>
@@ -387,17 +387,17 @@ export default function AdminVouchersPage() {
       )}
 
       {disableTarget && (
-        <Modal title="Disable voucher reward rule?" onClose={() => setDisableTarget(null)} hideClose={disabling}>
+        <Modal title="Vô hiệu hóa quy tắc voucher?" onClose={() => setDisableTarget(null)} hideClose={disabling}>
           <div className={styles.confirmBody}>
             <p>
-              <strong>{disableTarget.name}</strong> will no longer be selected for future voucher rewards.
+              <strong>{disableTarget.name}</strong> sẽ không còn được chọn cho phần thưởng voucher trong tương lai.
             </p>
             <div className={styles.modalActions}>
               <Button type="button" className="btn-secondary" onClick={() => setDisableTarget(null)} disabled={disabling}>
-                Keep active
+                Giữ kích hoạt
               </Button>
               <Button type="button" className={styles.disableButton} onClick={confirmDisable} loading={disabling}>
-                Disable rule
+                Vô hiệu hóa quy tắc
               </Button>
             </div>
           </div>

@@ -39,22 +39,22 @@ export default function BookCard({ book }) {
             {book.title}
           </Link>
         </h3>
-        <p className="book-card-author">{book.author || 'TBD'}</p>
+        <p className="book-card-author">{book.author || 'Chưa có'}</p>
 
         {/* Rating and Sold stats */}
         <div className="book-card-meta">
           {hasReviews ? (
-            <div className="book-card-rating" title={`${book.reviewCount} customer reviews`}>
+            <div className="book-card-rating" title={`${book.reviewCount} đánh giá từ khách hàng`}>
               <StarRating value={book.ratingAvg} size={13} />
               <span>{book.ratingAvg.toFixed(1)} ({book.reviewCount})</span>
             </div>
           ) : (
-            <span className="book-card-no-rating">No ratings</span>
+            <span className="book-card-no-rating">Chưa có đánh giá</span>
           )}
           {hasSales && (
             <>
               <span className="book-card-divider">•</span>
-              <span className="book-card-sold">{book.soldCount} sold</span>
+              <span className="book-card-sold">Đã bán {book.soldCount}</span>
             </>
           )}
         </div>
@@ -75,7 +75,7 @@ export default function BookCard({ book }) {
 
         {book.stock <= 0 && (
           <div className="book-card-out-of-stock">
-            <span className="stock-badge is-empty">Out of stock</span>
+            <span className="stock-badge is-empty">Hết hàng</span>
           </div>
         )}
       </div>

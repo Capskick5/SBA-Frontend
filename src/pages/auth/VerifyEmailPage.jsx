@@ -28,7 +28,7 @@ export default function VerifyEmailPage() {
         email: form.get('email'),
         otp: form.get('otp'),
       });
-      setSuccess('Email verified successfully. You can now log in.');
+      setSuccess('Xác minh email thành công. Bạn có thể đăng nhập ngay.');
     } catch (err) {
       captureFormError(err, setError, setFieldErrors);
     } finally {
@@ -43,7 +43,7 @@ export default function VerifyEmailPage() {
     setError(null);
     try {
       await authService.resendVerification({ email });
-      setSuccess('A new OTP has been sent if the email exists.');
+      setSuccess('Mã OTP mới đã được gửi nếu email tồn tại.');
     } catch (err) {
       captureFormError(err, setError, setFieldErrors);
     } finally {
@@ -53,23 +53,23 @@ export default function VerifyEmailPage() {
 
   return (
     <section className="narrow">
-      <h1>Verify Email</h1>
+      <h1>Xác minh email</h1>
       <AuthFormMessage error={error} success={success} />
       <form className="form" onSubmit={handleSubmit}>
         <Input label="Email" name="email" type="email" defaultValue={emailDefault} error={fieldErrors.email} required />
         <Input label="OTP" name="otp" error={fieldErrors.otp} required />
-        <Button type="submit" disabled={loading}>{loading ? 'Processing...' : 'Verify'}</Button>
+        <Button type="submit" disabled={loading}>{loading ? 'Đang xử lý...' : 'Xác minh'}</Button>
       </form>
       <div className="actions">
         <Button type="button" onClick={handleResend} disabled={resendLoading}>
-          {resendLoading ? 'Sending...' : 'Resend OTP'}
+          {resendLoading ? 'Đang gửi...' : 'Gửi lại OTP'}
         </Button>
       </div>
       <AuthFormFooter>
         {success ? (
-          <Link to="/login?registered=1">Go to login</Link>
+          <Link to="/login?registered=1">Đi đến trang đăng nhập</Link>
         ) : (
-          <Link to="/login">Back to login</Link>
+          <Link to="/login">Quay lại đăng nhập</Link>
         )}
       </AuthFormFooter>
     </section>

@@ -19,27 +19,14 @@ import {
   getPendingPaymentUserMessage,
 } from '../../utils/pendingOrderGuard';
 
-const STATUS_MAP = {
-  'PENDING_PAYMENT': { text: 'Pending payment', class: 'pending-payment' },
-  'PAID': { text: 'Processing', class: 'processing' },
-  'PROCESSING': { text: 'Processing', class: 'processing' },
-  'PACKED': { text: 'Packed', class: 'processing' },
-  'SHIPPED': { text: 'Shipping', class: 'shipping' },
-  'RE_DELIVERY': { text: 'Re-delivery', class: 'shipping' },
-  'DELIVERED': { text: 'Delivered', class: 'delivered' },
-  'CANCELLED': { text: 'Cancelled', class: 'cancelled' },
-  'REFUND_REQUESTED': { text: 'Refund requested', class: 'refund-requested' },
-  'REFUNDED': { text: 'Refunded', class: 'refunded' },
-};
-
 const TABS = [
-  { id: 'ALL', label: 'All orders' },
-  { id: 'PENDING_PAYMENT', label: 'Pending payment' },
-  { id: 'PROCESSING', label: 'Processing' },
-  { id: 'SHIPPED', label: 'Shipping' },
-  { id: 'DELIVERED', label: 'Delivered' },
-  { id: 'CANCELLED', label: 'Cancelled' },
-  { id: 'REFUND_REQUESTED', label: 'Refund requests' },
+  { id: 'ALL', label: 'Tất cả đơn' },
+  { id: 'PENDING_PAYMENT', label: 'Chờ thanh toán' },
+  { id: 'PROCESSING', label: 'Đang xử lý' },
+  { id: 'SHIPPED', label: 'Đang giao' },
+  { id: 'DELIVERED', label: 'Đã giao' },
+  { id: 'CANCELLED', label: 'Đã hủy' },
+  { id: 'REFUND_REQUESTED', label: 'Yêu cầu hoàn tiền' },
 ];
 
 const PAGE_SIZE = 10;
@@ -135,7 +122,7 @@ export default function OrdersPage() {
       setOrders(detailedOrders);
     } catch (err) {
       console.error('Failed to load orders:', err);
-      setError('Could not load your orders. Please try again later.');
+      setError('Không thể tải đơn hàng. Vui lòng thử lại sau.');
     } finally {
       setLoading(false);
     }
@@ -167,7 +154,7 @@ export default function OrdersPage() {
     } catch (err) {
       console.error('Failed to rebuy order items:', err);
       showToast(
-        getPendingPaymentUserMessage(err) || 'Could not buy this order again. Please try again.',
+        getPendingPaymentUserMessage(err) || 'Không thể mua lại đơn hàng này. Vui lòng thử lại.',
         'error',
       );
     } finally {
@@ -176,7 +163,7 @@ export default function OrdersPage() {
   };
 
   const getBookCover = (item) => {
-    return item.coverUrl || item.bookCoverUrl || `https://placehold.co/120x170?text=${encodeURIComponent(item.title || 'Book')}`;
+    return item.coverUrl || item.bookCoverUrl || `https://placehold.co/120x170?text=${encodeURIComponent(item.title || 'Sách')}`;
   };
 
   const handleSearchSubmit = (e) => {
@@ -203,7 +190,7 @@ export default function OrdersPage() {
       const cancelledOrder = await orderService.cancelPendingOrder(cancelTarget.id);
       clearPendingPaymentCache();
       setCancelTarget(null);
-      showToast(`Order #${cancelledOrder.id} was cancelled.`, 'success');
+      showToast(`Đơn hàng #${cancelledOrder.id} đã được hủy.`, 'success');
       if (orders.length === 1 && page > 0) {
         setPage((current) => current - 1);
       } else {
@@ -219,7 +206,7 @@ export default function OrdersPage() {
         }
       }
     } catch (err) {
-      showToast(err?.message || 'Could not cancel this order. Please try again.', 'error');
+      showToast(err?.message || 'Không thể hủy đơn hàng này. Vui lòng thử lại.', 'error');
     } finally {
       setCancellingId(null);
     }
@@ -233,7 +220,7 @@ export default function OrdersPage() {
       const paymentLink = await orderService.getPendingPaymentLink(order.id);
       window.location.assign(paymentLink.checkoutUrl);
     } catch (err) {
-      showToast(err?.message || 'Could not continue this payment. Please try again.', 'error');
+      showToast(err?.message || 'Không thể tiếp tục thanh toán. Vui lòng thử lại.', 'error');
       await loadOrders();
       setResumingId(null);
     }
@@ -242,7 +229,7 @@ export default function OrdersPage() {
   return (
     <section className="stack">
       <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--text)', margin: '0' }}>
-        My Orders
+        Đơn hàng của tôi
       </h1>
 
       {/* Tabs list */}
@@ -273,40 +260,39 @@ export default function OrdersPage() {
         <input
           type="text"
           className="orders-search-input"
-          placeholder="Search all orders by order ID or product name"
+          placeholder="Tìm đơn theo mã đơn hoặc tên sản phẩm"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         <div className="orders-search-divider" />
         <button type="submit" className="orders-search-btn">
-          Search orders
+          Tìm đơn
         </button>
       </form>
 
       {/* Main Content Area */}
       {loading ? (
-        <LoadingState text="Loading orders..." />
+        <LoadingState text="Đang tải đơn hàng..." />
       ) : error ? (
         <ErrorState text={error}>
-          <Button onClick={loadOrders}>Try again</Button>
+          <Button onClick={loadOrders}>Thử lại</Button>
         </ErrorState>
       ) : orders.length === 0 ? (
         <div style={{ padding: '60px', textAlign: 'center', background: 'var(--surface)', borderRadius: 'var(--radius-md)', color: 'var(--muted)', marginTop: '16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
           <ShoppingBag size={48} style={{ color: 'var(--brand-light)', marginBottom: '16px' }} />
           <p style={{ fontSize: '1.1rem', marginBottom: '8px', color: 'var(--text)', fontWeight: 'bold' }}>
-            {appliedSearch ? 'No matching orders found' : 'No orders yet'}
+            {appliedSearch ? 'Không tìm thấy đơn phù hợp' : 'Chưa có đơn hàng'}
           </p>
           <p style={{ fontSize: '0.9rem', marginBottom: '20px' }}>
-            {appliedSearch ? 'Try another keyword.' : 'You have not placed any orders yet.'}
+            {appliedSearch ? 'Thử từ khóa khác.' : 'Bạn chưa đặt đơn hàng nào.'}
           </p>
-          <Link to="/"><Button>Continue shopping</Button></Link>
+          <Link to="/"><Button>Tiếp tục mua sắm</Button></Link>
         </div>
       ) : (
         <>
-          <div className="orders-page-count">Showing {orders.length} of {totalItems} orders</div>
+          <div className="orders-page-count">Hiển thị {orders.length} / {totalItems} đơn</div>
           <div className="order-cards-list">
             {orders.map((order) => {
-            const statusConfig = STATUS_MAP[order.status] || { text: order.status, class: 'unknown' };
             const isRebuying = rebuyingId === order.id;
 
             return (
@@ -314,10 +300,10 @@ export default function OrdersPage() {
                 {/* Header: Order ID, Date & Status */}
                 <div className="order-card-header">
                   <div className="order-card-info">
-                    <span className="order-card-id">Order #{order.id}</span>
-                    <span className="order-card-date">Placed on {formatDateTime(order.createdAt)}</span>
+                    <span className="order-card-id">Đơn #{order.id}</span>
+                    <span className="order-card-date">Đặt ngày {formatDateTime(order.createdAt)}</span>
                     {order.deliveryType === 'GIFT' && (
-                      <span className="order-card-gift-badge">Gift order · Wrapped</span>
+                      <span className="order-card-gift-badge">Đơn quà · Đã gói quà</span>
                     )}
                   </div>
                   <OrderStatusBadge status={order.status} />
@@ -330,16 +316,16 @@ export default function OrdersPage() {
                       <div className="order-item-cover-wrapper">
                         <img
                           src={getBookCover(item)}
-                          alt={item.title || 'Book Cover'}
+                          alt={item.title || 'Bìa sách'}
                           className="order-item-cover"
                           onError={(e) => {
-                            e.target.src = `https://placehold.co/120x170?text=${encodeURIComponent(item.title || 'Book')}`;
+                            e.target.src = `https://placehold.co/120x170?text=${encodeURIComponent(item.title || 'Sách')}`;
                           }}
                         />
                       </div>
                       <div className="order-item-details">
                         <h4 className="order-item-title">{item.title}</h4>
-                        <span className="order-item-qty">Quantity: x{item.quantity}</span>
+                        <span className="order-item-qty">Số lượng: x{item.quantity}</span>
                       </div>
                       <div className="order-item-price">
                         {formatCurrency(item.lineTotal || 0)}
@@ -352,12 +338,12 @@ export default function OrdersPage() {
                 <div className="order-card-footer">
                   <div className="order-card-shipping">
                     {order.status === 'SHIPPED' && (
-                      <span>In transit | Carrier: GHTK</span>
+                      <span>Đang vận chuyển | Đơn vị: GHTK</span>
                     )}
                   </div>
                   <div className="order-card-summary">
                     <div className="order-card-total-row">
-                      <span>Total:</span>
+                      <span>Tổng cộng:</span>
                       <span className="order-card-total-price">
                         {formatCurrency(order.total || 0)}
                       </span>
@@ -374,7 +360,7 @@ export default function OrdersPage() {
                             disabled={Boolean(cancellingId) || Boolean(resumingId)}
                             onClick={() => handleContinuePayment(order)}
                           >
-                            Continue payment
+                            Tiếp tục thanh toán
                           </Button>
                           <Button
                             type="button"
@@ -382,12 +368,12 @@ export default function OrdersPage() {
                             disabled={Boolean(cancellingId) || Boolean(resumingId)}
                             onClick={() => setCancelTarget(order)}
                           >
-                            Cancel order
+                            Hủy đơn
                           </Button>
                         </div>
                       )}
                       <Link to={`/orders/${order.id}`} className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '8px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', fontSize: '13px', fontWeight: '500', transition: 'all 0.2s' }}>
-                        View details
+                        Xem chi tiết
                       </Link>
                       {/* Only allow Rebuying if status is completed, processing or shipped */}
                       {order.status !== 'PENDING_PAYMENT' && (
@@ -397,7 +383,7 @@ export default function OrdersPage() {
                           onClick={() => handleRebuy(order)}
                           style={{ padding: '8px 16px', borderRadius: 'var(--radius-sm)', fontSize: '13px' }}
                         >
-                          Buy again
+                          Mua lại
                         </Button>
                       )}
                     </div>
@@ -419,13 +405,13 @@ export default function OrdersPage() {
 
       {cancelTarget && (
         <ConfirmDialog
-          title="Cancel pending order?"
+          title="Hủy đơn chờ thanh toán?"
           onCancel={() => {
             if (!cancellingId) setCancelTarget(null);
           }}
           onConfirm={handleCancelPendingOrder}
         >
-          Order #{cancelTarget.id} will be cancelled and its reserved stock will be released. This action cannot be undone.
+          Đơn #{cancelTarget.id} sẽ bị hủy và số lượng đã giữ sẽ được trả lại kho. Thao tác này không thể hoàn tác.
         </ConfirmDialog>
       )}
 

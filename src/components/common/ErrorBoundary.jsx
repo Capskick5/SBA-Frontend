@@ -18,9 +18,9 @@ export default class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <ErrorState text="An unexpected error occurred. Please reload the page.">
+        <ErrorState text="Đã xảy ra lỗi không mong muốn. Vui lòng tải lại trang.">
           <button className="btn" type="button" onClick={() => window.location.reload()}>
-            Reload
+            Tải lại
           </button>
         </ErrorState>
       );

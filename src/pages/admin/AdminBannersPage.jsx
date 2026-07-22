@@ -59,7 +59,7 @@ export default function AdminBannersPage() {
       .catch((err) => {
         if (!active) return;
         setBanners([]);
-        setError(getErrorMessage(err, 'Could not load banners.'));
+        setError(getErrorMessage(err, 'Không thể tải banner.'));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -115,7 +115,7 @@ export default function AdminBannersPage() {
       setField('imageKey', key);
       setImagePreviewUrl(URL.createObjectURL(file));
     } catch (err) {
-      showToast(getErrorMessage(err, 'Failed to upload banner image.'), 'error');
+      showToast(getErrorMessage(err, 'Không thể tải ảnh banner lên.'), 'error');
     } finally {
       setUploadingImage(false);
     }
@@ -124,16 +124,16 @@ export default function AdminBannersPage() {
   const submitBanner = async (event) => {
     event.preventDefault();
     if (!form.title.trim()) {
-      setFormError('Enter a banner title.');
+      setFormError('Nhập tiêu đề banner.');
       return;
     }
     if (!form.imageKey) {
-      setFormError('Upload a banner image.');
+      setFormError('Tải ảnh banner lên.');
       return;
     }
     const displayOrder = Number(form.displayOrder);
     if (!Number.isFinite(displayOrder)) {
-      setFormError('Display order must be a number.');
+      setFormError('Thứ tự hiển thị phải là số.');
       return;
     }
 
@@ -151,15 +151,15 @@ export default function AdminBannersPage() {
     try {
       if (editingId) {
         await updateBanner(editingId, payload, { imageUrl: imagePreviewUrl });
-        showToast('Banner updated.');
+        showToast('Đã cập nhật banner.');
       } else {
         await createBanner(payload, { imageUrl: imagePreviewUrl });
-        showToast('Banner created.');
+        showToast('Đã tạo banner.');
       }
       setFormOpen(false);
       reloadBanners();
     } catch (err) {
-      setFormError(getErrorMessage(err, 'Could not save this banner.'));
+      setFormError(getErrorMessage(err, 'Không thể lưu banner này.'));
     } finally {
       setSubmitting(false);
     }
@@ -168,10 +168,10 @@ export default function AdminBannersPage() {
   const toggleActive = async (banner) => {
     try {
       await setBannerActive(banner.id, !banner.active);
-      showToast(banner.active ? 'Banner deactivated.' : 'Banner activated.');
+      showToast(banner.active ? 'Đã tắt banner.' : 'Đã bật banner.');
       reloadBanners();
     } catch (err) {
-      showToast(getErrorMessage(err, 'Could not update banner status.'), 'error');
+      showToast(getErrorMessage(err, 'Không thể cập nhật trạng thái banner.'), 'error');
     }
   };
 
@@ -180,11 +180,11 @@ export default function AdminBannersPage() {
     setDeleting(true);
     try {
       await deleteBanner(deleteTarget.id);
-      showToast('Banner deleted.');
+      showToast('Đã xóa banner.');
       setDeleteTarget(null);
       reloadBanners();
     } catch (err) {
-      showToast(getErrorMessage(err, 'Could not delete this banner.'), 'error');
+      showToast(getErrorMessage(err, 'Không thể xóa banner này.'), 'error');
     } finally {
       setDeleting(false);
     }
@@ -193,42 +193,42 @@ export default function AdminBannersPage() {
   const columns = [
     {
       key: 'imageUrl',
-      label: 'Preview',
+      label: 'Xem trước',
       render: (banner) => (
         <div className="banner-thumb-cell">
           {banner.imageUrl ? (
             <img src={banner.imageUrl} alt={banner.title} />
           ) : (
-            <span className="muted">No image</span>
+            <span className="muted">Chưa có ảnh</span>
           )}
         </div>
       ),
     },
-    { key: 'title', label: 'Title' },
-    { key: 'subtitle', label: 'Subtitle', render: (banner) => banner.subtitle || '-' },
-    { key: 'displayOrder', label: 'Order' },
+    { key: 'title', label: 'Tiêu đề' },
+    { key: 'subtitle', label: 'Phụ đề', render: (banner) => banner.subtitle || '-' },
+    { key: 'displayOrder', label: 'Thứ tự' },
     {
       key: 'active',
-      label: 'Status',
+      label: 'Trạng thái',
       render: (banner) => (
         <span className={`status-badge ${banner.active ? 'delivered' : 'unknown'}`}>
-          {banner.active ? 'Active' : 'Inactive'}
+          {banner.active ? 'Đang hiện' : 'Không hoạt động'}
         </span>
       ),
     },
     {
       key: 'actions',
-      label: 'Actions',
+      label: 'Thao tác',
       render: (banner) => (
         <div className="banner-row-actions">
           <Button type="button" className="btn-secondary" onClick={() => openEdit(banner)}>
-            Edit
+            Sửa
           </Button>
           <Button type="button" className="btn-secondary" onClick={() => toggleActive(banner)}>
-            {banner.active ? 'Deactivate' : 'Activate'}
+            {banner.active ? 'Tắt' : 'Bật'}
           </Button>
           <Button type="button" className="btn-secondary danger-action" onClick={() => setDeleteTarget(banner)}>
-            <Trash2 size={15} /> Delete
+            <Trash2 size={15} /> Xóa
           </Button>
         </div>
       ),
@@ -239,68 +239,68 @@ export default function AdminBannersPage() {
     <section className="stack">
       <header className="admin-banners-header">
         <div>
-          <h1>Banners</h1>
-          <p>Configure homepage banners.</p>
+          <h1>Banner</h1>
+          <p>Cấu hình banner trang chủ.</p>
         </div>
         <Button type="button" onClick={openCreate}>
-          <Plus size={17} /> Add banner
+          <Plus size={17} /> Thêm banner
         </Button>
       </header>
 
       <div className="admin-banners-subheader">
-        <h2>Homepage banners</h2>
+        <h2>Banner trang chủ</h2>
         {usingMockBanners && (
-          <span className="status-badge unknown">Offline mock fallback</span>
+          <span className="status-badge unknown">Dữ liệu mẫu ngoại tuyến</span>
         )}
       </div>
 
       {loading ? (
-        <LoadingState text="Loading banners..." />
+        <LoadingState text="Đang tải banner..." />
       ) : error ? (
         <ErrorState text={error}>
-          <Button type="button" onClick={reloadBanners}>Try again</Button>
+          <Button type="button" onClick={reloadBanners}>Thử lại</Button>
         </ErrorState>
       ) : (
-        <Table columns={columns} rows={banners} emptyText="No banners yet. Add one to show it on the homepage." />
+        <Table columns={columns} rows={banners} emptyText="Chưa có banner nào. Thêm banner để hiển thị trên trang chủ." />
       )}
 
       {formOpen && (
-        <Modal title={editingId ? 'Edit banner' : 'Add banner'} onClose={() => setFormOpen(false)}>
+        <Modal title={editingId ? 'Sửa banner' : 'Thêm banner'} onClose={() => setFormOpen(false)}>
           <form className="form" onSubmit={submitBanner}>
             {formError && <p className="form-message form-message-error">{formError}</p>}
 
             <div className="field">
-              <span>Banner image</span>
+              <span>Ảnh banner</span>
               <input type="file" accept="image/*" onChange={handleImageChange} />
-              {uploadingImage && <p className="muted">Uploading...</p>}
+              {uploadingImage && <p className="muted">Đang tải lên...</p>}
               {imagePreviewUrl && (
                 <div className="banner-thumb-cell banner-form-preview">
-                  <img src={imagePreviewUrl} alt="Banner preview" />
+                  <img src={imagePreviewUrl} alt="Xem trước banner" />
                 </div>
               )}
             </div>
 
             <Input
-              label="Title"
+              label="Tiêu đề"
               value={form.title}
               onChange={(event) => setField('title', event.target.value)}
-              placeholder="e.g. Explore BookVerse"
+              placeholder="vd. Khám phá BookVerse"
               required
             />
             <Input
-              label="Subtitle"
+              label="Phụ đề"
               value={form.subtitle}
               onChange={(event) => setField('subtitle', event.target.value)}
-              placeholder="Optional supporting text"
+              placeholder="Văn bản hỗ trợ (tùy chọn)"
             />
             <Input
-              label="Destination link (optional)"
+              label="Liên kết đích (tùy chọn)"
               value={form.linkUrl}
               onChange={(event) => setField('linkUrl', event.target.value)}
-              placeholder="e.g. /books/12, /?category=8, or https://..."
+              placeholder="vd. /books/12, /?category=8, hoặc https://..."
             />
             <Input
-              label="Display order"
+              label="Thứ tự hiển thị"
               type="number"
               value={form.displayOrder}
               onChange={(event) => setField('displayOrder', event.target.value)}
@@ -311,15 +311,15 @@ export default function AdminBannersPage() {
                 checked={form.active}
                 onChange={(event) => setField('active', event.target.checked)}
               />
-              <span>Show this banner on the homepage</span>
+              <span>Hiển thị banner này trên trang chủ</span>
             </label>
 
             <div className="confirm-dialog-actions">
               <Button type="button" className="btn-secondary" onClick={() => setFormOpen(false)} disabled={submitting}>
-                Cancel
+                Hủy
               </Button>
               <Button type="submit" loading={submitting} disabled={uploadingImage}>
-                {editingId ? 'Save changes' : 'Create banner'}
+                {editingId ? 'Lưu thay đổi' : 'Tạo banner'}
               </Button>
             </div>
           </form>
@@ -327,17 +327,17 @@ export default function AdminBannersPage() {
       )}
 
       {deleteTarget && (
-        <Modal title="Delete banner?" onClose={() => setDeleteTarget(null)} hideClose={deleting}>
+        <Modal title="Xóa banner?" onClose={() => setDeleteTarget(null)} hideClose={deleting}>
           <div className="stack">
             <p>
-              <strong>{deleteTarget.title}</strong> will be permanently removed from the homepage.
+              <strong>{deleteTarget.title}</strong> sẽ bị xóa vĩnh viễn khỏi trang chủ.
             </p>
             <div className="confirm-dialog-actions">
               <Button type="button" className="btn-secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>
-                Cancel
+                Hủy
               </Button>
               <Button type="button" className="danger-action" onClick={confirmDelete} loading={deleting}>
-                Delete banner
+                Xóa banner
               </Button>
             </div>
           </div>

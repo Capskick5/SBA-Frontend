@@ -40,7 +40,7 @@ export default function ResetPasswordPage() {
 
   return (
     <section className="narrow">
-      <h1>Reset Password</h1>
+      <h1>Đặt lại mật khẩu</h1>
       <AuthFormMessage error={error} />
       <form className="form" onSubmit={handleSubmit}>
         <Input
@@ -53,18 +53,18 @@ export default function ResetPasswordPage() {
         />
         <Input label="OTP" name="otp" error={fieldErrors.otp} required />
         <Input
-          label="New password"
+          label="Mật khẩu mới"
           name="newPassword"
           type="password"
           error={fieldErrors.newPassword}
           required
         />
         <Button type="submit" disabled={loading}>
-          {loading ? "Processing..." : "Reset"}
+          {loading ? "Đang xử lý..." : "Đặt lại"}
         </Button>
       </form>
       <AuthFormFooter>
-        <Link to="/login">Back to login</Link>
+        <Link to="/login">Quay lại đăng nhập</Link>
       </AuthFormFooter>
     </section>
   );

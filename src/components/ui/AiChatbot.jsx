@@ -31,7 +31,7 @@ export default function AiChatbot() {
     {
       id: 1,
       sender: 'bot',
-      text: 'Hi! Tell me what kind of book you are looking for, and I will help you find a good match.',
+      text: 'Xin chào! Hãy cho tôi biết bạn đang tìm loại sách nào, tôi sẽ giúp bạn chọn phù hợp.',
     },
   ]);
 
@@ -40,10 +40,10 @@ export default function AiChatbot() {
       try {
         const updatedCart = await cartFacade.addItem(book, 1);
         notifyCartUpdated(updatedCart);
-        showToast(`Added "${book.title}" to cart!`);
+        showToast(`Đã thêm "${book.title}" vào giỏ hàng!`);
       } catch (err) {
         showToast(
-          getPendingPaymentUserMessage(err) || err.message || 'Failed to add book to cart',
+          getPendingPaymentUserMessage(err) || err.message || 'Không thể thêm sách vào giỏ hàng',
           'error',
         );
       } finally {
@@ -91,7 +91,7 @@ export default function AiChatbot() {
       const errorMsg = {
         id: Date.now() + 1,
         sender: 'bot',
-        text: 'Something went wrong while connecting to the AI service. Please try again later.',
+        text: 'Không kết nối được dịch vụ AI. Vui lòng thử lại sau.',
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -102,8 +102,6 @@ export default function AiChatbot() {
   const handleSuggestionClick = (text) => {
     handleSend(text);
   };
-
-
 
   const handleAddToCart = (book) => {
     setIsAddingMap((prev) => ({ ...prev, [book.id]: true }));
@@ -117,16 +115,16 @@ export default function AiChatbot() {
           type="button"
           className="ai-chatbot-trigger btn"
           onClick={() => setIsOpen(true)}
-          aria-label="Open AI chat"
-          title="AI Chat"
+          aria-label="Mở trợ lý AI"
+          title="Trợ lý AI"
         >
           <BotMessageSquare size={28} aria-hidden="true" />
-          💬 AI Chat
+          Trợ lý AI
         </button>
       ) : (
         <div className="ai-chatbot-window">
           <div className="ai-chatbot-header">
-            <h3>AI Book Assistant</h3>
+            <h3>Trợ lý tìm sách AI</h3>
             <button
               type="button"
               className="ai-chatbot-close"
@@ -140,8 +138,8 @@ export default function AiChatbot() {
             <div className="ai-chatbot-messages">
               <div className="ai-chatbot-message is-bot">
                 <div className="message-text">
-                  <p>The AI book assistant is available for logged-in customers.</p>
-                  <p>Please log in to start chatting and get personal recommendations.</p>
+                  <p>Trợ lý tìm sách AI dành cho khách hàng đã đăng nhập.</p>
+                  <p>Vui lòng đăng nhập để trò chuyện và nhận gợi ý cá nhân hóa.</p>
                 </div>
               </div>
               <button
@@ -149,7 +147,7 @@ export default function AiChatbot() {
                 className="btn"
                 onClick={() => navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`)}
               >
-                Log in to chat
+                Đăng nhập để trò chuyện
               </button>
             </div>
           ) : (
@@ -173,7 +171,7 @@ export default function AiChatbot() {
                               onClick={() => navigate(`/books/${b.id}`)}
                               className="btn btn-sm"
                             >
-                              View
+                              Xem
                             </button>
                             <button
                               type="button"
@@ -181,7 +179,7 @@ export default function AiChatbot() {
                               disabled={b.stock === 0 || isAddingMap[b.id]}
                               className="btn btn-sm"
                             >
-                              {isAddingMap[b.id] ? 'Adding...' : 'Add'}
+                              {isAddingMap[b.id] ? 'Đang thêm...' : 'Thêm'}
                             </button>
                           </div>
                         </div>
@@ -193,7 +191,7 @@ export default function AiChatbot() {
             ))}
             {isLoading && (
               <div className="ai-chatbot-message is-bot is-loading">
-                <span>Processing your request...</span>
+                <span>Đang xử lý yêu cầu...</span>
               </div>
             )}
           </div>
@@ -201,21 +199,21 @@ export default function AiChatbot() {
           <div className="ai-chatbot-suggestions">
             <button
               type="button"
-              onClick={() => handleSuggestionClick('Find books about AI and technology')}
+              onClick={() => handleSuggestionClick('Tìm sách về AI và công nghệ')}
             >
-              AI & Technology
+              AI & Công nghệ
             </button>
             <button
               type="button"
-              onClick={() => handleSuggestionClick('Recommend books about psychology and self-help')}
+              onClick={() => handleSuggestionClick('Gợi ý sách tâm lý và phát triển bản thân')}
             >
-              Psychology & Self-Help
+              Tâm lý & Phát triển bản thân
             </button>
             <button
               type="button"
-              onClick={() => handleSuggestionClick('Find fiction and literature books')}
+              onClick={() => handleSuggestionClick('Tìm sách văn học và tiểu thuyết')}
             >
-              Fiction & Literature
+              Văn học & Tiểu thuyết
             </button>
           </div>
 
@@ -228,13 +226,13 @@ export default function AiChatbot() {
           >
             <input
               type="text"
-              placeholder="Describe the book you want to find..."
+              placeholder="Mô tả cuốn sách bạn muốn tìm..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               disabled={isLoading}
             />
             <button type="submit" className="btn" disabled={isLoading || !query.trim()}>
-              Send
+              Gửi
             </button>
           </form>
           </>

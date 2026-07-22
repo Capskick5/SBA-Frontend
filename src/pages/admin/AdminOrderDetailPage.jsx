@@ -13,12 +13,12 @@ import { refundService } from '../../services/refundService';
 import { ShoppingCart, Warehouse, Truck, CircleDollarSign, User, Package } from 'lucide-react';
 
 const steps = [
-  { label: 'Placed', icon: ShoppingCart },
-  { label: 'Paid', icon: CircleDollarSign },
-  { label: 'Processing', icon: Package },
-  { label: 'Packed', icon: Warehouse },
-  { label: 'Shipped', icon: Truck },
-  { label: 'Delivered', icon: User }
+  { label: 'Đã đặt', icon: ShoppingCart },
+  { label: 'Đã thanh toán', icon: CircleDollarSign },
+  { label: 'Đang xử lý', icon: Package },
+  { label: 'Đã đóng gói', icon: Warehouse },
+  { label: 'Đã giao vận', icon: Truck },
+  { label: 'Đã giao', icon: User }
 ];
 
 export default function AdminOrderDetailPage() {
@@ -49,7 +49,7 @@ export default function AdminOrderDetailPage() {
       .catch(err => {
         if (!active) return;
         setOrder(null);
-        setLoadError(err.response?.data?.message || err.message || 'Could not load the order.');
+        setLoadError(err.response?.data?.message || err.message || 'Không thể tải đơn hàng.');
       });
 
     return () => {
@@ -87,7 +87,7 @@ export default function AdminOrderDetailPage() {
       setPendingStatusChange(null);
       retryLoadOrder();
     } catch (err) {
-      setUpdateError(err.response?.data?.message || err.message || 'Could not update the order.');
+      setUpdateError(err.response?.data?.message || err.message || 'Không thể cập nhật đơn hàng.');
     } finally {
       setUpdating(false);
     }
@@ -100,12 +100,12 @@ export default function AdminOrderDetailPage() {
 
   const getPendingStatusMessage = () => {
     if (pendingStatusChange === 'PROCESSING') {
-      return `Mark order #${id} as packed? The customer will see that packaging has started.`;
+      return `Đánh dấu đơn #${id} là đã đóng gói? Khách hàng sẽ thấy quá trình đóng gói đã bắt đầu.`;
     }
     if (pendingStatusChange === 'DELIVERED') {
-      return `Mark order #${id} as delivered? This will complete the order.`;
+      return `Đánh dấu đơn #${id} là đã giao? Thao tác này sẽ hoàn tất đơn hàng.`;
     }
-    return 'Confirm this status change?';
+    return 'Xác nhận thay đổi trạng thái này?';
   };
 
   const handleShipSubmit = (e) => {
@@ -156,10 +156,10 @@ export default function AdminOrderDetailPage() {
 
   const getStepTooltip = (index, label) => {
     if (index !== nextStepIndex) return undefined;
-    if (index === 2) return `Click to start processing (${label})`;
-    if (index === 3) return `Click to pack order (${label})`;
-    if (index === 4) return `Click to enter shipping info (${label})`;
-    if (index === 5) return `Click to complete order (${label})`;
+    if (index === 2) return `Nhấn để bắt đầu xử lý (${label})`;
+    if (index === 3) return `Nhấn để đóng gói đơn hàng (${label})`;
+    if (index === 4) return `Nhấn để nhập thông tin giao hàng (${label})`;
+    if (index === 5) return `Nhấn để hoàn tất đơn hàng (${label})`;
     return undefined;
   };
 
@@ -167,15 +167,15 @@ export default function AdminOrderDetailPage() {
     <>
       <div style={{ marginBottom: '16px' }}>
         <Link to="/admin/orders" className="order-detail-back-link" style={{ textDecoration: 'none' }}>
-          &lt;&lt; Back to orders
+          &lt;&lt; Quay lại đơn hàng
         </Link>
       </div>
 
-      {!order && !loadError && <LoadingState text="Loading order..." />}
+      {!order && !loadError && <LoadingState text="Đang tải đơn hàng..." />}
       {loadError && (
         <ErrorState text={loadError}>
           <button className="btn" type="button" onClick={retryLoadOrder}>
-            Retry
+            Thử lại
           </button>
         </ErrorState>
       )}
@@ -184,9 +184,9 @@ export default function AdminOrderDetailPage() {
         <div className={`admin-order-flow-container ${isCancelled ? 'cancelled' : ''}`}>
           <div className="admin-actions-heading" style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <div>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Order Fulfilment</h3>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Xử lý đơn hàng</h3>
               <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--muted)' }}>
-                Track progress and perform action updates.
+                Theo dõi tiến độ và cập nhật trạng thái.
               </p>
             </div>
             {order?.status && <OrderStatusBadge status={order.status} />}
@@ -255,23 +255,23 @@ export default function AdminOrderDetailPage() {
       )}
 
       {showShipModal && (
-        <Modal title="Shipping Details" onClose={() => setShowShipModal(false)} hideClose={true}>
+        <Modal title="Thông tin giao hàng" onClose={() => setShowShipModal(false)} hideClose={true}>
           <form onSubmit={handleShipSubmit} style={{ padding: '16px' }}>
             <Input
-              label="Shipping Provider"
+              label="Đơn vị vận chuyển"
               value={shippingProvider}
               onChange={(e) => setShippingProvider(e.target.value)}
               required
             />
             <Input
-              label="Tracking Code"
+              label="Mã vận đơn"
               value={trackingCode}
               onChange={(e) => setTrackingCode(e.target.value)}
               required
             />
             <div style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: 'flex-end' }}>
-              <Button type="button" className="btn-secondary" onClick={() => setShowShipModal(false)}>Cancel</Button>
-              <Button type="submit" variant="primary" loading={updating}>Confirm Ship</Button>
+              <Button type="button" className="btn-secondary" onClick={() => setShowShipModal(false)}>Hủy</Button>
+              <Button type="submit" variant="primary" loading={updating}>Xác nhận giao hàng</Button>
             </div>
           </form>
         </Modal>
@@ -279,7 +279,7 @@ export default function AdminOrderDetailPage() {
 
       {pendingStatusChange && (
         <ConfirmDialog
-          title="Confirm status update"
+          title="Xác nhận cập nhật trạng thái"
           onCancel={() => setPendingStatusChange(null)}
           onConfirm={confirmPendingStatusChange}
         >

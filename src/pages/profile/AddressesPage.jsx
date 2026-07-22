@@ -27,10 +27,10 @@ export default function AddressesPage({ onTitleChange }) {
   const [searchParams] = useSearchParams();
   const redirectTo = getSafeRedirect(searchParams.get('redirect'));
   const redirectLabel = redirectTo?.startsWith('/cart')
-    ? 'Back to cart'
+    ? 'Quay lại giỏ hàng'
     : redirectTo?.startsWith('/checkout')
-      ? 'Back to checkout'
-      : 'Back';
+      ? 'Quay lại thanh toán'
+      : 'Quay lại';
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -60,7 +60,7 @@ export default function AddressesPage({ onTitleChange }) {
 
   useEffect(() => {
     if (!onTitleChange) return;
-    onTitleChange(showForm ? (editingId ? 'Edit address' : 'Add new address') : 'Address book');
+    onTitleChange(showForm ? (editingId ? 'Sửa địa chỉ' : 'Thêm địa chỉ mới') : 'Sổ địa chỉ');
   }, [editingId, onTitleChange, showForm]);
 
   const clearFormErrors = () => {
@@ -154,7 +154,7 @@ export default function AddressesPage({ onTitleChange }) {
   if (showForm) {
     return (
       <section className="address-book-page address-book-editor-page">
-        {!onTitleChange && <h1>{editingId ? 'Edit address' : 'Add new address'}</h1>}
+        {!onTitleChange && <h1>{editingId ? 'Sửa địa chỉ' : 'Thêm địa chỉ mới'}</h1>}
 
         {redirectTo && (
           <Link to={redirectTo} className="btn btn-secondary addresses-back-link">
@@ -169,7 +169,7 @@ export default function AddressesPage({ onTitleChange }) {
             initialValues={formValues}
             fieldErrors={formFieldErrors}
             onSubmit={handleSubmit}
-            submitLabel="Save"
+            submitLabel="Lưu"
             loading={formLoading}
             onCancel={resetForm}
           />
@@ -180,7 +180,7 @@ export default function AddressesPage({ onTitleChange }) {
 
   return (
     <section className="address-book-page">
-      {!onTitleChange && <h1>Address book</h1>}
+      {!onTitleChange && <h1>Sổ địa chỉ</h1>}
       {redirectTo && (
         <Link to={redirectTo} className="btn btn-secondary addresses-back-link">
           {redirectLabel}
@@ -190,10 +190,10 @@ export default function AddressesPage({ onTitleChange }) {
 
       <button type="button" className="address-book-add" onClick={startAdd}>
         <Plus size={26} />
-        <span>Add new address</span>
+        <span>Thêm địa chỉ mới</span>
       </button>
 
-      {!addresses.length && !error && !showForm && <EmptyState text="No addresses yet." />}
+      {!addresses.length && !error && !showForm && <EmptyState text="Chưa có địa chỉ nào." />}
 
       <div className="address-book-list">
         {addresses.map((address) => (
@@ -204,21 +204,21 @@ export default function AddressesPage({ onTitleChange }) {
                 {address.isDefault && (
                   <span className="address-book-default">
                     <CheckCircle2 size={14} />
-                    Default address
+                    Địa chỉ mặc định
                   </span>
                 )}
               </div>
-              <p>Address: {[address.line, address.ward, address.district, address.city].filter(Boolean).join(', ')}</p>
-              <p>Phone: {address.phone}</p>
+              <p>Địa chỉ: {[address.line, address.ward, address.district, address.city].filter(Boolean).join(', ')}</p>
+              <p>Điện thoại: {address.phone}</p>
             </div>
 
             <div className="address-book-actions">
-              <button type="button" onClick={() => startEdit(address)}>Edit</button>
-              <button type="button" className="danger" onClick={() => handleDelete(address.id)}>Delete</button>
+              <button type="button" onClick={() => startEdit(address)}>Sửa</button>
+              <button type="button" className="danger" onClick={() => handleDelete(address.id)}>Xóa</button>
               {address.isDefault ? (
                 <span className="address-book-action-spacer" aria-hidden="true" />
               ) : (
-                <button type="button" onClick={() => handleSetDefault(address.id)}>Set default</button>
+                <button type="button" onClick={() => handleSetDefault(address.id)}>Đặt làm mặc định</button>
               )}
             </div>
           </article>
