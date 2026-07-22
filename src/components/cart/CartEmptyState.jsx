@@ -1,36 +1,15 @@
-import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ShoppingBag,
   Sparkles,
   ArrowRight,
   BookOpen,
-  TrendingUp,
   ShieldCheck,
   Truck,
 } from 'lucide-react';
-import { bookService } from '../../services/bookService';
 
 export default function CartEmptyState() {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState([]);
-
-  useEffect(() => {
-    let active = true;
-    bookService
-      .getCategories()
-      .then((data) => {
-        if (!active) return;
-        const valid = (data || []).filter((c) => c.active !== false).slice(0, 4);
-        setCategories(valid);
-      })
-      .catch(() => {
-        if (active) setCategories([]);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   return (
     <div className="cart-empty-container">
@@ -61,7 +40,7 @@ export default function CartEmptyState() {
           <ArrowRight size={16} />
         </button>
 
-        {/* Quick Discovery Pills */}
+        {/* Quick Discovery Tag */}
         <div className="cart-empty-suggestions">
           <span className="cart-empty-suggestions-label">Gợi ý khám phá nhanh</span>
           <div className="cart-empty-pills">
@@ -69,19 +48,6 @@ export default function CartEmptyState() {
               <BookOpen size={14} />
               Tất cả sách
             </Link>
-            <Link to="/?sort=sold_desc" className="cart-empty-pill is-highlight">
-              <TrendingUp size={14} />
-              Bán chạy nhất
-            </Link>
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                to={`/?category=${cat.id}`}
-                className="cart-empty-pill"
-              >
-                {cat.name}
-              </Link>
-            ))}
           </div>
         </div>
 
