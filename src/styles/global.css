@@ -8010,17 +8010,22 @@ html[data-theme="dark"] .status-badge.payment-failed {
 .campaigns-trigger-bar {
   margin-top: 12px;
   margin-bottom: 24px;
-  background: linear-gradient(135deg, #4a1c32 0%, #5d2a42 50%, #881337 100%);
+  background: linear-gradient(
+    135deg,
+    var(--surface) 0%,
+    var(--surface-alt) 45%,
+    color-mix(in srgb, var(--brand-light) 70%, var(--surface)) 100%
+  );
   border-radius: var(--radius-lg);
   padding: 20px 24px;
-  color: #ffffff;
+  color: var(--text);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  box-shadow: 0 8px 24px rgba(93, 42, 66, 0.25);
+  box-shadow: var(--shadow-md);
   flex-wrap: wrap;
-  border: 1px solid rgba(251, 99, 118, 0.2);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
 }
 
 .trigger-bar-left {
@@ -8033,27 +8038,28 @@ html[data-theme="dark"] .status-badge.payment-failed {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fef0eb;
-  box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.05);
+  color: var(--accent);
+  box-shadow: 0 0 0 8px var(--accent-glow);
   animation: pulse-ring 2s infinite;
+  flex-shrink: 0;
 }
 
 @keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 rgba(251, 99, 118, 0.4); }
-  70% { box-shadow: 0 0 0 12px rgba(251, 99, 118, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(251, 99, 118, 0); }
+  0% { box-shadow: 0 0 0 0 var(--accent-glow); }
+  70% { box-shadow: 0 0 0 12px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }
 
 .trigger-badge {
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.5px;
-  background: rgba(255, 255, 255, 0.18);
-  color: #fef0eb;
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  color: var(--accent);
   padding: 3px 10px;
   border-radius: 10px;
   display: inline-block;
@@ -8064,12 +8070,12 @@ html[data-theme="dark"] .status-badge.payment-failed {
   font-size: 1.2rem;
   font-weight: 700;
   margin: 0;
-  color: #ffffff;
+  color: var(--text);
 }
 
 .trigger-bar-left p {
   font-size: 0.86rem;
-  color: rgba(255, 249, 236, 0.85);
+  color: var(--muted);
   margin: 4px 0 0 0;
 }
 
@@ -8077,7 +8083,7 @@ html[data-theme="dark"] .status-badge.payment-failed {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #fb6376 0%, #e11d48 100%);
+  background: var(--accent);
   color: #ffffff;
   font-size: 0.92rem;
   font-weight: 700;
@@ -8085,15 +8091,42 @@ html[data-theme="dark"] .status-badge.payment-failed {
   padding: 12px 22px;
   border-radius: 12px;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(251, 99, 118, 0.4);
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px var(--accent-glow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   white-space: nowrap;
 }
 
 .btn-open-campaign-modal:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(251, 99, 118, 0.6);
-  background: linear-gradient(135deg, #ff7b8c 0%, #e11d48 100%);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 45%, transparent);
+  background: var(--accent-hover);
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .campaigns-trigger-bar {
+  background: linear-gradient(
+    135deg,
+    var(--surface) 0%,
+    var(--surface-alt) 55%,
+    color-mix(in srgb, var(--brand-primary) 55%, var(--surface-alt)) 100%
+  );
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+html[data-theme="dark"] .trigger-icon-pulse {
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface-alt));
+  color: var(--accent);
+}
+
+html[data-theme="dark"] .trigger-badge {
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface-alt));
+  color: var(--brand-light);
+}
+
+html[data-theme="dark"] .btn-open-campaign-modal:hover {
+  background: var(--brand-light);
+  color: var(--brand-primary);
 }
 
 /* Fullscreen Modal Backdrop & Container */

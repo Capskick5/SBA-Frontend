@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Gift, Check, X, Tag as TagIcon, ArrowRight, Search } from 'lucide-react';
+import { BookOpen, Gift, Check, X, Tag as TagIcon, ArrowRight, Search } from 'lucide-react';
 import Button from '../ui/Button';
 import { LoadingState } from '../ui/State';
 import { campaignService } from '../../services/campaignService';
@@ -142,7 +142,7 @@ export default function CampaignModal({ isOpen, onClose }) {
         <header className="campaign-modal-header">
           <div>
             <div className="campaign-modal-kicker">
-              <Sparkles size={16} /> KHO VOUCHER & CAMPAIGN KHUYẾN MÃI
+              <BookOpen size={16} /> KHO VOUCHER & CAMPAIGN KHUYẾN MÃI
             </div>
             <h2>Các Chương Trình Khuyến Mãi Đang Diễn Ra</h2>
             <p>Bấm "Thu thập" để lưu trực tiếp mã giảm giá vào ví voucher cá nhân của bạn!</p>

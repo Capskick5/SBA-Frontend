@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { BookOpen, ArrowRight } from 'lucide-react';
 import { bookService } from '../../services/bookService';
 import { bannerService } from '../../services/bannerService';
 import CatalogFilters from '../../components/catalog/CatalogFilters';
@@ -174,7 +174,7 @@ export default function CatalogPage() {
       <section className="campaigns-trigger-bar">
         <div className="trigger-bar-left">
           <div className="trigger-icon-pulse">
-            <Sparkles size={22} />
+            <BookOpen size={22} />
           </div>
           <div>
             <div className="trigger-badge">🔥 CHIẾN DỊCH KHUYẾN MÃI ĐANG DIỄN RA</div>
