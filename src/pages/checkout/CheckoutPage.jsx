@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import AddressForm from '../../components/checkout/AddressForm';
 import CheckoutSummary from '../../components/checkout/CheckoutSummary';
 import { AuthFormMessage } from '../../components/auth/AuthFormFooter';
 import Button from '../../components/ui/Button';
-import { CheckCircle2, Home, ShoppingBag, PackageSearch } from 'lucide-react';
 import { captureFormError } from '../../utils/formErrorUtils';
 import { useAuth } from '../../context/AuthContext';
 import { addressService } from '../../services/addressService';
@@ -21,13 +20,8 @@ import {
   getPendingPaymentUserMessage,
   PENDING_PAYMENT_MESSAGE,
 } from '../../utils/pendingOrderGuard';
-import {
-  checkoutWithCodFallback,
-  isCodCheckoutSuccess,
-} from '../../utils/codCheckoutMock';
 import { orderService } from '../../services/orderService';
 import { giftWrapService } from '../../services/giftWrapService';
-import { isMockCodOrderResult } from '../../utils/codCheckoutMock';
 
 function pickCartItemIds(param, cartItems) {
   const cartIds = (cartItems || []).map((item) => item.itemId);
@@ -64,7 +58,6 @@ function formatVoucherDate(value) {
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const isLoggedIn = !!user;
   const isGuest = !user;
@@ -80,8 +73,6 @@ export default function CheckoutPage() {
   const [selectedVoucherId, setSelectedVoucherId] = useState('');
   const [voucherError, setVoucherError] = useState('');
   const [deliveryMode, setDeliveryMode] = useState('self');
-  const [paymentMethod, setPaymentMethod] = useState('VNPAY');
-  const [codOrderResult, setCodOrderResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [checkoutError, setCheckoutError] = useState('');
   const [formKey, setFormKey] = useState(0);
@@ -447,29 +438,6 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleCodSuccess = async (result, { guestCheckout = false, usedMock = false } = {}) => {
-    if (guestCheckout) {
-      clearGuestCart();
-      notifyCartUpdated();
-    } else {
-      const updatedCart = await cartFacade.getCart().catch(() => null);
-      notifyCartUpdated(updatedCart);
-    }
-
-    if (usedMock || isMockCodOrderResult(result)) {
-      showToast('Could not confirm COD checkout with the server. Showing a local preview only.', 'info');
-      setCodOrderResult({ ...result, mock: true });
-      return;
-    }
-
-    showToast('Order placed successfully. Pay with cash when it arrives.', 'success');
-    if (guestCheckout) {
-      setCodOrderResult(result);
-      return;
-    }
-    navigate(`/orders/${result.orderId}`);
-  };
-
   const pay = async () => {
     if (paying) return;
     if (cartItemIds.length === 0) return;
@@ -484,6 +452,7 @@ export default function CheckoutPage() {
         idempotencyKeyRef.current = uuidv4();
       }
       const key = idempotencyKeyRef.current;
+      const paymentMethod = 'VNPAY';
 
       if (isGuest) {
         if (!isAddressComplete(guestAddress)) {
@@ -491,29 +460,21 @@ export default function CheckoutPage() {
           setPaying(false);
           return;
         }
-        const { result, usedMock } = await checkoutWithCodFallback({
+        const result = await checkoutService.checkoutGuest({
+          email: guestEmail || null,
+          ...guestAddress,
+          items: selectedCartItems.map((item) => ({
+            bookId: item.bookId,
+            quantity: item.quantity,
+          })),
+          deliveryType,
+          giftWrapId: deliveryType === 'GIFT' ? selectedGiftWrapId : null,
           paymentMethod,
-          preview,
-          checkoutCall: () => checkoutService.checkoutGuest({
-            email: guestEmail || null,
-            ...guestAddress,
-            items: selectedCartItems.map((item) => ({
-              bookId: item.bookId,
-              quantity: item.quantity,
-            })),
-            deliveryType,
-            giftWrapId: deliveryType === 'GIFT' ? selectedGiftWrapId : null,
-            paymentMethod,
-          }, key),
-        });
+        }, key);
 
-        if (paymentMethod !== 'COD' && result?.checkoutUrl) {
+        if (result?.checkoutUrl) {
           clearGuestCart();
           window.location.href = result.checkoutUrl;
-          return;
-        }
-        if (isCodCheckoutSuccess(result) || (paymentMethod === 'COD' && usedMock)) {
-          await handleCodSuccess(result, { guestCheckout: true, usedMock });
           return;
         }
         setCheckoutError('Guest checkout is not available yet. Please try again later or sign in.');
@@ -529,26 +490,18 @@ export default function CheckoutPage() {
       }
 
       if (!selectedAddressId) return;
-      const { result, usedMock } = await checkoutWithCodFallback({
+      const result = await checkoutService.checkout(
+        selectedAddressId,
+        cartItemIds,
+        key,
+        selectedVoucherId || undefined,
+        deliveryType,
+        deliveryType === 'GIFT' ? selectedGiftWrapId : null,
         paymentMethod,
-        preview,
-        checkoutCall: () => checkoutService.checkout(
-          selectedAddressId,
-          cartItemIds,
-          key,
-          selectedVoucherId || undefined,
-          deliveryType,
-          deliveryType === 'GIFT' ? selectedGiftWrapId : null,
-          paymentMethod,
-        ),
-      });
+      );
 
-      if (paymentMethod !== 'COD' && result.checkoutUrl) {
+      if (result?.checkoutUrl) {
         window.location.href = result.checkoutUrl;
-        return;
-      }
-      if (isCodCheckoutSuccess(result) || (paymentMethod === 'COD' && usedMock)) {
-        await handleCodSuccess(result, { usedMock });
       }
     } catch (err) {
       const pendingMessage = getPendingPaymentUserMessage(err);
@@ -684,57 +637,6 @@ export default function CheckoutPage() {
       : isGuest
         ? (!isAddressComplete(guestAddress) ? 'Confirm a delivery address below to continue to payment.' : '')
         : (!selectedAddressId ? 'Add a delivery address to continue to payment.' : '');
-
-  const codPreviewOnly = isMockCodOrderResult(codOrderResult);
-
-  if (codOrderResult) {
-    return (
-      <section className="center-panel checkout-cod-success">
-        <CheckCircle2 size={64} color="var(--success, #10b981)" />
-        <h1>{codPreviewOnly ? 'COD preview' : 'Order placed!'}</h1>
-        <p>
-          {codPreviewOnly ? (
-            <>
-              Could not confirm this cash-on-delivery order with the server.
-              Reference <strong>{codOrderResult.orderId}</strong> for {formatCurrency(codOrderResult.total)}.
-            </>
-          ) : (
-            <>
-              Order #{codOrderResult.orderId} has been placed for {formatCurrency(codOrderResult.total)}.
-              Pay with cash when it arrives.
-            </>
-          )}
-        </p>
-        {codOrderResult.orderCode && codOrderResult.guestToken && (
-          <div className="checkout-cod-tracking">
-            <p>
-              Your order code is <strong>{codOrderResult.orderCode}</strong>. Use the button below to
-              track your order any time — we have also emailed this link to you.
-            </p>
-            <Link
-              to={`/orders/track?code=${encodeURIComponent(codOrderResult.orderCode)}&token=${encodeURIComponent(codOrderResult.guestToken)}`}
-            >
-              <Button className="btn-secondary">
-                <PackageSearch size={18} /> Track your order
-              </Button>
-            </Link>
-          </div>
-        )}
-        <div className="actions">
-          <Link to="/">
-            <Button className="btn-secondary">
-              <Home size={18} /> Home
-            </Button>
-          </Link>
-          <Link to="/">
-            <Button>
-              <ShoppingBag size={18} /> Continue shopping
-            </Button>
-          </Link>
-        </div>
-      </section>
-    );
-  }
 
   return (
     <div className="stack" style={{ gap: '24px' }}>
@@ -1129,8 +1031,6 @@ export default function CheckoutPage() {
             canPay={canPay}
             disabledReason={disabledReason}
             onPay={pay}
-            paymentMethod={paymentMethod}
-            onChangePaymentMethod={setPaymentMethod}
           />
         </div>
       </section>
