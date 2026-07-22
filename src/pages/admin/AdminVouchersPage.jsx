@@ -209,7 +209,10 @@ export default function AdminVouchersPage() {
       name: form.name.trim(),
       discountType: form.discountType,
       discountValue,
-      maxDiscountAmount: form.maxDiscountAmount ? Number(form.maxDiscountAmount) : null,
+      maxDiscountAmount:
+        form.discountType === 'PERCENTAGE' && form.maxDiscountAmount
+          ? Number(form.maxDiscountAmount)
+          : null,
       minOrderValue,
       totalQuantity,
       startTime,
@@ -407,25 +410,36 @@ export default function AdminVouchersPage() {
               </select>
             </label>
 
-            <div className={styles.formGrid}>
+            {form.discountType === 'PERCENTAGE' ? (
+              <div className={styles.formGrid}>
+                <Input
+                  label="Phần trăm giảm (%)"
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={form.discountValue}
+                  onChange={(event) => setField('discountValue', event.target.value)}
+                  required
+                />
+                <Input
+                  label="Giảm tối đa (VND)"
+                  type="number"
+                  min="0"
+                  value={form.maxDiscountAmount}
+                  onChange={(event) => setField('maxDiscountAmount', event.target.value)}
+                  placeholder="Số tiền giảm tối đa"
+                />
+              </div>
+            ) : (
               <Input
-                label={form.discountType === 'PERCENTAGE' ? 'Phần trăm giảm (%)' : 'Số tiền giảm (VND)'}
+                label="Số tiền giảm (VND)"
                 type="number"
                 min="1"
-                max={form.discountType === 'PERCENTAGE' ? '100' : undefined}
                 value={form.discountValue}
                 onChange={(event) => setField('discountValue', event.target.value)}
                 required
               />
-              <Input
-                label="Giảm tối đa (VND - cho %)"
-                type="number"
-                min="0"
-                value={form.maxDiscountAmount}
-                onChange={(event) => setField('maxDiscountAmount', event.target.value)}
-                placeholder={form.discountType === 'PERCENTAGE' ? 'Số tiền giảm tối đa' : 'Không bắt buộc'}
-              />
-            </div>
+            )}
 
             <div className={styles.formGrid}>
               <Input
