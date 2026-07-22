@@ -11,8 +11,20 @@ function normalizeVoucherPage(response, requestedPage) {
 }
 
 export const voucherService = {
+  // Public: vouchers currently available to claim
+  async getAvailablePage({ page = 0, size = 12 } = {}) {
+    const payload = await apiClient.get(`/vouchers?page=${page}&size=${size}&sort=createdAt,desc`);
+    return normalizeVoucherPage(payload, page);
+  },
+
+  // Customer: claim a voucher into the personal wallet
+  claim(voucherId) {
+    return apiClient.post(`/vouchers/claim/${voucherId}`);
+  },
+
+  // Customer: vouchers already claimed by the current user
   async getMinePage({ page = 0, size = 20 } = {}) {
-    const payload = await apiClient.get(`/vouchers/me?page=${page}&size=${size}&sort=expiresAt,asc`);
+    const payload = await apiClient.get(`/vouchers/me?page=${page}&size=${size}&sort=claimedAt,desc`);
     return normalizeVoucherPage(payload, page);
   },
 

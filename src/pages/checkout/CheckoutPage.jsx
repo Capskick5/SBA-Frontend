@@ -43,6 +43,17 @@ function isAddressComplete(address) {
   );
 }
 
+function isEmailAddressValid(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email.trim());
+}
+
+function validateGuestEmail(email) {
+  const value = email.trim();
+  if (!value) return 'Enter your email address to receive order updates.';
+  if (!isEmailAddressValid(value)) return 'Enter a valid email address.';
+  return '';
+}
+
 function formatVoucherDiscount(voucher) {
   if (!voucher) return '';
   if (voucher.discountType === 'PERCENTAGE') {
@@ -187,8 +198,9 @@ export default function CheckoutPage() {
         return;
       }
       try {
+        const previewEmail = isEmailAddressValid(guestEmail) ? guestEmail.trim() : null;
         const payload = {
-          email: guestEmail || null,
+          email: previewEmail,
           recipient: guestAddressOverride.recipient,
           phone: guestAddressOverride.phone,
           line: guestAddressOverride.line,
@@ -455,6 +467,13 @@ export default function CheckoutPage() {
       const paymentMethod = 'VNPAY';
 
       if (isGuest) {
+        const guestEmailError = validateGuestEmail(guestEmail);
+        if (guestEmailError) {
+          setEmailError(guestEmailError);
+          setCheckoutError('Enter a valid contact email to continue to payment.');
+          setPaying(false);
+          return;
+        }
         if (!isAddressComplete(guestAddress)) {
           setCheckoutError('Thêm địa chỉ giao hàng để tiếp tục thanh toán.');
           setPaying(false);
@@ -470,7 +489,19 @@ export default function CheckoutPage() {
           deliveryType,
           giftWrapId: deliveryType === 'GIFT' ? selectedGiftWrapId : null,
           paymentMethod,
-        }, key);
+          preview,
+          checkoutCall: () => checkoutService.checkoutGuest({
+            email: guestEmail.trim(),
+            ...guestAddress,
+            items: selectedCartItems.map((item) => ({
+              bookId: item.bookId,
+              quantity: item.quantity,
+            })),
+            deliveryType,
+            giftWrapId: deliveryType === 'GIFT' ? selectedGiftWrapId : null,
+            paymentMethod,
+          }, key),
+        });
 
         if (result?.checkoutUrl) {
           clearGuestCart();
@@ -627,16 +658,68 @@ export default function CheckoutPage() {
   const selectedVoucher = vouchers.find((voucher) => String(voucher.id) === String(selectedVoucherId));
 
   const giftWrapMissing = deliveryMode === 'gift' && !selectedGiftWrapId;
+  const guestEmailValidationMessage = isGuest ? validateGuestEmail(guestEmail) : '';
   const canPay = !pendingOrder && !giftWrapMissing && (isGuest
-    ? isAddressComplete(guestAddress) && cartItemIds.length > 0
+    ? !guestEmailValidationMessage && isAddressComplete(guestAddress) && cartItemIds.length > 0
     : Boolean(selectedAddressId) && cartItemIds.length > 0);
   const disabledReason = pendingOrder
     ? PENDING_PAYMENT_MESSAGE
     : giftWrapMissing
       ? 'Chọn kiểu gói quà để tiếp tục.'
       : isGuest
-        ? (!isAddressComplete(guestAddress) ? 'Xác nhận địa chỉ giao hàng bên dưới để tiếp tục thanh toán.' : '')
-        : (!selectedAddressId ? 'Thêm địa chỉ giao hàng để tiếp tục thanh toán.' : '');
+        ? (guestEmailValidationMessage || (!isAddressComplete(guestAddress) ? 'Confirm a delivery address below to continue to payment.' : ''))
+        : (!selectedAddressId ? 'Add a delivery address to continue to payment.' : '');
+
+  const codPreviewOnly = isMockCodOrderResult(codOrderResult);
+
+  if (codOrderResult) {
+    return (
+      <section className="center-panel checkout-cod-success">
+        <CheckCircle2 size={64} color="var(--success, #10b981)" />
+        <h1>{codPreviewOnly ? 'COD preview' : 'Order placed!'}</h1>
+        <p>
+          {codPreviewOnly ? (
+            <>
+              Could not confirm this cash-on-delivery order with the server.
+              Reference <strong>{codOrderResult.orderId}</strong> for {formatCurrency(codOrderResult.total)}.
+            </>
+          ) : (
+            <>
+              Order #{codOrderResult.orderId} has been placed for {formatCurrency(codOrderResult.total)}.
+              Pay with cash when it arrives.
+            </>
+          )}
+        </p>
+        {codOrderResult.orderCode && codOrderResult.guestToken && (
+          <div className="checkout-cod-tracking">
+            <p>
+              Your order code is <strong>{codOrderResult.orderCode}</strong>. Use the button below to
+              track your order any time — we have also emailed this link to you.
+            </p>
+            <Link
+              to={`/orders/track?code=${encodeURIComponent(codOrderResult.orderCode)}&token=${encodeURIComponent(codOrderResult.guestToken)}`}
+            >
+              <Button className="btn-secondary">
+                <PackageSearch size={18} /> Track your order
+              </Button>
+            </Link>
+          </div>
+        )}
+        <div className="actions">
+          <Link to="/">
+            <Button className="btn-secondary">
+              <Home size={18} /> Home
+            </Button>
+          </Link>
+          <Link to="/">
+            <Button>
+              <ShoppingBag size={18} /> Continue shopping
+            </Button>
+          </Link>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <div className="stack" style={{ gap: '24px' }}>
@@ -738,16 +821,28 @@ export default function CheckoutPage() {
                 <div className="stack" style={{ gap: '12px', marginTop: '12px' }}>
                   <input
                     type="email"
-                    placeholder="Địa chỉ email (không bắt buộc)"
+                    placeholder="you@example.com"
                     value={guestEmail}
                     onChange={(e) => {
-                      setGuestEmail(e.target.value);
-                      setEmailError('');
+                      const nextEmail = e.target.value;
+                      setGuestEmail(nextEmail);
+                      if (emailError) {
+                        setEmailError(validateGuestEmail(nextEmail));
+                      }
                     }}
+                    onBlur={(e) => setEmailError(validateGuestEmail(e.target.value))}
                     className="cart-voucher-select"
-                    style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid #d1d5db' }}
+                    aria-invalid={emailError ? 'true' : undefined}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: emailError ? '1px solid var(--error)' : '1px solid #d1d5db',
+                      background: emailError ? 'rgba(239, 68, 68, 0.04)' : undefined,
+                    }}
                   />
-                  {emailError && <p className="form-message form-message-error" style={{ margin: 0 }}>{emailError}</p>}
+                  {emailError && <p className="field-error" style={{ margin: 0 }}>{emailError}</p>}
                 </div>
               </div>
             )}
@@ -908,9 +1003,9 @@ export default function CheckoutPage() {
                     {selectedVoucher ? (
                       <article className="checkout-selected-voucher-card">
                         <div>
-                          <span className="voucher-card-label">Mã đã áp dụng</span>
-                          <strong>{selectedVoucher.code}</strong>
-                          <p>{selectedVoucher.name}</p>
+                          <span className="voucher-card-label">Applied voucher</span>
+                          <strong>{selectedVoucher.voucherCode}</strong>
+                          <p>{selectedVoucher.voucherName}</p>
                         </div>
                         <dl>
                           <div>
@@ -918,8 +1013,8 @@ export default function CheckoutPage() {
                             <dd>{formatVoucherDiscount(selectedVoucher)}</dd>
                           </div>
                           <div>
-                            <dt>Tạm tính tối thiểu</dt>
-                            <dd>{formatCurrency(selectedVoucher.tierMinAmount)}</dd>
+                            <dt>Minimum subtotal</dt>
+                            <dd>{formatCurrency(selectedVoucher.minOrderValue)}</dd>
                           </div>
                         </dl>
                         <div className="checkout-voucher-actions">
@@ -947,9 +1042,9 @@ export default function CheckoutPage() {
                           return (
                             <article className={`checkout-voucher-card${isSelected ? ' is-selected' : ''}`} key={voucher.id}>
                               <div>
-                                <span className="voucher-card-label">Mã giảm giá</span>
-                                <strong>{voucher.code}</strong>
-                                <p>{voucher.name}</p>
+                                <span className="voucher-card-label">Voucher code</span>
+                                <strong>{voucher.voucherCode}</strong>
+                                <p>{voucher.voucherName}</p>
                               </div>
                               <dl>
                                 <div>
@@ -957,8 +1052,8 @@ export default function CheckoutPage() {
                                   <dd>{formatVoucherDiscount(voucher)}</dd>
                                 </div>
                                 <div>
-                                  <dt>Tạm tính tối thiểu</dt>
-                                  <dd>{formatCurrency(voucher.tierMinAmount)}</dd>
+                                  <dt>Minimum subtotal</dt>
+                                  <dd>{formatCurrency(voucher.minOrderValue)}</dd>
                                 </div>
                                 <div>
                                   <dt>Hết hạn</dt>
@@ -979,7 +1074,7 @@ export default function CheckoutPage() {
                     )}
                     {selectedVoucher && (
                       <p className="voucher-applied-note">
-                        Mã {selectedVoucher.code} đã được áp dụng cho đơn thanh toán này.
+                        Voucher {selectedVoucher.voucherCode} is applied to this checkout.
                       </p>
                     )}
                   </>

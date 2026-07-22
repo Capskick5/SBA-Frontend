@@ -170,6 +170,21 @@
   color: var(--text);
 }
 
+.periodCell {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.formError {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--error);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 @media (max-width: 900px) {
   .header,
   .toolbar {

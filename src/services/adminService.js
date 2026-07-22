@@ -92,10 +92,17 @@ export const adminService = {
   getReviewModerationHistory: (id, params) => api.get(`/admin/reviews/${id}/moderation-history`, { params }).then(res => res.data?.data || res.data),
   deleteReview: (id) => api.delete(`/reviews/${id}`).then(res => res.data),
 
-  getVoucherRules: (params) => api.get('/vouchers', { params }).then(res => res.data?.data || res.data),
-  createVoucherRule: (body) => api.post('/vouchers', body).then(res => res.data?.data || res.data),
-  updateVoucherRule: (id, body) => api.put(`/vouchers/${id}`, body).then(res => res.data?.data || res.data),
-  disableVoucherRule: (id) => api.delete(`/vouchers/${id}`),
+  // Campaigns (admin) — group promotions such as flash sales / welcome gifts
+  getCampaigns: (params) => api.get('/admin/campaigns', { params }).then(res => res.data?.data || res.data),
+  createCampaign: (body) => api.post('/admin/campaigns', body).then(res => res.data?.data || res.data),
+  updateCampaign: (id, body) => api.put(`/admin/campaigns/${id}`, body).then(res => res.data?.data || res.data),
+  deleteCampaign: (id) => api.delete(`/admin/campaigns/${id}`),
+
+  // Voucher templates (admin) — the redeemable coupons customers can claim
+  getVouchers: (params) => api.get('/admin/vouchers', { params }).then(res => res.data?.data || res.data),
+  createVoucher: (body) => api.post('/admin/vouchers', body).then(res => res.data?.data || res.data),
+  updateVoucher: (id, body) => api.put(`/admin/vouchers/${id}`, body).then(res => res.data?.data || res.data),
+  deleteVoucher: (id) => api.delete(`/admin/vouchers/${id}`),
 
   toggleBookActive: (id, isActive) => {
     return api.put(`/books/${id}/active`, { active: isActive });
