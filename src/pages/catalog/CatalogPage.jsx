@@ -253,8 +253,6 @@ export default function CatalogPage() {
       <section className="catalog-layout">
         <aside className="catalog-sidebar">
           <CatalogFilters
-            query={query}
-            setQuery={(value) => updateCatalogUrl({ query: value }, { resetPage: true })}
             category={category}
             setCategory={(value) => updateCatalogUrl({ category: value }, { resetPage: true })}
             sort={sort}
@@ -269,25 +267,6 @@ export default function CatalogPage() {
               <p className="catalog-results-count">
                 Hiển thị <strong>{showingStart}-{showingEnd}</strong> trong tổng số <strong>{totalItems}</strong> cuốn sách
               </p>
-
-              <div className="catalog-sort-wrapper">
-                <label htmlFor="catalog-sort-select" className="catalog-sort-label">
-                  Sắp xếp:
-                </label>
-                <select
-                  id="catalog-sort-select"
-                  className="catalog-sort-select"
-                  value={sort}
-                  onChange={(e) => updateCatalogUrl({ sort: e.target.value }, { resetPage: true })}
-                >
-                  <option value="relevance">Mới & Liên quan</option>
-                  <option value="sold_desc">Bán chạy nhất</option>
-                  <option value="rating_desc">Đánh giá cao</option>
-                  <option value="title_asc">Tên A - Z</option>
-                  <option value="price_asc">Giá thấp → cao</option>
-                  <option value="price_desc">Giá cao → thấp</option>
-                </select>
-              </div>
             </div>
           )}
 
