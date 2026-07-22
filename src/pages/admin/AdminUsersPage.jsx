@@ -6,6 +6,7 @@ import Table from '../../components/ui/Table';
 import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 import { showToast } from '../../utils/toast';
+import { markUsersAsSeen } from '../../utils/adminUsersBadge';
 
 const PAGE_SIZE = 10;
 
@@ -53,6 +54,10 @@ export default function AdminUsersPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    markUsersAsSeen();
+  }, []);
 
   useEffect(() => {
     let active = true;

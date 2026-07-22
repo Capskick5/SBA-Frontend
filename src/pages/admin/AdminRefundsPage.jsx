@@ -43,7 +43,7 @@ const RESOLUTION_ELIGIBILITY = {
 
 const STATUS_TABS = [
   { id: 'ALL', label: 'Tất cả', statuses: [] },
-  { id: 'PENDING_REVIEW', label: 'Chờ xử lý', statuses: ['RETURN_REQUESTED', 'WAITING_EVIDENCE', 'UNDER_REVIEW', 'PENDING'] },
+  { id: 'PENDING_REVIEW', label: 'Chờ xử lý', statuses: ['RETURN_REQUESTED', 'WAITING_EVIDENCE', 'UNDER_REVIEW'] },
   { id: 'IN_PROGRESS', label: 'Đang xử lý', statuses: ['PICKUP_PENDING', 'RETURN_RECEIVED', 'INSPECTING', 'RESHIP_PENDING', 'EXCHANGE_SHIPPING', 'REFUND_PROCESSING'] },
   { id: 'DONE', label: 'Hoàn tất', statuses: ['REFUND_COMPLETED', 'COMPLETED'] },
   { id: 'REJECTED', label: 'Từ chối', statuses: ['REJECTED'] },
@@ -393,7 +393,7 @@ export default function AdminRefundsPage() {
 
             {/* ---- Actions per status ---- */}
 
-            {['RETURN_REQUESTED', 'WAITING_EVIDENCE', 'UNDER_REVIEW', 'PENDING'].includes(selectedRefund.status) && (
+            {['RETURN_REQUESTED', 'WAITING_EVIDENCE', 'UNDER_REVIEW'].includes(selectedRefund.status) && (
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {selectedRefund.status === 'WAITING_EVIDENCE' && (
                   <div style={{ padding: '10px 12px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '6px', fontSize: '13px', color: '#d97706' }}>

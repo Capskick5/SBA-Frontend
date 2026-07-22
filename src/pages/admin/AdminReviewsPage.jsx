@@ -10,6 +10,7 @@ import { ErrorState, LoadingState } from '../../components/ui/State';
 import { adminService } from '../../services/adminService';
 import { formatDateTime } from '../../utils/formatters';
 import { showToast } from '../../utils/toast';
+import { markReviewsAsSeen } from '../../utils/adminReviewsBadge';
 
 const PAGE_SIZE = 10;
 
@@ -19,6 +20,8 @@ export default function AdminReviewsPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [status, setStatus] = useState('ALL');
+  const [ratingFilter, setRatingFilter] = useState('ALL');
+  const [sortBy, setSortBy] = useState('createdAt,desc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [moderationTarget, setModerationTarget] = useState(null);
@@ -37,8 +40,9 @@ export default function AdminReviewsPage() {
     adminService.getReviews({
       page,
       size: PAGE_SIZE,
-      sort: 'createdAt,desc',
+      sort: sortBy,
       ...(status === 'ALL' ? {} : { status }),
+      ...(ratingFilter === 'ALL' ? {} : { rating: Number(ratingFilter) }),
     })
       .then((result) => {
         setReviews(result?.items || result?.content || []);
@@ -50,7 +54,11 @@ export default function AdminReviewsPage() {
         setError('Không thể tải đánh giá. Vui lòng thử lại sau.');
       })
       .finally(() => setLoading(false));
-  }, [page, status]);
+  }, [page, status, ratingFilter, sortBy]);
+
+  useEffect(() => {
+    markReviewsAsSeen();
+  }, []);
 
   useEffect(() => {
     Promise.resolve().then(loadReviews);
@@ -146,6 +154,38 @@ export default function AdminReviewsPage() {
             <option value="ALL">Tất cả đánh giá</option>
             <option value="PUBLISHED">Đang hiển thị</option>
             <option value="HIDDEN">Đã ẩn</option>
+          </select>
+        </AdminFilterField>
+
+        <AdminFilterField label="Số sao">
+          <select
+            value={ratingFilter}
+            onChange={(event) => {
+              setRatingFilter(event.target.value);
+              setPage(0);
+            }}
+          >
+            <option value="ALL">Tất cả số sao</option>
+            <option value="5">5 sao</option>
+            <option value="4">4 sao</option>
+            <option value="3">3 sao</option>
+            <option value="2">2 sao</option>
+            <option value="1">1 sao</option>
+          </select>
+        </AdminFilterField>
+
+        <AdminFilterField label="Sắp xếp">
+          <select
+            value={sortBy}
+            onChange={(event) => {
+              setSortBy(event.target.value);
+              setPage(0);
+            }}
+          >
+            <option value="createdAt,desc">Mới nhất trước</option>
+            <option value="createdAt,asc">Cũ nhất trước</option>
+            <option value="rating,desc">Số sao: Cao đến thấp</option>
+            <option value="rating,asc">Số sao: Thấp đến cao</option>
           </select>
         </AdminFilterField>
       </AdminToolbar>
