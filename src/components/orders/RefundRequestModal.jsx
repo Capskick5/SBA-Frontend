@@ -6,15 +6,16 @@ import Textarea from '../ui/Textarea';
 import { formatCurrency } from '../../utils/formatters';
 import { showToast } from '../../utils/toast';
 import { refundService } from '../../services/refundService';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, X } from 'lucide-react';
 
 const REASON_OPTIONS = [
   { value: 'BOOK_DEFECT', label: 'Sách bị lỗi (in ấn, đóng gáy, mất trang...)' },
   { value: 'WRONG_BOOK', label: 'Giao sai sách' },
   { value: 'MISSING_BOOK', label: 'Thiếu sách trong đơn hàng' },
   { value: 'DAMAGED_IN_TRANSIT', label: 'Sách bị hư hỏng do vận chuyển' },
-  { value: 'CHANGE_OF_MIND', label: 'Đổi ý, không muốn mua nữa' },
 ];
+
+const MIN_EVIDENCE_FILES = 2;
 
 export default function RefundRequestModal({ order, isOpen, onClose, onSubmitSuccess }) {
   const [reason, setReason] = useState('BOOK_DEFECT');
@@ -23,8 +24,10 @@ export default function RefundRequestModal({ order, isOpen, onClose, onSubmitSuc
   const [accountNumber, setAccountNumber] = useState('');
   const [accountOwner, setAccountOwner] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [changeOfMindAcknowledged, setChangeOfMindAcknowledged] = useState(false);
   const [quantities, setQuantities] = useState({});
+  const [evidenceItems, setEvidenceItems] = useState([]);
+  const [uploadingEvidence, setUploadingEvidence] = useState(false);
+  const [evidenceInputKey, setEvidenceInputKey] = useState(0);
 
   if (!isOpen || !order) return null;
 
@@ -50,6 +53,31 @@ export default function RefundRequestModal({ order, isOpen, onClose, onSubmitSuc
     setQuantities((current) => ({ ...current, [item.id]: clamped }));
   };
 
+  const handleEvidenceFilesSelected = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setEvidenceInputKey((key) => key + 1);
+    setUploadingEvidence(true);
+    for (const file of files) {
+      const localId = `${Date.now()}-${file.name}-${Math.random()}`;
+      setEvidenceItems((current) => [...current, { id: localId, name: file.name, url: null, error: false }]);
+      try {
+        const { url } = await refundService.uploadEvidenceFile(file);
+        setEvidenceItems((current) => current.map((it) => (it.id === localId ? { ...it, url } : it)));
+      } catch (err) {
+        setEvidenceItems((current) => current.map((it) => (it.id === localId ? { ...it, error: true } : it)));
+        showToast(err?.message || `Không thể tải lên "${file.name}"`, 'error');
+      }
+    }
+    setUploadingEvidence(false);
+  };
+
+  const removeEvidenceItem = (id) => {
+    setEvidenceItems((current) => current.filter((it) => it.id !== id));
+  };
+
+  const uploadedEvidenceUrls = evidenceItems.filter((it) => it.url).map((it) => it.url);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const selectedItems = Object.entries(quantities)
@@ -63,8 +91,12 @@ export default function RefundRequestModal({ order, isOpen, onClose, onSubmitSuc
       showToast('Vui lòng điền đầy đủ thông tin tài khoản ngân hàng để nhận tiền hoàn', 'error');
       return;
     }
-    if (reason === 'CHANGE_OF_MIND' && !changeOfMindAcknowledged) {
-      showToast('Vui lòng xác nhận các điều kiện đổi ý trước khi gửi yêu cầu', 'error');
+    if (uploadingEvidence) {
+      showToast('Vui lòng đợi tải lên bằng chứng hoàn tất', 'error');
+      return;
+    }
+    if (uploadedEvidenceUrls.length < MIN_EVIDENCE_FILES) {
+      showToast(`Vui lòng tải lên ít nhất ${MIN_EVIDENCE_FILES} hình ảnh/video làm bằng chứng`, 'error');
       return;
     }
 
@@ -77,9 +109,9 @@ export default function RefundRequestModal({ order, isOpen, onClose, onSubmitSuc
         bankName,
         accountNumber,
         accountOwner,
-        changeOfMindAcknowledged: reason === 'CHANGE_OF_MIND' ? changeOfMindAcknowledged : undefined,
+        evidenceUrls: uploadedEvidenceUrls,
       });
-      showToast('Gửi yêu cầu trả hàng thành công! Sau khi tạo, vui lòng nộp bằng chứng (hình ảnh/video) để admin xem xét.', 'success');
+      showToast('Gửi yêu cầu trả hàng thành công! CSKH sẽ xem xét yêu cầu của bạn sớm nhất có thể.', 'success');
       onSubmitSuccess?.();
       onClose();
     } catch (err) {
@@ -183,25 +215,44 @@ export default function RefundRequestModal({ order, isOpen, onClose, onSubmitSuc
           />
         </div>
 
-        {reason === 'CHANGE_OF_MIND' && (
-          <div style={{ padding: '12px', background: 'rgba(234, 179, 8, 0.08)', borderRadius: '8px', border: '1px solid rgba(234, 179, 8, 0.3)', fontSize: '13px' }}>
-            <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={changeOfMindAcknowledged}
-                onChange={(e) => setChangeOfMindAcknowledged(e.target.checked)}
-                style={{ marginTop: '3px', cursor: 'pointer' }}
-              />
-              <span>
-                Tôi xác nhận yêu cầu này được gửi trong vòng <strong>30 ngày</strong> kể từ khi nhận hàng, sách còn nguyên
-                vẹn (chưa sử dụng, không viết/gạch, còn nguyên bao bì) và trả kèm đầy đủ quà tặng đi kèm (nếu có).
-              </span>
-            </label>
-          </div>
-        )}
-
-        <div style={{ padding: '10px 12px', background: 'var(--surface-alt, rgba(59, 130, 246, 0.08))', borderRadius: '8px', fontSize: '12px', color: 'var(--muted)' }}>
-          Sau khi tạo yêu cầu, bạn sẽ cần nộp bằng chứng (hình ảnh/video) ở màn hình chi tiết đơn hàng để bộ phận CSKH xem xét.
+        <div>
+          <label style={{ display: 'block', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>
+            Bằng chứng (hình ảnh/video) * <span style={{ fontWeight: 400, color: 'var(--muted)' }}>— tối thiểu {MIN_EVIDENCE_FILES} tệp</span>
+          </label>
+          <input
+            key={evidenceInputKey}
+            type="file"
+            accept="image/*,video/*"
+            multiple
+            onChange={handleEvidenceFilesSelected}
+            style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '13px', width: '100%' }}
+          />
+          <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: 'var(--muted)' }}>
+            Chấp nhận hình ảnh hoặc video, tối đa 20MB mỗi tệp. Bằng chứng giúp CSKH xét duyệt yêu cầu nhanh hơn.
+          </p>
+          {evidenceItems.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+              {evidenceItems.map((item) => (
+                <div key={item.id} style={{ position: 'relative', width: '72px', height: '72px' }}>
+                  {item.url ? (
+                    <img src={item.url} alt={item.name} style={{ width: '72px', height: '72px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border)' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                  ) : (
+                    <div style={{ width: '72px', height: '72px', borderRadius: '6px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: item.error ? '#ef4444' : 'var(--muted)', textAlign: 'center', padding: '4px' }}>
+                      {item.error ? 'Lỗi tải lên' : 'Đang tải...'}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeEvidenceItem(item.id)}
+                    style={{ position: 'absolute', top: '-6px', right: '-6px', width: '20px', height: '20px', borderRadius: '50%', border: 'none', background: '#ef4444', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    aria-label="Xóa tệp"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div style={{ borderTop: '1px dashed var(--border)', paddingTop: '16px' }}>

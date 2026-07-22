@@ -64,14 +64,10 @@ const ACTIONABLE_ORDER_STATUSES = new Set([
 
 /** Refunds awaiting review or still in progress (exclude completed / rejected). */
 const ACTIONABLE_REFUND_STATUSES = new Set([
-  'RETURN_REQUESTED',
-  'WAITING_EVIDENCE',
   'UNDER_REVIEW',
   'PICKUP_PENDING',
   'RETURN_RECEIVED',
   'INSPECTING',
-  'RESHIP_PENDING',
-  'EXCHANGE_SHIPPING',
   'REFUND_PROCESSING',
 ]);
 

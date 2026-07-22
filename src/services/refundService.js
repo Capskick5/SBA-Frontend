@@ -9,7 +9,7 @@ export const refundService = {
       bankName: refundData.bankName,
       bankAccountNumber: refundData.accountNumber,
       bankAccountHolder: refundData.accountOwner,
-      changeOfMindAcknowledged: refundData.changeOfMindAcknowledged || undefined,
+      evidenceUrls: refundData.evidenceUrls,
     });
     window.dispatchEvent(new Event('refund_updated'));
     return result;
@@ -23,14 +23,6 @@ export const refundService = {
     const formData = new FormData();
     formData.append('file', file);
     return apiClient.post('/refund-requests/evidence/upload', formData);
-  },
-
-  async submitEvidence(orderId, refundRequestId, { url }) {
-    const result = await apiClient.put(`/orders/${orderId}/refund-requests/${refundRequestId}/evidence`, {
-      url,
-    });
-    window.dispatchEvent(new Event('refund_updated'));
-    return result;
   },
 
   async submitReturnShipment(orderId, refundRequestId, { shippingProvider, trackingCode }) {

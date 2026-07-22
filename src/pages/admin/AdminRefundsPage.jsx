@@ -18,7 +18,6 @@ const REASON_LABELS = {
   WRONG_BOOK: 'Giao sai sách',
   MISSING_BOOK: 'Thiếu sách trong đơn hàng',
   DAMAGED_IN_TRANSIT: 'Sách bị hư hỏng do vận chuyển',
-  CHANGE_OF_MIND: 'Đổi ý, không muốn mua nữa',
 };
 
 function EvidenceThumbnail({ url }) {
@@ -29,38 +28,21 @@ function EvidenceThumbnail({ url }) {
     : <img src={url} alt="Bằng chứng" style={style} onError={() => setIsVideo(true)} />;
 }
 
-const RESOLUTION_LABELS = {
-  RESHIP: 'Gửi lại sách thiếu',
-  EXCHANGE: 'Đổi sách mới',
-  REFUND: 'Hoàn tiền',
-};
-
-const RESOLUTION_ELIGIBILITY = {
-  RESHIP: (reason) => reason === 'MISSING_BOOK',
-  EXCHANGE: (reason) => ['WRONG_BOOK', 'BOOK_DEFECT', 'DAMAGED_IN_TRANSIT'].includes(reason),
-  REFUND: () => true,
-};
-
 const STATUS_TABS = [
   { id: 'ALL', label: 'Tất cả', statuses: [] },
-  { id: 'PENDING_REVIEW', label: 'Chờ xử lý', statuses: ['RETURN_REQUESTED', 'WAITING_EVIDENCE', 'UNDER_REVIEW'] },
-  { id: 'IN_PROGRESS', label: 'Đang xử lý', statuses: ['PICKUP_PENDING', 'RETURN_RECEIVED', 'INSPECTING', 'RESHIP_PENDING', 'EXCHANGE_SHIPPING', 'REFUND_PROCESSING'] },
+  { id: 'PENDING_REVIEW', label: 'Chờ xử lý', statuses: ['UNDER_REVIEW'] },
+  { id: 'IN_PROGRESS', label: 'Đang xử lý', statuses: ['PICKUP_PENDING', 'RETURN_RECEIVED', 'INSPECTING', 'REFUND_PROCESSING'] },
   { id: 'DONE', label: 'Hoàn tất', statuses: ['REFUND_COMPLETED', 'COMPLETED'] },
   { id: 'REJECTED', label: 'Từ chối', statuses: ['REJECTED'] },
 ];
 
 const STATUS_META = {
-  PENDING: { badgeClass: 'refund-requested', badgeLabel: 'CHỜ XỬ LÝ' },
-  RETURN_REQUESTED: { badgeClass: 'refund-requested', badgeLabel: 'ĐÃ GỬI YÊU CẦU' },
-  WAITING_EVIDENCE: { badgeClass: 'refund-requested', badgeLabel: 'CHỜ BẰNG CHỨNG' },
   UNDER_REVIEW: { badgeClass: 'refund-requested', badgeLabel: 'ĐANG XEM XÉT' },
   APPROVED: { badgeClass: 'refund-requested', badgeLabel: 'ĐÃ DUYỆT' },
   REJECTED: { badgeClass: 'cancelled', badgeLabel: 'TỪ CHỐI' },
   PICKUP_PENDING: { badgeClass: 'refund-requested', badgeLabel: 'CHỜ NHẬN HÀNG' },
   RETURN_RECEIVED: { badgeClass: 'refund-requested', badgeLabel: 'ĐÃ NHẬN HÀNG' },
   INSPECTING: { badgeClass: 'refund-requested', badgeLabel: 'ĐANG KIỂM TRA' },
-  RESHIP_PENDING: { badgeClass: 'refund-requested', badgeLabel: 'CHỜ GỬI LẠI HÀNG' },
-  EXCHANGE_SHIPPING: { badgeClass: 'refund-requested', badgeLabel: 'ĐANG GỬI HÀNG ĐỔI' },
   REFUND_PROCESSING: { badgeClass: 'refund-requested', badgeLabel: 'ĐANG HOÀN TIỀN' },
   REFUND_COMPLETED: { badgeClass: 'refunded', badgeLabel: 'ĐÃ HOÀN TIỀN' },
   COMPLETED: { badgeClass: 'refunded', badgeLabel: 'HOÀN TẤT' },
@@ -77,11 +59,8 @@ export default function AdminRefundsPage() {
   const [selectedRefund, setSelectedRefund] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectInput, setShowRejectInput] = useState(false);
-  const [approveResolutionType, setApproveResolutionType] = useState('');
   const [approveNote, setApproveNote] = useState('');
   const [inspectionNote, setInspectionNote] = useState('');
-  const [replacementProvider, setReplacementProvider] = useState('');
-  const [replacementTrackingCode, setReplacementTrackingCode] = useState('');
   const [processing, setProcessing] = useState(false);
 
   const loadRefunds = useCallback(() => {
@@ -115,11 +94,8 @@ export default function AdminRefundsPage() {
   const resetDetailForms = () => {
     setShowRejectInput(false);
     setRejectReason('');
-    setApproveResolutionType('');
     setApproveNote('');
     setInspectionNote('');
-    setReplacementProvider('');
-    setReplacementTrackingCode('');
   };
 
   const closeAndReload = () => {
@@ -146,12 +122,8 @@ export default function AdminRefundsPage() {
   };
 
   const handleApprove = (id) => {
-    if (!approveResolutionType) {
-      showToast('Vui lòng chọn hướng xử lý', 'error');
-      return;
-    }
     runAction(
-      () => adminService.approveRefundRequest(id, { resolutionType: approveResolutionType, note: approveNote.trim() || undefined }),
+      () => adminService.approveRefundRequest(id, { note: approveNote.trim() || undefined }),
       'Đã duyệt yêu cầu trả hàng thành công!'
     );
   };
@@ -178,17 +150,6 @@ export default function AdminRefundsPage() {
     runAction(
       () => adminService.completeRefundInspection(id, { passed, note: inspectionNote.trim() || undefined }),
       passed ? 'Kiểm tra đạt — tiếp tục xử lý.' : 'Đã ghi nhận kiểm tra không đạt.'
-    );
-  };
-
-  const handleSubmitReplacement = (id) => {
-    if (!replacementProvider.trim() || !replacementTrackingCode.trim()) {
-      showToast('Vui lòng nhập đầy đủ nhà vận chuyển và mã vận đơn', 'error');
-      return;
-    }
-    runAction(
-      () => adminService.submitReplacementShipment(id, { shippingProvider: replacementProvider.trim(), trackingCode: replacementTrackingCode.trim() }),
-      'Đã lưu thông tin vận chuyển hàng thay thế.'
     );
   };
 
@@ -327,9 +288,6 @@ export default function AdminRefundsPage() {
                 <p style={{ margin: '2px 0', fontSize: '13px' }}>
                   Xử lý bởi: <strong>{selectedRefund.decidedByName || `Admin #${selectedRefund.decidedByUserId}`}</strong> vào lúc <strong>{formatDateTime(selectedRefund.decidedAt)}</strong>
                 </p>
-                {selectedRefund.resolutionType && (
-                  <p style={{ margin: '2px 0', fontSize: '13px' }}>Hướng xử lý: <strong>{RESOLUTION_LABELS[selectedRefund.resolutionType] || selectedRefund.resolutionType}</strong></p>
-                )}
                 {selectedRefund.decisionNote && (
                   <p style={{ margin: '6px 0 0 0', fontSize: '13px' }} className={selectedRefund.status === 'REJECTED' ? 'admin-status-bad' : 'admin-status-muted'}>
                     Ghi chú: {selectedRefund.decisionNote}
@@ -375,14 +333,6 @@ export default function AdminRefundsPage() {
               </div>
             )}
 
-            {selectedRefund.replacementTrackingCode && (
-              <div className="admin-panel-box">
-                <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>Vận chuyển hàng thay thế</h4>
-                <p style={{ margin: '2px 0', fontSize: '13px' }}>Nhà vận chuyển: <strong>{selectedRefund.replacementShippingProvider}</strong></p>
-                <p style={{ margin: '2px 0', fontSize: '13px' }}>Mã vận đơn: <strong>{selectedRefund.replacementTrackingCode}</strong></p>
-              </div>
-            )}
-
             {selectedRefund.refundProcessedByUserId && (
               <div className="admin-panel-box">
                 <p style={{ margin: '2px 0', fontSize: '13px' }}>
@@ -393,30 +343,10 @@ export default function AdminRefundsPage() {
 
             {/* ---- Actions per status ---- */}
 
-            {['RETURN_REQUESTED', 'WAITING_EVIDENCE', 'UNDER_REVIEW'].includes(selectedRefund.status) && (
+            {selectedRefund.status === 'UNDER_REVIEW' && (
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {selectedRefund.status === 'WAITING_EVIDENCE' && (
-                  <div style={{ padding: '10px 12px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '6px', fontSize: '13px', color: '#d97706' }}>
-                    <strong>Đang chờ bằng chứng:</strong> Khách hàng chưa nộp bằng chứng (hoặc đang bổ sung). Yêu cầu sẽ tự động chuyển sang trạng thái <em>Đang xem xét (UNDER_REVIEW)</em> sau khi khách nộp bằng chứng thành công.
-                  </div>
-                )}
                 {!showRejectInput ? (
                   <>
-                    <div>
-                      <label style={{ fontSize: '12px', color: 'var(--muted)', display: 'block', marginBottom: '4px' }}>Chọn hướng xử lý:</label>
-                      <select
-                        value={approveResolutionType}
-                        onChange={(e) => setApproveResolutionType(e.target.value)}
-                        style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '13px' }}
-                      >
-                        <option value="">-- Chọn hướng xử lý --</option>
-                        {Object.keys(RESOLUTION_LABELS).map((rt) => (
-                          <option key={rt} value={rt} disabled={!RESOLUTION_ELIGIBILITY[rt](selectedRefund.reason)}>
-                            {RESOLUTION_LABELS[rt]}{!RESOLUTION_ELIGIBILITY[rt](selectedRefund.reason) ? ' (không phù hợp với lý do này)' : ''}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
                     <Textarea
                       placeholder="Ghi chú (không bắt buộc)..."
                       value={approveNote}
@@ -428,10 +358,9 @@ export default function AdminRefundsPage() {
                         <XCircle size={16} style={{ marginRight: '4px' }} /> Từ chối
                       </Button>
                       <Button
-                        style={{ background: selectedRefund.status === 'WAITING_EVIDENCE' ? '#9ca3af' : '#10b981', borderColor: selectedRefund.status === 'WAITING_EVIDENCE' ? '#9ca3af' : '#10b981', color: '#ffffff', fontWeight: 600 }}
+                        style={{ background: '#10b981', borderColor: '#10b981', color: '#ffffff', fontWeight: 600 }}
                         onClick={() => handleApprove(selectedRefund.id)}
-                        disabled={processing || selectedRefund.status === 'WAITING_EVIDENCE'}
-                        title={selectedRefund.status === 'WAITING_EVIDENCE' ? 'Khách hàng cần nộp bằng chứng trước khi có thể duyệt' : undefined}
+                        disabled={processing}
                       >
                         <CheckCircle size={16} style={{ marginRight: '4px' }} /> Duyệt yêu cầu
                       </Button>
@@ -489,38 +418,6 @@ export default function AdminRefundsPage() {
                   </Button>
                 </div>
               </div>
-            )}
-
-            {(selectedRefund.status === 'RESHIP_PENDING' || selectedRefund.status === 'EXCHANGE_SHIPPING') && (
-              !selectedRefund.replacementTrackingCode ? (
-                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                    <input
-                      value={replacementProvider}
-                      onChange={(e) => setReplacementProvider(e.target.value)}
-                      placeholder="Nhà vận chuyển"
-                      style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '13px' }}
-                    />
-                    <input
-                      value={replacementTrackingCode}
-                      onChange={(e) => setReplacementTrackingCode(e.target.value)}
-                      placeholder="Mã vận đơn"
-                      style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '13px' }}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <Button variant="primary" onClick={() => handleSubmitReplacement(selectedRefund.id)} disabled={processing}>
-                      Lưu thông tin vận chuyển
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
-                  <Button variant="primary" style={{ background: '#10b981', borderColor: '#10b981' }} onClick={() => handleClose(selectedRefund.id)} disabled={processing}>
-                    <CheckCircle size={16} style={{ marginRight: '4px' }} /> Đóng yêu cầu
-                  </Button>
-                </div>
-              )
             )}
 
             {selectedRefund.status === 'REFUND_PROCESSING' && (

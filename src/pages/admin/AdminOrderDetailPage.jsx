@@ -198,7 +198,6 @@ export default function AdminOrderDetailPage() {
               WRONG_BOOK: 'Giao sai sách',
               MISSING_BOOK: 'Thiếu sách trong đơn hàng',
               DAMAGED_IN_TRANSIT: 'Sách bị hư hỏng do vận chuyển',
-              CHANGE_OF_MIND: 'Đổi ý, không muốn mua nữa',
             };
             const DONE_STATUSES = ['REFUND_COMPLETED', 'COMPLETED'];
             const isRejected = refundRequest.status === 'REJECTED';

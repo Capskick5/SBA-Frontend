@@ -134,7 +134,6 @@ export const adminService = {
   confirmRefundReceived: (id) => api.put(`/admin/refund-requests/${id}/confirm-received`).then(res => res.data?.data || res.data),
   startRefundInspection: (id) => api.put(`/admin/refund-requests/${id}/start-inspection`).then(res => res.data?.data || res.data),
   completeRefundInspection: (id, body) => api.put(`/admin/refund-requests/${id}/complete-inspection`, body).then(res => res.data?.data || res.data),
-  submitReplacementShipment: (id, body) => api.put(`/admin/refund-requests/${id}/replacement-shipment`, body).then(res => res.data?.data || res.data),
   markRefundProcessed: (id) => api.put(`/admin/refund-requests/${id}/mark-refund-processed`).then(res => res.data?.data || res.data),
   closeRefundRequest: (id) => api.put(`/admin/refund-requests/${id}/close`).then(res => res.data?.data || res.data),
 
