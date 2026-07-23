@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Printer } from 'lucide-react';
 import { bookService } from '../../services/bookService';
 import { cartFacade } from '../../services/cartFacade';
 import { notifyCartUpdated } from '../../utils/cartEvents';
-import OrderTimeline from '../../components/orders/OrderTimeline';
 import { LoadingState, ErrorState } from '../../components/ui/State';
 import { orderService } from '../../services/orderService';
 import { refundService } from '../../services/refundService';
@@ -229,15 +229,7 @@ export default function OrderDetailPage({ adminView = false }) {
     }
   };
 
-  const getExpectedDeliveryDate = (dateStr) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    date.setDate(date.getDate() + 3);
-    const weekday = date.toLocaleDateString('vi-VN', { weekday: 'long' });
-    return `${weekday}, ${formatDate(date)}`;
-  };
 
-  const expectedDateText = getExpectedDeliveryDate(order.createdAt);
 
   return (
     <section className="order-detail-page-container stack" style={{ gap: '16px' }}>
@@ -257,18 +249,10 @@ export default function OrderDetailPage({ adminView = false }) {
           <h1>
             Đơn #{order.id} - <span className={`highlight ${statusConfig.class}`}>{statusConfig.text}</span>
           </h1>
-          {!adminView && (order.status === 'DELIVERED' || refundRequest) && (
-            <div>
-              {!refundRequest ? (
-                <Button className="btn-secondary" style={{ background: 'rgba(225, 29, 72, 0.08)', borderColor: 'rgba(225, 29, 72, 0.3)', color: '#e11d48', fontWeight: 600 }} onClick={() => setShowRefundModal(true)}>
-                  Trả hàng / Hoàn tiền
-                </Button>
-              ) : (
-                <span className={`status-badge ${REFUND_STATUS_META[refundRequest.status]?.badgeClass || 'refund-requested'}`}>
-                  Yêu cầu trả hàng: {REFUND_STATUS_META[refundRequest.status]?.badgeLabel || refundRequest.status}
-                </span>
-              )}
-            </div>
+          {refundRequest && (
+            <span className={`status-badge ${REFUND_STATUS_META[refundRequest.status]?.badgeClass || 'refund-requested'}`}>
+              Yêu cầu trả hàng: {REFUND_STATUS_META[refundRequest.status]?.badgeLabel || refundRequest.status}
+            </span>
           )}
         </div>
         <div className="order-detail-date">
@@ -373,8 +357,7 @@ export default function OrderDetailPage({ adminView = false }) {
           <h3>Phương thức giao hàng</h3>
           <div className="card-content">
             <strong><span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>NHANH</span> Giao hàng tiêu chuẩn</strong>
-            <p style={{ margin: '6px 0' }}>Dự kiến giao vào {expectedDateText}</p>
-            <p style={{ fontSize: '12px', color: 'var(--muted)' }}>
+            <p style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '4px' }}>
               {order.status === 'SHIPPED' || order.status === 'DELIVERED'
                 ? 'Giao bởi GHTK'
                 : 'Giao bởi BookVerse Logistics'}
@@ -520,7 +503,6 @@ export default function OrderDetailPage({ adminView = false }) {
               <strong>Tổng cộng</strong>
               <span className="order-detail-total-price">{formatCurrency(order.total || 0)}</span>
             </div>
-            <a href="#" onClick={(e) => { e.preventDefault(); window.print(); }} className="order-detail-invoice-link">Xem hóa đơn</a>
           </div>
         </div>
       </div>
@@ -531,21 +513,41 @@ export default function OrderDetailPage({ adminView = false }) {
           <Link to={isLoggedIn ? '/profile?tab=orders' : '/'} className="order-detail-back-link">
             &lt;&lt; {isLoggedIn ? 'Quay lại đơn hàng' : 'Quay lại trang chủ'}
           </Link>
-          <button
-            type="button"
-            onClick={() => setShowTimeline(!showTimeline)}
-            style={{ padding: '10px 20px', borderRadius: 'var(--radius-sm)', fontSize: '14px', background: '#ffd814', color: '#111', border: '1px solid #fcd200', fontWeight: '500', cursor: 'pointer' }}
-          >
-            {showTimeline ? 'Ẩn tiến trình' : 'Theo dõi đơn hàng'}
-          </button>
-        </div>
-      )}
-
-      {/* Order Timeline (Track Order history) */}
-      {showTimeline && (
-        <div className="order-detail-timeline-panel">
-          <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold' }}>Tiến trình đơn hàng</h3>
-          <OrderTimeline history={order.statusHistory || []} />
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <Button
+              type="button"
+              className="btn-secondary"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '10px 18px',
+                fontSize: '14px',
+                fontWeight: 600,
+              }}
+              onClick={() => window.print()}
+            >
+              <Printer size={16} />
+              In hóa đơn
+            </Button>
+            {order.status === 'DELIVERED' && !refundRequest && (
+              <Button
+                type="button"
+                className="btn-secondary"
+                style={{
+                  padding: '10px 18px',
+                  background: 'rgba(225, 29, 72, 0.08)',
+                  borderColor: 'rgba(225, 29, 72, 0.3)',
+                  color: '#e11d48',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                }}
+                onClick={() => setShowRefundModal(true)}
+              >
+                Trả hàng / Hoàn tiền
+              </Button>
+            )}
+          </div>
         </div>
       )}
 
@@ -577,6 +579,118 @@ export default function OrderDetailPage({ adminView = false }) {
         onClose={() => setShowRefundModal(false)}
         onSubmitSuccess={fetchRefundInfo}
       />
+
+      {/* Printable Formal Invoice Template */}
+      <div className="formal-invoice-print">
+        <div className="invoice-header">
+          <div className="invoice-company-info">
+            <h2 className="invoice-brand-title">BOOKVERSE ONLINE BOOKSTORE</h2>
+            <p><strong>Công ty TNHH Sách & Văn hóa BookVerse</strong></p>
+            <p>Địa chỉ: 123 Đường Sách, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh</p>
+            <p>Hotline: 1900 1234 · Email: support@bookverse.vn · Website: www.bookverse.vn</p>
+            <p>Mã số thuế: 0312345678</p>
+          </div>
+          <div className="invoice-title-block">
+            <h1>HÓA ĐƠN BÁN HÀNG</h1>
+            <p className="invoice-no">Mã đơn hàng: <strong>#{order.id}</strong></p>
+            <p className="invoice-date">Ngày lập: {formatDateTime(order.createdAt)}</p>
+          </div>
+        </div>
+
+        <hr className="invoice-divider" />
+
+        <div className="invoice-meta-grid">
+          <div className="invoice-meta-col">
+            <h3>Thông tin khách hàng</h3>
+            <p><strong>Người nhận:</strong> {address.recipient || 'Khách hàng'}</p>
+            <p><strong>Địa chỉ:</strong> {[address.line, address.ward, address.district, address.city].filter(Boolean).join(', ') || 'N/A'}</p>
+            <p><strong>Điện thoại:</strong> {address.phone || 'N/A'}</p>
+            {adminView && order.guestEmail && <p><strong>Email:</strong> {order.guestEmail}</p>}
+          </div>
+          <div className="invoice-meta-col">
+            <h3>Thông tin thanh toán & Giao hàng</h3>
+            <p><strong>Phương thức giao hàng:</strong> Giao hàng tiêu chuẩn</p>
+            <p><strong>Phương thức thanh toán:</strong> {getPaymentMethodLabel(order.paymentMethod)}</p>
+            <p><strong>Trạng thái thanh toán:</strong> {order.status === 'DELIVERED' || order.status === 'COMPLETED' || order.paymentMethod !== 'COD' ? 'Đã thanh toán' : statusConfig.text}</p>
+          </div>
+        </div>
+
+        <table className="invoice-table">
+          <thead>
+            <tr>
+              <th style={{ width: '6%', textAlign: 'center' }}>STT</th>
+              <th style={{ width: '48%' }}>Tên sản phẩm / Mã SKU</th>
+              <th style={{ width: '16%', textAlign: 'right' }}>Đơn giá</th>
+              <th style={{ width: '10%', textAlign: 'center' }}>SL</th>
+              <th style={{ width: '20%', textAlign: 'right' }}>Thành tiền</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(order.items || []).map((item, idx) => (
+              <tr key={`inv-item-${idx}`}>
+                <td style={{ textAlign: 'center' }}>{idx + 1}</td>
+                <td>
+                  <strong>{item.title}</strong>
+                  <br />
+                  <span style={{ fontSize: '11px', color: '#666' }}>SKU: 395962609{item.bookId || 'N/A'}</span>
+                </td>
+                <td style={{ textAlign: 'right' }}>{formatCurrency(item.price || (item.lineTotal / item.quantity) || 0)}</td>
+                <td style={{ textAlign: 'center' }}>{item.quantity}</td>
+                <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(item.lineTotal || 0)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="invoice-summary-wrapper">
+          <table className="invoice-summary-table">
+            <tbody>
+              <tr>
+                <td>Tạm tính:</td>
+                <td style={{ textAlign: 'right' }}>{formatCurrency(subtotal)}</td>
+              </tr>
+              <tr>
+                <td>Phí vận chuyển:</td>
+                <td style={{ textAlign: 'right' }}>{formatCurrency(shippingFee)}</td>
+              </tr>
+              {giftWrapFee > 0 && (
+                <tr>
+                  <td>Phí gói quà ({order.giftWrapName || 'Quà tặng'}):</td>
+                  <td style={{ textAlign: 'right' }}>{formatCurrency(giftWrapFee)}</td>
+                </tr>
+              )}
+              {discount > 0 && (
+                <tr>
+                  <td>Giảm giá:</td>
+                  <td style={{ textAlign: 'right', color: '#dc2626' }}>-{formatCurrency(discount)}</td>
+                </tr>
+              )}
+              <tr className="invoice-total-row">
+                <td><strong>TỔNG CỘNG THANH TOÁN:</strong></td>
+                <td style={{ textAlign: 'right' }}><strong>{formatCurrency(order.total || 0)}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div className="invoice-signatures">
+          <div className="signature-box">
+            <p><strong>Người mua hàng</strong></p>
+            <span className="signature-note">(Ký, ghi rõ họ tên)</span>
+          </div>
+          <div className="signature-box">
+            <p><strong>Người bán hàng</strong></p>
+            <span className="signature-note">(Ký, đóng dấu)</span>
+            <div className="signature-space"></div>
+            <p><strong>BookVerse Store</strong></p>
+          </div>
+        </div>
+
+        <div className="invoice-footer">
+          <p>Cảm ơn quý khách đã mua hàng tại BookVerse!</p>
+          <p>Mọi thắc mắc về đơn hàng xin liên hệ Hotline: 1900 1234 hoặc Email: support@bookverse.vn</p>
+        </div>
+      </div>
     </section>
   );
 }

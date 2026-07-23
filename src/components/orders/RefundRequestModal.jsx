@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -6,7 +6,17 @@ import Textarea from '../ui/Textarea';
 import { formatCurrency } from '../../utils/formatters';
 import { showToast } from '../../utils/toast';
 import { refundService } from '../../services/refundService';
-import { AlertCircle, X } from 'lucide-react';
+import {
+  AlertCircle,
+  Building2,
+  CreditCard,
+  Film,
+  Minus,
+  Plus,
+  UploadCloud,
+  User,
+  X,
+} from 'lucide-react';
 
 const REASON_OPTIONS = [
   { value: 'BOOK_DEFECT', label: 'Sách bị lỗi (in ấn, đóng gáy, mất trang...)' },
@@ -15,6 +25,10 @@ const REASON_OPTIONS = [
 ];
 
 const MIN_EVIDENCE_FILES = 2;
+
+function getItemCover(item) {
+  return item.coverUrl || item.imageUrl || `https://placehold.co/120x170?text=${encodeURIComponent(item.title || 'Sách')}`;
+}
 
 export default function RefundRequestModal({ order, isOpen, onClose, onSubmitSuccess }) {
   const [reason, setReason] = useState('BOOK_DEFECT');
@@ -27,13 +41,16 @@ export default function RefundRequestModal({ order, isOpen, onClose, onSubmitSuc
   const [evidenceItems, setEvidenceItems] = useState([]);
   const [uploadingEvidence, setUploadingEvidence] = useState(false);
   const [evidenceInputKey, setEvidenceInputKey] = useState(0);
+  const fileInputRef = useRef(null);
 
   if (!isOpen || !order) return null;
 
   const items = order.items || [];
-  const selectedAmount = items
-    .filter((item) => quantities[item.id] > 0)
-    .reduce((sum, item) => sum + item.unitPrice * quantities[item.id], 0);
+  const selectedItemsList = items.filter((item) => quantities[item.id] > 0);
+  const selectedAmount = selectedItemsList.reduce(
+    (sum, item) => sum + item.unitPrice * quantities[item.id],
+    0
+  );
 
   const toggleItem = (item) => {
     setQuantities((current) => {
@@ -47,9 +64,12 @@ export default function RefundRequestModal({ order, isOpen, onClose, onSubmitSuc
     });
   };
 
-  const setItemQuantity = (item, quantity) => {
-    const clamped = Math.min(Math.max(1, quantity), item.quantity);
-    setQuantities((current) => ({ ...current, [item.id]: clamped }));
+  const updateQuantity = (item, delta) => {
+    setQuantities((current) => {
+      const currentQty = current[item.id] || 1;
+      const nextQty = Math.min(Math.max(1, currentQty + delta), item.quantity);
+      return { ...current, [item.id]: nextQty };
+    });
   };
 
   const handleEvidenceFilesSelected = async (e) => {
@@ -59,12 +79,20 @@ export default function RefundRequestModal({ order, isOpen, onClose, onSubmitSuc
     setUploadingEvidence(true);
     for (const file of files) {
       const localId = `${Date.now()}-${file.name}-${Math.random()}`;
-      setEvidenceItems((current) => [...current, { id: localId, name: file.name, url: null, error: false }]);
+      const isVideo = file.type.startsWith('video/');
+      setEvidenceItems((current) => [
+        ...current,
+        { id: localId, name: file.name, url: null, isVideo, error: false },
+      ]);
       try {
         const { url } = await refundService.uploadEvidenceFile(file);
-        setEvidenceItems((current) => current.map((it) => (it.id === localId ? { ...it, url } : it)));
+        setEvidenceItems((current) =>
+          current.map((it) => (it.id === localId ? { ...it, url } : it))
+        );
       } catch (err) {
-        setEvidenceItems((current) => current.map((it) => (it.id === localId ? { ...it, error: true } : it)));
+        setEvidenceItems((current) =>
+          current.map((it) => (it.id === localId ? { ...it, error: true } : it))
+        );
         showToast(err?.message || `Không thể tải lên "${file.name}"`, 'error');
       }
     }
@@ -121,181 +149,257 @@ export default function RefundRequestModal({ order, isOpen, onClose, onSubmitSuc
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Yêu cầu hoàn tiền - Đơn hàng #${order.id}`}>
-      <form onSubmit={handleSubmit} className="stack" style={{ gap: '16px' }}>
-        <div>
-          <label style={{ display: 'block', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>
-            Chọn sản phẩm cần trả *
-          </label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px' }}>
-            {items.map((item) => {
-              const selectedQty = quantities[item.id] || 0;
-              const isSelected = selectedQty > 0;
-              return (
-                <div
-                  key={item.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '8px',
-                    borderRadius: '6px',
-                    background: isSelected ? 'rgba(239, 68, 68, 0.08)' : 'transparent',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleItem(item)}
-                    style={{ cursor: 'pointer' }}
-                  />
-                  <span style={{ flex: 1, fontSize: '13px', cursor: 'pointer' }} onClick={() => toggleItem(item)}>
-                    {item.title} <span style={{ color: 'var(--muted)' }}>(đã mua x{item.quantity})</span>
-                  </span>
-                  {isSelected && item.quantity > 1 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ fontSize: '12px', color: 'var(--muted)' }}>Số lượng trả:</span>
+    <Modal isOpen={isOpen} onClose={onClose} title="" maxWidth="640px">
+      <div className="refund-modal-container">
+        {/* Custom Header */}
+        <div className="refund-modal-header">
+          <div className="refund-header-title-box">
+            <h2>Yêu cầu hoàn tiền</h2>
+            <span className="refund-order-badge">Đơn hàng #{order.id}</span>
+          </div>
+          <button type="button" className="refund-modal-close-btn" onClick={onClose} aria-label="Đóng">
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="refund-modal-form">
+          {/* Section 1: Item Selection */}
+          <div className="refund-form-section">
+            <label className="refund-section-label">
+              Chọn sản phẩm cần trả <span className="req-star">*</span>
+            </label>
+            <div className="refund-items-grid">
+              {items.map((item) => {
+                const selectedQty = quantities[item.id] || 0;
+                const isSelected = selectedQty > 0;
+                return (
+                  <div
+                    key={item.id}
+                    className={`refund-item-card ${isSelected ? 'is-selected' : ''}`}
+                    onClick={() => toggleItem(item)}
+                  >
+                    <div className="refund-checkbox-wrapper">
                       <input
-                        type="number"
-                        min={1}
-                        max={item.quantity}
-                        value={selectedQty}
-                        onChange={(e) => setItemQuantity(item, Number(e.target.value))}
-                        style={{ width: '48px', padding: '4px 6px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '13px' }}
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {}}
+                        onClick={(e) => e.stopPropagation()}
+                        tabIndex={-1}
                       />
                     </div>
-                  )}
-                  <strong style={{ fontSize: '13px', minWidth: '90px', textAlign: 'right' }}>
-                    {formatCurrency(isSelected ? item.unitPrice * selectedQty : item.lineTotal)}
-                  </strong>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.08)', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)', fontSize: '13px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <AlertCircle size={18} color="#ef4444" style={{ flexShrink: 0 }} />
-          <span>Số tiền dự kiến hoàn trả: <strong style={{ color: '#ef4444' }}>{formatCurrency(selectedAmount)}</strong></span>
-        </div>
-
-        <div>
-          <label style={{ display: 'block', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>
-            Lý do hoàn hàng / hoàn tiền *
-          </label>
-          <select
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              borderRadius: '6px',
-              border: '1px solid var(--border)',
-              background: 'var(--surface)',
-              color: 'var(--text)',
-              fontSize: '14px'
-            }}
-          >
-            {REASON_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label style={{ display: 'block', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>
-            Chi tiết lý do & tình trạng sản phẩm
-          </label>
-          <Textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Mô tả cụ thể vấn đề bạn gặp phải với sản phẩm..."
-            rows={3}
-          />
-        </div>
-
-        <div>
-          <label style={{ display: 'block', fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>
-            Bằng chứng (hình ảnh/video) * <span style={{ fontWeight: 400, color: 'var(--muted)' }}>— tối thiểu {MIN_EVIDENCE_FILES} tệp</span>
-          </label>
-          <input
-            key={evidenceInputKey}
-            type="file"
-            accept="image/*,video/*"
-            multiple
-            onChange={handleEvidenceFilesSelected}
-            style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '13px', width: '100%' }}
-          />
-          <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: 'var(--muted)' }}>
-            Chấp nhận hình ảnh hoặc video, tối đa 20MB mỗi tệp. Bằng chứng giúp CSKH xét duyệt yêu cầu nhanh hơn.
-          </p>
-          {evidenceItems.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
-              {evidenceItems.map((item) => (
-                <div key={item.id} style={{ position: 'relative', width: '72px', height: '72px' }}>
-                  {item.url ? (
-                    <img src={item.url} alt={item.name} style={{ width: '72px', height: '72px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border)' }} onError={(e) => { e.target.style.display = 'none'; }} />
-                  ) : (
-                    <div style={{ width: '72px', height: '72px', borderRadius: '6px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: item.error ? '#ef4444' : 'var(--muted)', textAlign: 'center', padding: '4px' }}>
-                      {item.error ? 'Lỗi tải lên' : 'Đang tải...'}
+                    <div className="refund-item-cover-wrapper">
+                      <img
+                        src={getItemCover(item)}
+                        alt={item.title}
+                        onError={(e) => {
+                          e.target.src = `https://placehold.co/120x170?text=${encodeURIComponent(item.title || 'Sách')}`;
+                        }}
+                      />
                     </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => removeEvidenceItem(item.id)}
-                    style={{ position: 'absolute', top: '-6px', right: '-6px', width: '20px', height: '20px', borderRadius: '50%', border: 'none', background: '#ef4444', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                    aria-label="Xóa tệp"
-                  >
-                    <X size={12} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                    <div className="refund-item-info">
+                      <h4 className="refund-item-title">{item.title}</h4>
+                      <div className="refund-item-meta">
+                        <span className="refund-item-price">{formatCurrency(item.unitPrice)} / cuốn</span>
+                        <span className="refund-item-purchased">(Đã mua x{item.quantity})</span>
+                      </div>
+                    </div>
 
-        <div style={{ borderTop: '1px dashed var(--border)', paddingTop: '16px' }}>
-          <h4 style={{ margin: '0 0 12px 0', fontSize: '14px' }}>Thông tin tài khoản nhận tiền hoàn</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div>
-              <label style={{ fontSize: '12px', color: 'var(--muted)', display: 'block', marginBottom: '4px' }}>Ngân hàng *</label>
-              <Input
-                value={bankName}
-                onChange={(e) => setBankName(e.target.value)}
-                placeholder="VD: Vietcombank, MBBank..."
-                required
-              />
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: 'var(--muted)', display: 'block', marginBottom: '4px' }}>Số tài khoản *</label>
-              <Input
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                placeholder="Nhập số tài khoản"
-                required
-              />
+                    {isSelected ? (
+                      <div className="refund-item-right" onClick={(e) => e.stopPropagation()}>
+                        {item.quantity > 1 && (
+                          <div className="refund-qty-counter">
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item, -1)}
+                              disabled={selectedQty <= 1}
+                              aria-label="Giảm"
+                            >
+                              <Minus size={12} />
+                            </button>
+                            <span>{selectedQty}</span>
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item, 1)}
+                              disabled={selectedQty >= item.quantity}
+                              aria-label="Tăng"
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
+                        )}
+                        <strong className="refund-item-line-total">
+                          {formatCurrency(item.unitPrice * selectedQty)}
+                        </strong>
+                      </div>
+                    ) : (
+                      <div className="refund-item-right">
+                        <span className="refund-item-unselected-label">Bấm để chọn</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
-          <div style={{ marginTop: '10px' }}>
-            <label style={{ fontSize: '12px', color: 'var(--muted)', display: 'block', marginBottom: '4px' }}>Tên chủ tài khoản (viết hoa không dấu) *</label>
-            <Input
-              value={accountOwner}
-              onChange={(e) => setAccountOwner(e.target.value)}
-              placeholder="VD: NGUYEN VAN A"
-              required
+
+          {/* Refund Amount Summary Banner */}
+          <div className="refund-summary-banner">
+            <div className="refund-summary-text">
+              <span className="refund-summary-label">Số tiền dự kiến hoàn trả:</span>
+              <strong className="refund-summary-amount">{formatCurrency(selectedAmount)}</strong>
+            </div>
+            {selectedItemsList.length > 0 && (
+              <span className="refund-summary-badge">{selectedItemsList.length} sản phẩm</span>
+            )}
+          </div>
+
+          {/* Section 2: Reason & Description */}
+          <div className="refund-form-group">
+            <label className="refund-section-label">
+              Lý do hoàn hàng / hoàn tiền <span className="req-star">*</span>
+            </label>
+            <select
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              className="refund-select-input"
+            >
+              {REASON_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="refund-form-group">
+            <label className="refund-section-label">
+              Chi tiết lý do & tình trạng sản phẩm
+            </label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Mô tả cụ thể vấn đề gặp phải (ví dụ: gáy sách bung, thiếu trang từ 45-60, trầy xước...)"
+              rows={3}
             />
           </div>
-        </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-          <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
-            Hủy
-          </Button>
-          <Button type="submit" variant="primary" disabled={submitting}>
-            {submitting ? 'Đang gửi...' : 'Gửi yêu cầu hoàn tiền'}
-          </Button>
-        </div>
-      </form>
+          {/* Section 3: Evidence Upload */}
+          <div className="refund-form-group">
+            <label className="refund-section-label">
+              Bằng chứng (hình ảnh/video) <span className="req-star">*</span>
+              <span className="refund-label-hint">— Tối thiểu {MIN_EVIDENCE_FILES} tệp</span>
+            </label>
+
+            <input
+              ref={fileInputRef}
+              key={evidenceInputKey}
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              onChange={handleEvidenceFilesSelected}
+              style={{ display: 'none' }}
+            />
+
+            <div
+              className="refund-upload-dropzone"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <div className="refund-upload-icon-box">
+                <UploadCloud size={24} />
+              </div>
+              <div>
+                <p className="refund-upload-title">Nhấp để tải ảnh hoặc video bằng chứng</p>
+                <p className="refund-upload-desc">
+                  Chấp nhận PNG, JPG, MP4 (Tối đa 20MB mỗi tệp). Bằng chứng rõ ràng giúp duyệt đơn nhanh hơn.
+                </p>
+              </div>
+            </div>
+
+            {evidenceItems.length > 0 && (
+              <div className="refund-evidence-previews">
+                {evidenceItems.map((item) => (
+                  <div key={item.id} className="refund-evidence-thumb">
+                    {item.url ? (
+                      item.isVideo ? (
+                        <div className="refund-video-preview">
+                          <Film size={24} />
+                          <span>Video</span>
+                        </div>
+                      ) : (
+                        <img src={item.url} alt={item.name} />
+                      )
+                    ) : (
+                      <div className={`refund-thumb-status ${item.error ? 'is-error' : ''}`}>
+                        {item.error ? 'Lỗi' : 'Đang tải...'}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      className="refund-thumb-remove"
+                      onClick={() => removeEvidenceItem(item.id)}
+                      title="Xóa tệp"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Section 4: Bank Account Info */}
+          <div className="refund-bank-section">
+            <h4 className="refund-bank-title">Thông tin tài khoản nhận tiền hoàn</h4>
+            <div className="refund-bank-grid">
+              <div className="refund-form-group">
+                <label className="refund-input-label">
+                  <Building2 size={14} /> Ngân hàng <span className="req-star">*</span>
+                </label>
+                <Input
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  placeholder="VD: Vietcombank, MBBank..."
+                  required
+                />
+              </div>
+
+              <div className="refund-form-group">
+                <label className="refund-input-label">
+                  <CreditCard size={14} /> Số tài khoản <span className="req-star">*</span>
+                </label>
+                <Input
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  placeholder="Nhập số tài khoản ngân hàng"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="refund-form-group" style={{ marginTop: '12px' }}>
+              <label className="refund-input-label">
+                <User size={14} /> Tên chủ tài khoản (viết hoa không dấu) <span className="req-star">*</span>
+              </label>
+              <Input
+                value={accountOwner}
+                onChange={(e) => setAccountOwner(e.target.value)}
+                placeholder="VD: NGUYEN VAN A"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Sticky Modal Actions Footer */}
+          <div className="refund-modal-footer">
+            <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
+              Hủy
+            </Button>
+            <Button type="submit" variant="primary" disabled={submitting}>
+              {submitting ? 'Đang gửi yêu cầu...' : 'Gửi yêu cầu hoàn tiền'}
+            </Button>
+          </div>
+        </form>
+      </div>
     </Modal>
   );
 }
