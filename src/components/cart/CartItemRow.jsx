@@ -4,6 +4,7 @@ import { formatCurrency } from '../../utils/formatters';
 
 export default function CartItemRow({ item, selected, error, onSelect, onQuantity, onRemove }) {
   const hasDiscount = item.originalPrice && item.originalPrice > item.price;
+  const atStockLimit = item.stock != null && item.quantity >= item.stock;
 
   return (
     <div className={`cart-item-row${!item.available ? ' cart-item-unavailable' : ''}`}>
@@ -53,7 +54,7 @@ export default function CartItemRow({ item, selected, error, onSelect, onQuantit
             type="button"
             className="cart-qty-btn"
             onClick={() => onQuantity(item.itemId, item.quantity + 1)}
-            disabled={!item.available}
+            disabled={!item.available || atStockLimit}
             aria-label="Tăng số lượng"
           >
             <Plus size={12} />

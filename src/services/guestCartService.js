@@ -1,4 +1,5 @@
 import { apiClient } from '../api/apiClient';
+import { createError } from '../api/apiError';
 import {
   clearGuestCart,
   getGuestCartItems,
@@ -10,23 +11,56 @@ import {
 const fallbackCover = (title) =>
   `https://placehold.co/120x170?text=${encodeURIComponent(title || 'Book')}`;
 
+const STOCK_EXCEEDED_MESSAGE = 'Số lượng vượt quá tồn kho hiện có.';
+
 let guestApiAvailable = false;
+
+function resolveStockLimit(source) {
+  if (source?.stock == null || source.stock === '') return null;
+  const stock = Number(source.stock);
+  return Number.isFinite(stock) ? Math.max(0, stock) : null;
+}
+
+function assertWithinStock(nextQty, stockLimit, currentQty = 0) {
+  if (stockLimit == null) return;
+  if (stockLimit <= 0) {
+    throw createError({
+      code: 400,
+      error_type: 'VALIDATION_ERROR',
+      message: 'Sách này hiện đã hết hàng.',
+    });
+  }
+  if (nextQty > stockLimit) {
+    throw createError({
+      code: 400,
+      error_type: 'VALIDATION_ERROR',
+      message: currentQty >= stockLimit
+        ? `Giỏ đã có đủ số lượng còn lại (${stockLimit} cuốn).`
+        : STOCK_EXCEEDED_MESSAGE,
+    });
+  }
+}
 
 function guestHeaders() {
   return { 'X-Guest-Token': getGuestToken() };
 }
 
 function mapLocalItems(items) {
-  return items.map((item) => ({
-    itemId: item.itemId,
-    bookId: item.bookId,
-    title: item.title || 'Untitled book',
-    coverUrl: item.coverUrl || fallbackCover(item.title),
-    price: item.price || 0,
-    quantity: item.quantity || 1,
-    lineTotal: (item.price || 0) * (item.quantity || 1),
-    available: item.available !== false,
-  }));
+  return items.map((item) => {
+    const stock = resolveStockLimit(item);
+    const quantity = item.quantity || 1;
+    return {
+      itemId: item.itemId,
+      bookId: item.bookId,
+      title: item.title || 'Untitled book',
+      coverUrl: item.coverUrl || fallbackCover(item.title),
+      price: item.price || 0,
+      quantity,
+      stock,
+      lineTotal: (item.price || 0) * quantity,
+      available: item.available !== false && (stock == null || stock > 0),
+    };
+  });
 }
 
 function buildLocalCart(items = getGuestCartItems()) {
@@ -92,16 +126,23 @@ async function tryGuestApi(request) {
 }
 
 function upsertLocalItem(book, quantity) {
+  const addQty = Math.max(1, Number(quantity) || 1);
+  const stockLimit = resolveStockLimit(book);
   const items = getGuestCartItems();
   const itemId = guestItemIdForBook(book.id);
   const existing = items.find((item) => item.bookId === book.id || item.itemId === itemId);
+  const currentQty = existing?.quantity || 0;
+  const nextQty = currentQty + addQty;
+
+  assertWithinStock(nextQty, stockLimit, currentQty);
 
   if (existing) {
-    existing.quantity = Math.max(1, (existing.quantity || 0) + quantity);
+    existing.quantity = nextQty;
     existing.title = book.title || existing.title;
     existing.coverUrl = book.coverUrl || existing.coverUrl;
     existing.price = book.price ?? existing.price;
-    existing.available = book.stock == null ? existing.available : book.stock > 0;
+    existing.stock = stockLimit ?? existing.stock ?? null;
+    existing.available = stockLimit == null ? existing.available !== false : stockLimit > 0;
   } else {
     items.push({
       itemId,
@@ -109,8 +150,9 @@ function upsertLocalItem(book, quantity) {
       title: book.title || 'Untitled book',
       coverUrl: book.coverUrl || fallbackCover(book.title),
       price: book.price || 0,
-      quantity: Math.max(1, quantity),
-      available: book.stock == null ? true : book.stock > 0,
+      quantity: nextQty,
+      stock: stockLimit,
+      available: stockLimit == null ? true : stockLimit > 0,
     });
   }
 
@@ -133,6 +175,7 @@ export const guestCartService = {
           coverUrl: item.coverUrl,
           price: item.price,
           quantity: item.quantity,
+          stock: item.stock ?? null,
           available: item.available,
         })),
       );
@@ -164,13 +207,21 @@ export const guestCartService = {
     );
     if (remote) return mapApiCart(remote);
 
-    const items = getGuestCartItems().map((item) =>
+    const items = getGuestCartItems();
+    const target = items.find(
+      (item) => String(item.itemId) === String(itemId) || item.bookId === bookId,
+    );
+    if (target) {
+      assertWithinStock(nextQty, resolveStockLimit(target), target.quantity || 0);
+    }
+
+    const nextItems = items.map((item) =>
       String(item.itemId) === String(itemId) || item.bookId === bookId
         ? { ...item, quantity: nextQty }
         : item,
     );
-    setGuestCartItems(items);
-    return buildLocalCart(items);
+    setGuestCartItems(nextItems);
+    return buildLocalCart(nextItems);
   },
 
   async removeItem(itemId) {

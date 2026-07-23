@@ -25,6 +25,9 @@ export const checkoutService = {
   },
 
   checkoutGuest(payload, idempotencyKey) {
+    if (!idempotencyKey) {
+      return Promise.reject(new Error('Thiếu Idempotency-Key cho thanh toán khách.'));
+    }
     return apiClient.post('/orders/guest', payload, {
       auth: false,
       headers: { 'Idempotency-Key': idempotencyKey },

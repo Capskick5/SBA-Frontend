@@ -58,6 +58,10 @@ const BACKEND_MESSAGE_TRANSLATIONS = {
     'Sách này hiện đã hết hàng.',
   'Stock not available':
     'Số lượng sách trong kho không đủ.',
+  'Idempotency key is already used':
+    'Yêu cầu thanh toán trước đó đã được ghi nhận. Vui lòng thử lại.',
+  'Unable to create VNPAY checkout link':
+    'Không tạo được liên kết thanh toán. Vui lòng thử lại.',
   'User not found':
     'Không tìm thấy thông tin người dùng.',
   'Book not found':
