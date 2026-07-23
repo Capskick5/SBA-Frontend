@@ -208,7 +208,7 @@ export default function CatalogPage() {
               <BookOpen size={22} />
             </div>
             <div>
-              <div className="trigger-badge">🔥 CHIẾN DỊCH KHUYẾN MÃI ĐANG DIỄN RA</div>
+              <div className="trigger-badge">CHIẾN DỊCH KHUYẾN MÃI ĐANG DIỄN RA</div>
               <h3>Kho Voucher & Campaign Khuyến Mãi</h3>
               <p>Khám phá các ưu đãi giờ vàng, thu thập trực tiếp mã giảm giá về ví cá nhân chỉ với 1 cú click!</p>
             </div>
