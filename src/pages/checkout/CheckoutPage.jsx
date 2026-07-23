@@ -499,7 +499,7 @@ export default function CheckoutPage() {
         const guestEmailError = validateGuestEmail(guestEmail);
         if (guestEmailError) {
           setEmailError(guestEmailError);
-          setCheckoutError('Enter a valid contact email to continue to payment.');
+          setCheckoutError('Nhập email liên hệ hợp lệ để tiếp tục thanh toán.');
           setPaying(false);
           return;
         }
@@ -508,9 +508,15 @@ export default function CheckoutPage() {
           setPaying(false);
           return;
         }
-        const result = await checkoutService.checkoutGuest({
-          email: guestEmail || null,
-          ...guestAddress,
+
+        const guestPayload = {
+          email: guestEmail.trim(),
+          recipient: guestAddress.recipient,
+          phone: guestAddress.phone,
+          line: guestAddress.line,
+          ward: guestAddress.ward || null,
+          district: guestAddress.district || null,
+          city: guestAddress.city,
           items: selectedCartItems.map((item) => ({
             bookId: item.bookId,
             quantity: item.quantity,
@@ -518,26 +524,18 @@ export default function CheckoutPage() {
           deliveryType,
           giftWrapId: deliveryType === 'GIFT' ? selectedGiftWrapId : null,
           paymentMethod,
-          preview,
-          checkoutCall: () => checkoutService.checkoutGuest({
-            email: guestEmail.trim(),
-            ...guestAddress,
-            items: selectedCartItems.map((item) => ({
-              bookId: item.bookId,
-              quantity: item.quantity,
-            })),
-            deliveryType,
-            giftWrapId: deliveryType === 'GIFT' ? selectedGiftWrapId : null,
-            paymentMethod,
-          }, key),
-        });
+        };
+
+        const result = await checkoutService.checkoutGuest(guestPayload, key);
 
         if (result?.checkoutUrl) {
           clearGuestCart();
           window.location.href = result.checkoutUrl;
           return;
         }
-        setCheckoutError('Thanh toán khách chưa khả dụng. Vui lòng thử lại sau hoặc đăng nhập.');
+        // Order may already exist (idempotent retry) but payment link is not ready yet.
+        idempotencyKeyRef.current = null;
+        setCheckoutError('Không tạo được liên kết thanh toán. Vui lòng thử lại.');
         return;
       }
 
@@ -564,8 +562,18 @@ export default function CheckoutPage() {
         window.location.href = result.checkoutUrl;
       }
     } catch (err) {
+      const rawMessage = err?.response?.data?.message || err?.message || '';
+      const isIdempotencyConflict = /idempotency key is already used/i.test(rawMessage);
+      // Next click must use a fresh key — the previous key already created an order.
+      if (isIdempotencyConflict) {
+        idempotencyKeyRef.current = null;
+      }
+
       const pendingMessage = getPendingPaymentUserMessage(err);
       const message = pendingMessage
+        || (isIdempotencyConflict
+          ? 'Yêu cầu thanh toán trước đó đã được ghi nhận. Nhấn lại để tiếp tục hoặc dùng liên kết thanh toán mới.'
+          : null)
         || err?.response?.data?.message
         || err?.message
         || 'Thanh toán thất bại. Vui lòng thử lại.';
