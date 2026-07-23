@@ -249,11 +249,6 @@ export default function OrderDetailPage({ adminView = false }) {
           <h1>
             Đơn #{order.id} - <span className={`highlight ${statusConfig.class}`}>{statusConfig.text}</span>
           </h1>
-          {refundRequest && (
-            <span className={`status-badge ${REFUND_STATUS_META[refundRequest.status]?.badgeClass || 'refund-requested'}`}>
-              Yêu cầu trả hàng: {REFUND_STATUS_META[refundRequest.status]?.badgeLabel || refundRequest.status}
-            </span>
-          )}
         </div>
         <div className="order-detail-date">
           Đặt ngày {formatDateTime(order.createdAt)}
@@ -267,78 +262,6 @@ export default function OrderDetailPage({ adminView = false }) {
           )}
         </div>
       </div>
-
-      {/* Refund Status Info Banner */}
-      {refundRequest && (
-        <div style={{
-          padding: '16px',
-          borderRadius: '8px',
-          background: REFUND_STATUS_META[refundRequest.status]?.bg || 'rgba(245, 158, 11, 0.08)',
-          border: `1px solid ${REFUND_STATUS_META[refundRequest.status]?.border || 'rgba(245, 158, 11, 0.2)'}`,
-        }}>
-          <h4 style={{ margin: '0 0 6px 0', fontSize: '15px' }}>
-            {REFUND_STATUS_META[refundRequest.status]?.heading || refundRequest.status}
-          </h4>
-          <p style={{ margin: '0', fontSize: '13px', color: 'var(--muted)' }}>
-            Lý do trả hàng: <strong>{REASON_LABELS[refundRequest.reason] || refundRequest.reason}</strong> · Tài khoản nhận tiền: <strong>{refundRequest.bankName} - {refundRequest.bankAccountNumber} ({refundRequest.bankAccountHolder})</strong>
-          </p>
-          {refundRequest.items?.length > 0 && (
-            <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: 'var(--muted)' }}>
-              Sản phẩm yêu cầu trả: <strong>{refundRequest.items.map((item) => `${item.title} (x${item.quantity})`).join(', ')}</strong>
-            </p>
-          )}
-          {refundRequest.status === 'REJECTED' && (refundRequest.inspectionNote || refundRequest.decisionNote) && (
-            <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: '#ef4444' }}>
-              Lý do từ chối: {refundRequest.inspectionNote || refundRequest.decisionNote}
-            </p>
-          )}
-
-          {refundRequest.evidence?.length > 0 && (
-            <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed var(--border)' }}>
-              <p style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: '600' }}>Bằng chứng đã nộp:</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                {refundRequest.evidence.map((ev) => (
-                  <a key={ev.id} href={ev.url} target="_blank" rel="noreferrer" style={{ display: 'block' }}>
-                    <EvidenceThumbnail url={ev.url} />
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {refundRequest.status === 'PICKUP_PENDING' && !refundRequest.returnTrackingCode && (
-            <form onSubmit={handleSubmitReturnShipment} style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed var(--border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <p style={{ margin: 0, fontSize: '13px' }}>Vui lòng gửi sản phẩm về cho BookVerse và nhập thông tin vận chuyển bên dưới:</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <input
-                  value={returnProvider}
-                  onChange={(e) => setReturnProvider(e.target.value)}
-                  placeholder="Nhà vận chuyển (VD: GHTK, GHN...)"
-                  style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '13px' }}
-                />
-                <input
-                  value={returnTrackingCode}
-                  onChange={(e) => setReturnTrackingCode(e.target.value)}
-                  placeholder="Mã vận đơn"
-                  style={{ padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: '13px' }}
-                />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button type="submit" variant="primary" disabled={submittingReturn}>
-                  {submittingReturn ? 'Đang gửi...' : 'Xác nhận đã gửi hàng'}
-                </Button>
-              </div>
-            </form>
-          )}
-
-          {refundRequest.returnTrackingCode && (
-            <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: 'var(--muted)' }}>
-              Vận chuyển trả hàng: <strong>{refundRequest.returnShippingProvider} - {refundRequest.returnTrackingCode}</strong>
-              {refundRequest.status === 'PICKUP_PENDING' && ' (chờ BookVerse xác nhận đã nhận được hàng)'}
-            </p>
-          )}
-        </div>
-      )}
 
       {/* Info Grid */}
       <div className="order-detail-info-grid">

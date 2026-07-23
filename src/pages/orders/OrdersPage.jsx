@@ -8,6 +8,7 @@ import { ErrorState, LoadingState } from '../../components/ui/State';
 import OrderStatusBadge from '../../components/orders/OrderStatusBadge';
 import { orderService } from '../../services/orderService';
 import { bookService } from '../../services/bookService';
+import { refundService } from '../../services/refundService';
 import { cartFacade } from '../../services/cartFacade';
 import { notifyCartUpdated } from '../../utils/cartEvents';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
@@ -26,12 +27,11 @@ const TABS = [
   { id: 'SHIPPED', label: 'Đang giao' },
   { id: 'DELIVERED', label: 'Đã giao' },
   { id: 'CANCELLED', label: 'Đã hủy' },
-  { id: 'REFUND_REQUESTED', label: 'Yêu cầu hoàn tiền' },
 ];
 
 const PAGE_SIZE = 10;
 
-export default function OrdersPage() {
+export default function OrdersPage({ initialTab = 'ALL' }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [orders, setOrders] = useState([]);
@@ -40,7 +40,7 @@ export default function OrdersPage() {
   const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('ALL');
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [searchQuery, setSearchQuery] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
   const [rebuyingId, setRebuyingId] = useState(null);
@@ -50,11 +50,16 @@ export default function OrdersPage() {
   const [resumingId, setResumingId] = useState(null);
   const [showLockDialog, setShowLockDialog] = useState(false);
 
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
   const loadOrders = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const filter = activeTab === 'ALL'
+      const isRefundTab = activeTab === 'REFUND_REQUESTED';
+      const filter = (activeTab === 'ALL' || isRefundTab)
         ? {}
         : activeTab === 'PROCESSING'
           ? { statuses: ['PAID', 'PROCESSING', 'PACKED'] }
@@ -62,15 +67,13 @@ export default function OrdersPage() {
           ? { statuses: ['SHIPPED', 'RE_DELIVERY'] }
           : { status: activeTab };
       const result = await orderService.getOrdersPage({
-        page,
-        size: PAGE_SIZE,
+        page: isRefundTab ? 0 : page,
+        size: isRefundTab ? 100 : PAGE_SIZE,
         search: appliedSearch,
         ...filter,
       });
       const rawOrders = result.items;
-      setTotalPages(result.totalPages);
-      setTotalItems(result.totalItems);
-      
+
       const bookCache = {};
       const fetchBookCover = async (bookId) => {
         if (!bookId) return null;
@@ -86,7 +89,7 @@ export default function OrdersPage() {
         }
       };
 
-      // Fetch details in parallel to obtain the line items (books inside the order)
+      // Fetch details in parallel to obtain the line items & refund request
       const detailedOrders = await Promise.all(
         rawOrders.map(async (order) => {
           try {
@@ -104,11 +107,19 @@ export default function OrdersPage() {
               })
             );
 
+            let refundReq = null;
+            try {
+              refundReq = await refundService.getRefundByOrderId(order.id);
+            } catch {
+              refundReq = null;
+            }
+
             return {
               ...order,
               items: itemsWithCovers,
               addressSnapshot: details?.addressSnapshot,
               statusHistory: details?.statusHistory,
+              refundRequest: refundReq,
             };
           } catch (err) {
             console.error(`Failed to load details for order #${order.id}:`, err);
@@ -119,7 +130,20 @@ export default function OrdersPage() {
 
       // Sort by ID descending (newest first)
       detailedOrders.sort((a, b) => b.id - a.id);
-      setOrders(detailedOrders);
+
+      let finalOrders = detailedOrders;
+      if (isRefundTab) {
+        finalOrders = detailedOrders.filter((o) => !!o.refundRequest);
+        setTotalItems(finalOrders.length);
+        setTotalPages(Math.ceil(finalOrders.length / PAGE_SIZE) || 0);
+        const startIdx = page * PAGE_SIZE;
+        finalOrders = finalOrders.slice(startIdx, startIdx + PAGE_SIZE);
+      } else {
+        setTotalPages(result.totalPages);
+        setTotalItems(result.totalItems);
+      }
+
+      setOrders(finalOrders);
     } catch (err) {
       console.error('Failed to load orders:', err);
       setError('Không thể tải đơn hàng. Vui lòng thử lại sau.');

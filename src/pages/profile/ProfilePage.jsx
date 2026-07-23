@@ -5,6 +5,7 @@ import {
   Mail,
   MapPin,
   Package,
+  RotateCcw,
   Star,
   TicketPercent,
   User,
@@ -21,6 +22,7 @@ import AddressesPage from './AddressesPage';
 import MyReviewsPage from './MyReviewsPage';
 import OrdersPage from '../orders/OrdersPage';
 import VouchersPage from './VouchersPage';
+import CustomerReturnsPage from './CustomerReturnsPage';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -119,6 +121,7 @@ export default function ProfilePage() {
   const menuItems = [
     { id: 'account', label: 'Thông tin tài khoản', icon: User },
     { id: 'orders', label: 'Quản lý đơn hàng', icon: Package },
+    { id: 'refunds', label: 'Quản lý đổi trả', icon: RotateCcw },
     { id: 'vouchers', label: 'Voucher của tôi', icon: TicketPercent },
     { id: 'addresses', label: 'Sổ địa chỉ', icon: MapPin },
     { id: 'reviews', label: 'Đánh giá sản phẩm', icon: Star },
@@ -139,7 +142,17 @@ export default function ProfilePage() {
       return (
         <div className="profile-content">
           <div className="profile-card profile-embedded-card">
-            <OrdersPage />
+            <OrdersPage initialTab="ALL" />
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === 'refunds' || activeTab === 'returns') {
+      return (
+        <div className="profile-content">
+          <div className="profile-card profile-embedded-card">
+            <CustomerReturnsPage />
           </div>
         </div>
       );

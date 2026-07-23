@@ -38,6 +38,7 @@ const AdminCampaignsPage = lazy(() => import('../pages/admin/AdminCampaignsPage'
 const AdminBannersPage = lazy(() => import('../pages/admin/AdminBannersPage'));
 const AdminGiftWrapsPage = lazy(() => import('../pages/admin/AdminGiftWrapsPage'));
 const AdminRefundsPage = lazy(() => import('../pages/admin/AdminRefundsPage'));
+const AdminRefundDetailPage = lazy(() => import('../pages/admin/AdminRefundDetailPage'));
 
 const main = (page) => (
   <StorefrontRoute>
@@ -84,6 +85,7 @@ export default function AppRoutes() {
         <Route path="/admin/orders" element={admin(<AdminOrdersPage />)} />
         <Route path="/admin/orders/:id" element={admin(<AdminOrderDetailPage />)} />
         <Route path="/admin/refunds" element={admin(<AdminRefundsPage />)} />
+        <Route path="/admin/refunds/:id" element={admin(<AdminRefundDetailPage />)} />
         <Route path="/admin/campaigns" element={admin(<AdminCampaignsPage />)} />
         <Route path="/admin/vouchers" element={admin(<AdminVouchersPage />)} />
         <Route path="/admin/banners" element={admin(<AdminBannersPage />)} />
